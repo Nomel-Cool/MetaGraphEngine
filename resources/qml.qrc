@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/resources">
+        <file>qmls/DynamicTabBar.qml</file>
+        <file>qmls/MainPage.qml</file>
+        <file>qmls/designer/IndexBar.qml</file>
+        <file>qmls/designer/MetaGraphDesigner.qml</file>
+        <file>qmls/designer/PreviewBoard.qml</file>
+        <file>qmls/designer/SearchBar.qml</file>
+        <file>qmls/engine/EngineDesigner.qml</file>
+    </qresource>
+</RCC>

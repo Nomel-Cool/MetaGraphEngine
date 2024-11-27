@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/resources">
+        <file>xmls/graphAutomata/segment_automata.xml</file>
+        <file>xmls/componentsConfig/tab_pages.xml</file>
+    </qresource>
+</RCC>
