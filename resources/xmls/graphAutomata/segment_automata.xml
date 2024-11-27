@@ -1,0 +1,8 @@
+<model>
+	<name>BasicSegment</name>
+	<automata id="1">
+		<init_status param=""/>
+		<transfer_function func=""/>
+		<terminate_set set=""/>
+	</automata>
+</model>
