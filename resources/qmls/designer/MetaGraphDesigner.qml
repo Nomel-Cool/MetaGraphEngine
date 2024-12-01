@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import ModuleGraphFactory 1.0
 import "."
 
 Rectangle {
@@ -18,6 +19,9 @@ Rectangle {
             indexBar.keyWord = receivedText // 其他控件可以在此处理接收到的字符串
         }
     }
+    QGraphFactory{
+        id: graphFactoryImp
+    }
     IndexBar {
         id: indexBar
         width: searchBar.width
@@ -25,7 +29,8 @@ Rectangle {
         anchors.top: searchBar.bottom
         anchors.left: searchBar.left
         onItemSelected: (selectedItem) => {
-           console.log("Selected:", selectedItem); // 查询Redis关于这个关键词的图元自动机文件
+           console.log("Selected:", selectedItem); 
+           graphFactoryImp.CallFromIndexBar(selectedItem);// 查询Redis关于这个关键词的图元自动机文件
         }
     }
     Rectangle {
@@ -48,7 +53,7 @@ Rectangle {
         height: parent.height
         anchors.left: indexBar.right
         anchors.right: root.right
-        anchors.top: dynamicTabBar.bottom
+        anchors.top: root.bottom
         anchors.bottom: root.bottom
 
         x0: 0

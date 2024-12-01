@@ -30,7 +30,7 @@ import QtQuick.Layouts 1.15
 /// </function>
 
 Item {
-    property string keyWord: "" // External property
+    property string keyWord: ""
     signal itemSelected(string selectedItem)
 
     ListModel {
@@ -39,7 +39,7 @@ Item {
 
     Component.onCompleted: {
         for (var i = 0; i < 26; i++) {
-            wordModel.append({ letter: String.fromCharCode(65 + i), words: [{showText:String.fromCharCode(65 + i)+"Hello" },{showText:String.fromCharCode(65 + i)+"Apple" }] });
+            wordModel.append({ letter: String.fromCharCode(65 + i), words: [{showText:"BresenhamLine" }] });
         }
     }
 
