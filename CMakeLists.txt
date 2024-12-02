@@ -13,9 +13,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt6 COMPONENTS Core Gui Qml Quick REQUIRED)
 
-# 使用 file(GLOB ...) 捕获所有源文件和头文件 
+# 使用 file(GLOB ...) 捕获所有源文件和头文件 以及 链接dlls和libs目录中的库文件
 file(GLOB SOURCES "cpps/*.cpp")
 file(GLOB HEADERS "headers/*.h" "headers/*.hpp")
+# 值得注意的是这里千万不要去链接把dll当lib链接了（也就是不用去找dll的位置，只需要加载lib，对应就会找到dll了，亲测即使不同名也可以）
+file(GLOB LIB_FILES "${CMAKE_CURRENT_SOURCE_DIR}/libs/*.lib") 
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/headers)
 
@@ -27,8 +29,10 @@ qt6_add_resources(RESOURCES resources/xml.qrc)
 # 添加可执行文件
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} ${RESOURCES})
 
+
 # 链接Qt库，使用关键字签名
-target_link_libraries(${PROJECT_NAME} PUBLIC Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${LIB_FILES} Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick)
+
 
 # 添加QML导入路径
 set_target_properties(${PROJECT_NAME} PROPERTIES

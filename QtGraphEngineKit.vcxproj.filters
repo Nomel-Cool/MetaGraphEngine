@@ -45,9 +45,19 @@
     <None Include="resources\qmls\engine\EngineDesigner.qml">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="construct_project.bat">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="dlls\ShabbyFileManager.dll" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpps\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpps\MetaGraphAutomata.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpps\RenderKernel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -72,8 +82,25 @@
     <Xml Include="resources\xmls\graphAutomata\segment_automata.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="headers\a.h">
+    <ClInclude Include="headers\MetaGraphAutomata.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="headers\tinyxml2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\XMLParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\FileManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="headers\RenderKernel.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt" />
   </ItemGroup>
 </Project>

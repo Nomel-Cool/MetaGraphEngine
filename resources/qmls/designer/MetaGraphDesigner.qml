@@ -53,7 +53,7 @@ Rectangle {
         height: parent.height
         anchors.left: indexBar.right
         anchors.right: root.right
-        anchors.top: root.bottom
+        anchors.top: root.top
         anchors.bottom: root.bottom
 
         x0: 0

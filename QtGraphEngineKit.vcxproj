@@ -12,6 +12,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
+    <None Include="construct_project.bat" />
+    <None Include="dlls\ShabbyFileManager.dll" />
     <None Include="resources\qmls\DynamicTabBar.qml" />
     <None Include="resources\qmls\designer\IndexBar.qml" />
     <None Include="resources\qmls\designer\MetaGraphDesigner.qml" />
@@ -22,6 +24,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpps\main.cpp" />
+    <ClCompile Include="cpps\MetaGraphAutomata.cpp" />
+    <ClCompile Include="cpps\RenderKernel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="resources\img.qrc" />
@@ -36,7 +40,14 @@
     <Xml Include="resources\xmls\graphAutomata\segment_automata.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="headers\a.h" />
+    <ClInclude Include="headers\FileManager.h" />
+    <ClInclude Include="headers\MetaGraphAutomata.h" />
+    <ClInclude Include="headers\tinyxml2.h" />
+    <ClInclude Include="headers\XMLParser.h" />
+    <QtMoc Include="headers\RenderKernel.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{914C03F2-02AD-4A22-B045-93C67A4F65E1}</ProjectGuid>
@@ -89,9 +100,20 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <IncludePath>F:\WorkPlace\VS\QtGraphEngineKit\headers;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
   </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>F:\WorkPlace\VS\QtGraphEngineKit\dlls;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
     <ClCompile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>

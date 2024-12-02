@@ -14,7 +14,7 @@ void GraphFactory::CallFromIndexBar(const QString& func_name)
 
 bool GraphFactory::FillUp(const std::string& json_string, GraphModel& graph_model) {
     json json_obj;
-    if (!file_manager.GetJsonParser().DeSerialize(json_string, json_obj)) {
+    if (!file_manager.TransStr2JsonObject(json_string, json_obj)) {
         std::cerr << "Failed to parse JSON: " << json_string << std::endl;
         return false;
     }
@@ -113,12 +113,12 @@ std::string RenderCU::BresenhamLine(const GraphModel& graph_model)
 {
     json init_status, terminate_status;
     auto graph_automata = graph_model.automatas.begin();
-    if (!file_manager.GetJsonParser().DeSerialize(graph_automata->init_status, init_status))
+    if (!file_manager.TransStr2JsonObject(graph_automata->init_status, init_status))
     {
         std::cerr << "Failed to parse JSON: " << graph_automata->init_status << std::endl;
         return "{}";
     }
-    if (!file_manager.GetJsonParser().DeSerialize(graph_automata->terminate_status, terminate_status))
+    if (!file_manager.TransStr2JsonObject(graph_automata->terminate_status, terminate_status))
     {
         std::cerr << "Failed to parse JSON: " << graph_automata->terminate_status << std::endl;
         return "{}";
