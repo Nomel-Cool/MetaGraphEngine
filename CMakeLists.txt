@@ -18,6 +18,7 @@ file(GLOB SOURCES "cpps/*.cpp")
 file(GLOB HEADERS "headers/*.h" "headers/*.hpp")
 # 值得注意的是这里千万不要去链接把dll当lib链接了（也就是不用去找dll的位置，只需要加载lib，对应就会找到dll了，亲测即使不同名也可以）
 file(GLOB LIB_FILES "${CMAKE_CURRENT_SOURCE_DIR}/libs/*.lib") 
+file(GLOB DLL_FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls/*.dll")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/headers)
 
@@ -63,3 +64,15 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory 
     ${CMAKE_CURRENT_SOURCE_DIR}/resources ${CMAKE_BINARY_DIR}/resources
 )
+
+# 复制每个 .dll 文件到 build 输出目录
+foreach(DLL ${DLL_FILES}) 
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DLL} "$<TARGET_FILE_DIR:${PROJECT_NAME}>" 
+) 
+endforeach()
+# 安装每个 .dll 文件到安装目录 
+foreach(DLL ${DLL_FILES}) 
+    install(FILES ${DLL} DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+endforeach()
