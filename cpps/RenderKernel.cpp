@@ -1,15 +1,27 @@
 #include "RenderKernel.h"
 
-void GraphFactory::CallFromIndexBar(const QString& func_name)
+QString GraphFactory::Request4Model(const QString& model_name)
 {
-    GraphModel graph_model;
-    std::string file_name = "resources/xmls/graphAutomata/segment_automata.xml";
-    auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
-    bool trans_result = file_manager.TransXml2Class<GraphModel>(file_name, graph_model, bound_func);
-    if (trans_result)
-        std::string str_points_list = render_cu.GetFunctor(func_name.toStdString())(graph_model);
-    else
-        std::cerr << "Convert XML to Class Failed, Abort calling generating function." << std::endl;
+    redis_client.SelectDB(0);
+    std::string model_data = redis_client.Get(model_name.toStdString());
+    if (model_data.empty())
+    {
+        // GraphModel graph_model;
+        // std::string automata_xml_path = QueryFromDB(model_name)
+        // if(automata_xml_path.empty())
+        //     return "";
+        // auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
+        // bool trans_result = file_manager.TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
+        // if(trans_result)
+        // {
+        //     std::string str_points_list = render_cu.GetFunctor(func_name.toStdString())(graph_model);
+        //     redis_client.Set(model_name, str_points_list);
+        //     return str_points_list;
+        // }
+        // else
+        //     std::cerr << "Convert XML to Class Failed, Abort calling generating function." << std::endl;
+    }
+    return QString(model_data.c_str());
 }
 
 bool GraphFactory::FillUp(const std::string& json_string, GraphModel& graph_model) {

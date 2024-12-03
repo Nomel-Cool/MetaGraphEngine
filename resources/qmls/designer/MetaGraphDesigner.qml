@@ -30,7 +30,7 @@ Rectangle {
         anchors.left: searchBar.left
         onItemSelected: (selectedItem) => {
            console.log("Selected:", selectedItem); 
-           graphFactoryImp.CallFromIndexBar(selectedItem);// 查询Redis关于这个关键词的图元自动机文件
+           previewBoard.strPoints = graphFactoryImp.Request4Model(selectedItem);// 查询Redis关于这个关键词的图元自动机文件
         }
     }
     Rectangle {
@@ -55,11 +55,6 @@ Rectangle {
         anchors.right: root.right
         anchors.top: root.top
         anchors.bottom: root.bottom
-
-        x0: 0
-        y0: 0
-        x1: 50
-        y1: 50
     }
 }
 

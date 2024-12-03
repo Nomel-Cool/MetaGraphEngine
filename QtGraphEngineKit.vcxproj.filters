@@ -49,6 +49,8 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="dlls\ShabbyFileManager.dll" />
+    <None Include="dlls\ShabbyRedis.dll" />
+    <None Include="dlls\hiredis.dll" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpps\main.cpp">
@@ -94,6 +96,27 @@
     <ClInclude Include="headers\FileManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="headers\alloc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\hiredis.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\json.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\JSONParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\read.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\RedisClient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\sds.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="headers\RenderKernel.h">
@@ -102,5 +125,10 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="libs\ShabbyRedis.lib" />
+    <Library Include="libs\ShabbyFileManager.lib" />
+    <Library Include="libs\hiredis.lib" />
   </ItemGroup>
 </Project>

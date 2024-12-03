@@ -9,6 +9,9 @@
 
 class RedisClient {
 public:
+
+    RedisClient();
+
     RedisClient(const std::string& host, int port);
 
     ~RedisClient();

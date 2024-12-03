@@ -10,7 +10,7 @@
 #include "MetaGraphAutomata.h"
 
 #include "FileManager.h"
-
+#include "RedisClient.h"
 
 class RenderCU
 {
@@ -31,8 +31,8 @@ class GraphFactory : public QObject
 {
     Q_OBJECT
 public:
-    explicit GraphFactory(QObject* parent = nullptr) : QObject(parent) {}
-    Q_INVOKABLE void CallFromIndexBar(const QString& func_name);
+    explicit GraphFactory(QObject* parent = nullptr) : QObject(parent){}
+    Q_INVOKABLE QString Request4Model(const QString& model_name);
 protected:
     bool FillUp(const std::string& json_string, GraphModel& graph_model);
 private:
@@ -51,6 +51,7 @@ private:
 
     RenderCU render_cu;
     FileManager file_manager;
+    RedisClient redis_client;
 };
 
 #endif // !RENDER_KERNEL
