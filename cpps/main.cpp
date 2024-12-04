@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "RenderKernel.h"
+#include "XmlDataModel.h"
 
 int main(int argc, char *argv[])
 {
@@ -16,7 +17,8 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
 
-    qmlRegisterType<GraphFactory>("ModuleGraphFactory", 1, 0, "QGraphFactory");
+    qmlRegisterType<GraphFactory>("CustomModules", 1, 0, "QGraphFactory");
+    qmlRegisterType<XmlDataModelFactory>("CustomModules", 1, 0, "QIndexBarFactory");
 
     engine.load(QUrl(QStringLiteral(u"qrc:resources/qmls/MainPage.qml")));
     if (engine.rootObjects().isEmpty())
