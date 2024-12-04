@@ -28,6 +28,7 @@
     <ClCompile Include="cpps\main.cpp" />
     <ClCompile Include="cpps\MetaGraphAutomata.cpp" />
     <ClCompile Include="cpps\RenderKernel.cpp" />
+    <ClCompile Include="cpps\XmlDataModel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="resources\img.qrc" />
@@ -38,6 +39,7 @@
     <Image Include="resources\images\a.png" />
   </ItemGroup>
   <ItemGroup>
+    <Xml Include="resources\xmls\componentsConfig\model_index.xml" />
     <Xml Include="resources\xmls\componentsConfig\tab_pages.xml" />
     <Xml Include="resources\xmls\graphAutomata\segment_automata.xml" />
   </ItemGroup>
@@ -48,10 +50,12 @@
     <ClInclude Include="headers\json.hpp" />
     <ClInclude Include="headers\JSONParser.h" />
     <ClInclude Include="headers\MetaGraphAutomata.h" />
+    <ClInclude Include="headers\IndexBarModel.h" />
     <ClInclude Include="headers\read.h" />
     <ClInclude Include="headers\RedisClient.h" />
     <ClInclude Include="headers\sds.h" />
     <ClInclude Include="headers\tinyxml2.h" />
+    <QtMoc Include="headers\XmlDataModel.h" />
     <ClInclude Include="headers\XMLParser.h" />
     <QtMoc Include="headers\RenderKernel.h" />
   </ItemGroup>

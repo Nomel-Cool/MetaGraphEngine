@@ -41,7 +41,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 )
 
 # 添加自定义模块，即QML调用C++类成员函数情形下，注册的C++类所自定义的模块名同步
-qt6_add_qml_module(${PROJECT_NAME} URI "ModuleGraphFactory" VERSION 1.0 SOURCES ${HEADERS} ${SOURCES})
+qt6_add_qml_module(${PROJECT_NAME} URI "CustomModules" VERSION 1.0 SOURCES ${HEADERS} ${SOURCES})
 
 # 设置安装目录，是最终打包的资源可运行程序以及它调用的资源文件，一般打包给客户
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/install")
