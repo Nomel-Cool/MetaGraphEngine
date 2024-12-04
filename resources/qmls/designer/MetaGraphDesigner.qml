@@ -28,8 +28,8 @@ Rectangle {
         height: parent.height - searchBar.height
         anchors.top: searchBar.bottom
         anchors.left: searchBar.left
-        onItemSelected: (selectedItem) => {
-           console.log("Selected:", selectedItem); 
+        onPreviewItemSelected: (selectedItem) => {
+           previewBoard.currentModelName = selectedItem
            previewBoard.strPoints = graphFactoryImp.Request4Model(selectedItem);// 查询Redis关于这个关键词的图元自动机文件
         }
     }
@@ -55,6 +55,7 @@ Rectangle {
         anchors.right: root.right
         anchors.top: root.top
         anchors.bottom: root.bottom
+        drawSpeed: 50 // ms
     }
 }
 
