@@ -56,7 +56,7 @@ Item {
             var firstLetter = modelName.charAt(0).toUpperCase(); 
             var index = firstLetter.charCodeAt(0) - 65; 
             if (index >= 0 && index < 26)
-                wordModel.get(index).words.append({ showText: modelName });
+                wordModel.get(index).words.append({ showText: modelName }); // That is so fucking important to use the attribute name "showText"!!!
             // 如果需要动态更新视图，似乎需要对model用到它的set方法强制更新到视图
         }
     }
@@ -72,21 +72,20 @@ Item {
         delegate: ComboBox {
             id: comboBox
             width: listView.width
-            height: Math.max(40, implicitHeight) // 确保高度不小于隐含高度
+            height: Math.max(40, implicitHeight)
             visible: keyWord.length === 0 ? true : letter === keyWord.toUpperCase()[0]
             displayText: letter
             model: words
             clip: true
             delegate: Rectangle {
                 width: comboBox.width
-                height: comboBox.height // 设置项的高度等于 ComboBox 的高度
-                implicitHeight: 40
+                height: comboBox.height
                 color: comboBox.currentIndex === index ? "lightBlue" : "white" // Highlight text color for the selected item
                 Text {
                     anchors.fill: parent
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignHCenter
-                    text: model.showText // showText与添加的json结构的键值对一一对应
+                    text: model.showText
                 }
                 MouseArea { 
                     anchors.fill: parent
@@ -105,7 +104,7 @@ Item {
         }
     }
 
-    // React to changes in the keyWord property
+    
     onKeyWordChanged: {
         console.log("KeyWord changed to:", keyWord);
 
@@ -120,7 +119,6 @@ Item {
             return;
         }
 
-        // Find the index of the letter in the ListModel
         for (var i = 0; i < wordModel.count; i++) {
             if (wordModel.get(i).letter === firstLetter) {
                 pin2TopInListView(listView, i);
@@ -131,8 +129,8 @@ Item {
         }
     }
     function pin2TopInListView(list_view, indice) {
-        list_view.currentIndex = indice; // Move the corresponding ComboBox to the top
-        list_view.positionViewAtIndex(indice, ListView.Beginning); // Ensure it's at the top of the view
+        list_view.currentIndex = indice;
+        list_view.positionViewAtIndex(indice, ListView.Beginning);
     }
     function openComboBoxInListView(list_view, indice) {
         listView.itemAtIndex(indice).popup.open()
@@ -160,7 +158,6 @@ Item {
             return;
         }
 
-        // Get the data item corresponding to the letter
         var dataItem = wordModel.get(index);
 
         if (!dataItem.words) {
@@ -168,7 +165,6 @@ Item {
             return;
         }
 
-        // Check for duplicates
         for (var i = 0; i < dataItem.words.count; i++) {
             if (dataItem.words.get(i).showText === word) {
                 console.log("Duplicating word entered");
@@ -176,7 +172,6 @@ Item {
             }
         }
 
-        // Add the new word
         dataItem.words.append({ showText: word });
         console.log("Updated words for letter", dataItem.letter, ":", dataItem.words);
     }
@@ -194,7 +189,6 @@ function delItem(selectedItem) {
         return;
     }
 
-    // Get the data item corresponding to the letter
     var dataItem = wordModel.get(index);
 
     if (!dataItem.words) {
@@ -202,7 +196,6 @@ function delItem(selectedItem) {
         return;
     }
 
-    // Check for duplicates
     for (var i = 0; i < dataItem.words.count; i++) {
         if (dataItem.words.get(i).showText === selectedItem) {
             dataItem.words.remove(i, 1);
