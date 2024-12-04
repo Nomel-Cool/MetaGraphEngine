@@ -30,7 +30,8 @@ Rectangle {
         anchors.left: searchBar.left
         onPreviewItemSelected: (selectedItem) => {
            previewBoard.currentModelName = selectedItem
-           previewBoard.strPoints = graphFactoryImp.Request4Model(selectedItem);// 查询Redis关于这个关键词的图元自动机文件
+           var strPointsSeries = graphFactoryImp.Request4Model(selectedItem);// 查询Redis关于这个关键词的图元自动机文件
+           strPointsSeries.length != 0 ? (previewBoard.strPoints = strPointsSeries) : indexBar.delItem(selectedItem);      
         }
     }
     Rectangle {

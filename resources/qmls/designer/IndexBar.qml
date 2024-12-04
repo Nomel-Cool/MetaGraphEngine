@@ -49,7 +49,7 @@ Item {
 
     Component.onCompleted: {
         for (var i = 0; i < 26; i++)
-            wordModel.append({ letter: String.fromCharCode(65 + i), words: [] });
+            wordModel.append({ letter: String.fromCharCode(65 + i), words: [ {showText : String.fromCharCode(65 + i) + "Hello"}] });
         var modelNameList = indexBarFactoryImpl.Request4ModelName();
         for (var j = 0; j < modelNameList.length; ++j) { 
             var modelName = modelNameList[j]; 
@@ -169,8 +169,8 @@ Item {
         }
 
         // Check for duplicates
-        for (var i = 0; i < dataItem.words.length; i++) {
-            if (dataItem.words[i].text === word) {
+        for (var i = 0; i < dataItem.words.count; i++) {
+            if (dataItem.words.get(i).showText === word) {
                 console.log("Duplicating word entered");
                 return;
             }
@@ -180,4 +180,39 @@ Item {
         dataItem.words.append({ showText: word });
         console.log("Updated words for letter", dataItem.letter, ":", dataItem.words);
     }
+function delItem(selectedItem) {
+    if (!selectedItem || selectedItem.length === 0) {
+        console.log("Empty selectedItem");
+        return;
+    }
+
+    var firstLetter = selectedItem[0].toUpperCase();
+    var index = firstLetter.charCodeAt(0) - 65;
+
+    if (index < 0 || index > 25) {
+        console.log("Invalid selectedItem");
+        return;
+    }
+
+    // Get the data item corresponding to the letter
+    var dataItem = wordModel.get(index);
+
+    if (!dataItem.words) {
+        console.error("words is undefined for letter", dataItem.letter);
+        return;
+    }
+
+    // Check for duplicates
+    for (var i = 0; i < dataItem.words.count; i++) {
+        if (dataItem.words.get(i).showText === selectedItem) {
+            dataItem.words.remove(i, 1);
+            console.log("Deleted item:", selectedItem);
+            break;
+        }
+    }
+
+    // 强制更新布局
+    listView.forceLayout();
+}
+
 }
