@@ -27,6 +27,10 @@ private:
     FileManager file_manager;
 };
 
+/// <summary>
+/// Todo: 可以继承同一个实现了FillUp和状态机状态集的父类
+/// 主要用于处理QML与后端的图元请求
+/// </summary>
 class GraphFactory : public QObject
 {
     Q_OBJECT
