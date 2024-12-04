@@ -1,7 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
-
+import CustomModules 1.0
 /// <summary>
 /// 用26个ComboBox存储A~Z开头的单词，并支持关键词搜索后高亮显示到置顶
 /// </summary>
@@ -28,18 +28,36 @@ import QtQuick.Layouts 1.15
 /// <param name="list_view">ComboBox所在的ListView的id</param>
 /// <param name="indice">ListView中ComboBox的索引</param>
 /// </function>
+///
+/// <function name="addWord">
+/// <summary>前端添加模型名称到图元栏的接口</summary>
+/// <param name="word">所添加的模型名称</param>
+/// </function>
 
 Item {
     property string keyWord: ""
-    signal itemSelected(string selectedItem)
+    signal previewItemSelected(string selectedItem)
+    signal drawItemSelected(string selectedItem)
+
+    QIndexBarFactory {
+        id: indexBarFactoryImpl
+    }
 
     ListModel {
         id: wordModel
     }
 
     Component.onCompleted: {
-        for (var i = 0; i < 26; i++) {
-            wordModel.append({ letter: String.fromCharCode(65 + i), words: [{showText:"BresenhamLine" }] });
+        for (var i = 0; i < 26; i++)
+            wordModel.append({ letter: String.fromCharCode(65 + i), words: [] });
+        var modelNameList = indexBarFactoryImpl.Request4ModelName();
+        for (var j = 0; j < modelNameList.length; ++j) { 
+            var modelName = modelNameList[j]; 
+            var firstLetter = modelName.charAt(0).toUpperCase(); 
+            var index = firstLetter.charCodeAt(0) - 65; 
+            if (index >= 0 && index < 26)
+                wordModel.get(index).words.append({ showText: modelName });
+            // 如果需要动态更新视图，似乎需要对model用到它的set方法强制更新到视图
         }
     }
 
@@ -62,16 +80,25 @@ Item {
             delegate: Rectangle {
                 width: comboBox.width
                 height: comboBox.height // 设置项的高度等于 ComboBox 的高度
+                implicitHeight: 40
                 color: comboBox.currentIndex === index ? "lightBlue" : "white" // Highlight text color for the selected item
                 Text {
-                    anchors.centerIn: parent
+                    anchors.fill: parent
+                    verticalAlignment: Text.AlignVCenter
+                    horizontalAlignment: Text.AlignHCenter
                     text: model.showText // showText与添加的json结构的键值对一一对应
                 }
                 MouseArea { 
                     anchors.fill: parent
-                    onClicked: {
-                        comboBox.currentIndex = index 
-                        itemSelected(currentText);
+                    acceptedButtons: Qt.LeftButton|Qt.RightButton
+                    onClicked: function(mouse) { 
+                        if (mouse.button === Qt.RightButton) { 
+                            comboBox.currentIndex = index; 
+                            previewItemSelected(currentText);
+                        } 
+                        else if (mouse.button === Qt.LeftButton) { 
+                            drawItemSelected(currentText);
+                        } 
                     }
                 }
             }
