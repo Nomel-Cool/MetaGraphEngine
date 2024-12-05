@@ -12,9 +12,12 @@ QString GraphFactory::Request4Model(const QString& model_name)
         //     return "";
         // auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
         // bool trans_result = file_manager.TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
+        // std::string str_points_list = "[";
         // if(trans_result)
         // {
-        //     std::string str_points_list = render_cu.GetFunctor(func_name.toStdString())(graph_model);
+        //     for(const &SingleAutomata sa : graph_model.automatas)
+        //         str_points_list += render_cu.GetFunctor(sa.func_name.toStdString())(sa) + ",";
+        //     str_points_list.replace(str_points_list.end() - 1, str_points_list.end(),"]");
         //     redis_client.Set(model_name, str_points_list);
         //     return str_points_list;
         // }
