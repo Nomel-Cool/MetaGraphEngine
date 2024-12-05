@@ -49,10 +49,10 @@ Item {
 
     Component.onCompleted: {
         for (var i = 0; i < 26; i++)
-            wordModel.append({ letter: String.fromCharCode(65 + i), words: [ {showText : String.fromCharCode(65 + i) + "Hello"}] });
+            wordModel.append({ letter: String.fromCharCode(65 + i), words: [] });
         var modelNameList = indexBarFactoryImpl.Request4ModelName();
         for (var j = 0; j < modelNameList.length; ++j) { 
-            var modelName = modelNameList[j]; 
+            var modelName = modelNameList[j];
             var firstLetter = modelName.charAt(0).toUpperCase(); 
             var index = firstLetter.charCodeAt(0) - 65; 
             if (index >= 0 && index < 26)

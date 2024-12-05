@@ -19,11 +19,11 @@ public:
     {
         render_functions["BresenhamLine"] = std::bind(&RenderCU::BresenhamLine, this, std::placeholders::_1);
     }
-    std::function<std::string(const GraphModel&)> GetFunctor(std::string func_name);
+    std::function<std::string(const SingleAutomata&)> GetFunctor(std::string func_name);
 protected:
-    virtual std::string BresenhamLine(const GraphModel& graph_model);
+    virtual std::string BresenhamLine(const SingleAutomata& graph_model);
 private:
-    std::map<std::string, std::function<std::string(const GraphModel&)>> render_functions;
+    std::map<std::string, std::function<std::string(const SingleAutomata&)>> render_functions;
     FileManager file_manager;
 };
 

@@ -44,7 +44,7 @@ bool XmlDataModelFactory::FillUp(const std::string& json_string, IndexBarModel& 
                     model_index.model_name_array.emplace_back(json_obj["model_name"][i]["name"]);
                     break;
                 }
-        current_state = State::WaitingForModel;
+        current_state = State::WaitingForModelName;
         break;
     default:
         throw std::logic_error("Invalid state");

@@ -6,23 +6,24 @@ QString GraphFactory::Request4Model(const QString& model_name)
     std::string model_data = redis_client.Get(model_name.toStdString());
     if (model_data.empty())
     {
-        // GraphModel graph_model;
-        // std::string automata_xml_path = QueryFromDB(model_name)
-        // if(automata_xml_path.empty())
-        //     return "";
-        // auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
-        // bool trans_result = file_manager.TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
-        // std::string str_points_list = "[";
-        // if(trans_result)
-        // {
-        //     for(const &SingleAutomata sa : graph_model.automatas)
-        //         str_points_list += render_cu.GetFunctor(sa.func_name.toStdString())(sa) + ",";
-        //     str_points_list.replace(str_points_list.end() - 1, str_points_list.end(),"]");
-        //     redis_client.Set(model_name, str_points_list);
-        //     return str_points_list;
-        // }
-        // else
-        //     std::cerr << "Convert XML to Class Failed, Abort calling generating function." << std::endl;
+         GraphModel graph_model;
+         //std::string automata_xml_path = QueryFromDB(model_name)
+         std::string automata_xml_path = "./resources/xmls/graphAutomata/triangle_automata.xml";
+         if(automata_xml_path.empty())
+             return "";
+         auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
+         bool trans_result = file_manager.TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
+         std::string str_points_list = "[";
+         if(trans_result)
+         {
+             for(const SingleAutomata& sa : graph_model.automatas)
+                 str_points_list += render_cu.GetFunctor(sa.func_name)(sa) + ",";
+             str_points_list.replace(str_points_list.end() - 1, str_points_list.end(),"]");
+             redis_client.Set(model_name.toStdString(), str_points_list);
+             return QString(str_points_list.c_str());
+         }
+         else
+             std::cerr << "Convert XML to Class Failed, Abort calling generating function." << std::endl;
     }
     return QString(model_data.c_str());
 }
@@ -124,18 +125,17 @@ bool GraphFactory::FillUp(const std::string& json_string, GraphModel& graph_mode
     return true;
 }
 
-std::string RenderCU::BresenhamLine(const GraphModel& graph_model)
+std::string RenderCU::BresenhamLine(const SingleAutomata& graph_model)
 {
     json init_status, terminate_status;
-    auto graph_automata = graph_model.automatas.begin();
-    if (!file_manager.TransStr2JsonObject(graph_automata->init_status, init_status))
+    if (!file_manager.TransStr2JsonObject(graph_model.init_status, init_status))
     {
-        std::cerr << "Failed to parse JSON: " << graph_automata->init_status << std::endl;
+        std::cerr << "Failed to parse JSON: " << graph_model.init_status << std::endl;
         return "{}";
     }
-    if (!file_manager.TransStr2JsonObject(graph_automata->terminate_status, terminate_status))
+    if (!file_manager.TransStr2JsonObject(graph_model.terminate_status, terminate_status))
     {
-        std::cerr << "Failed to parse JSON: " << graph_automata->terminate_status << std::endl;
+        std::cerr << "Failed to parse JSON: " << graph_model.terminate_status << std::endl;
         return "{}";
     }
     std::vector<std::pair<float, float>> points;
@@ -143,52 +143,52 @@ std::string RenderCU::BresenhamLine(const GraphModel& graph_model)
     float y0 = init_status["y"];
     float xn = terminate_status["x"];
     float yn = terminate_status["y"];
+    float dx = fabs(xn - x0);
+    float dy = fabs(yn - y0);
+    float stepX = (x0 < xn) ? 1 : -1;
+    float stepY = (y0 < yn) ? 1 : -1;
     float x = x0;
     float y = y0;
-    float dx = abs(xn - x0);
-    float dy = abs(yn - y0);
-    float stepX = dx >= 0 ? 1 : -1;
-    float stepY = dy >= 0 ? 1 : -1;
-    float p = dx < dy ? dy - 2 * dx : dx - 2 * dy;
+
     if (dx > dy) // |m| <= 1
     {
-        float p = dx - 2 * dy;
-        float y = y0;
-        for (float x = x0; x <= xn; x += stepX)
-        {
+        float p = 2 * dy - dx;
+        while (x != xn) {
             points.emplace_back(std::make_pair(x, y));
-            if (p <= 0)
-            {
+            if (p >= 0) {
                 y += stepY;
-                p += 2 * (dy - dx);
+                p -= 2 * dx;
             }
-            p -= 2 * dy;
+            x += stepX;
+            p += 2 * dy;
         }
     }
     else // |m| > 1
     {
-        float p = dy - 2 * dx;
-        float x = x0;
-        for (float y = y0; y <= yn; y += stepY)
-        {
+        float p = 2 * dx - dy;
+        while (y != yn) {
             points.emplace_back(std::make_pair(x, y));
-            if (p <= 0)
-            {
+            if (p >= 0) {
                 x += stepX;
-                p += 2 * (dy - dx);
+                p -= 2 * dy;
             }
-            p -= 2 * dy;
+            y += stepY;
+            p += 2 * dx;
         }
     }
+
+    // Add the final point
+    points.emplace_back(std::make_pair(xn, yn));
+
     json result;
     for (const auto& point : points)
-    {
         result.push_back({ {"point", {point.first, point.second}} });
-    }
+
     return result.dump();
 }
 
-std::function<std::string(const GraphModel&)> RenderCU::GetFunctor(std::string func_name)
+
+std::function<std::string(const SingleAutomata&)> RenderCU::GetFunctor(std::string func_name)
 {
     return render_functions[func_name];
 }

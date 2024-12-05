@@ -1,0 +1,23 @@
+<model name="BasicTriangle">
+	<automata id="1">
+		<init init_status='{\"x\":0,\"y\":0}'/>
+		<transfer func_name="BresenhamLine"/>
+		<input current_input="{}"/>
+		<current current_status="{}"/>
+		<terminate terminate_status='{\"x\":100,\"y\":100}'/>
+	</automata>
+	<automata id="2">
+		<init init_status='{\"x\":100,\"y\":100}'/>
+		<transfer func_name="BresenhamLine"/>
+		<input current_input="{}"/>
+		<current current_status="{}"/>
+		<terminate terminate_status='{\"x\":200,\"y\":100}'/>
+	</automata>
+	<automata id="3">
+		<init init_status='{\"x\":200,\"y\":100}'/>
+		<transfer func_name="BresenhamLine"/>
+		<input current_input="{}"/>
+		<current current_status="{}"/>
+		<terminate terminate_status='{\"x\":0,\"y\":0}'/>
+	</automata>
+</model>
