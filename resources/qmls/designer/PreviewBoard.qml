@@ -13,6 +13,7 @@ Rectangle {
     QtObject {
         id: __private
         property var points: []
+        property int currentLayerIndex: 0 // 当前绘制的层索引
         property int currentPointIndex: 0 // 当前绘制的点索引
     }
 
@@ -22,9 +23,14 @@ Rectangle {
         repeat: true
         running: false
         onTriggered: {
-            if (__private.currentPointIndex < __private.points.length) {
-                automataRender.requestPaint();
-                __private.currentPointIndex++;
+            if (__private.currentLayerIndex < __private.points.length) {
+                if (__private.currentPointIndex < __private.points[__private.currentLayerIndex].length) {
+                    automataRender.requestPaint();
+                    __private.currentPointIndex++;
+                } else {
+                    __private.currentLayerIndex++;
+                    __private.currentPointIndex = 0;
+                }
             } else {
                 drawTimer.stop();
             }
@@ -33,6 +39,7 @@ Rectangle {
 
     onStrPointsChanged: {
         __private.points = JSON.parse(strPoints);
+        __private.currentLayerIndex = 0;
         __private.currentPointIndex = 0;
         drawTimer.start(); // 开始绘制动画
     }
@@ -64,9 +71,14 @@ Rectangle {
             var ctx = automataRender.getContext("2d")
             ctx.clearRect(0, 0, width, height)
             ctx.fillStyle = "black"
-            for (var i = 0; i < __private.currentPointIndex; i++) {
-                var p = __private.points[i]["point"]
-                ctx.fillRect(p[0], p[1], 1, 1)
+            
+            // 按当前索引逐层逐点绘制
+            for (var i = 0; i <= __private.currentLayerIndex; ++i) { // automata layers
+                var maxPointIndex = (i < __private.currentLayerIndex) ? __private.points[i].length : __private.currentPointIndex;
+                for (var j = 0; j < maxPointIndex; ++j) { // single automata
+                    var p = __private.points[i][j]["point"];
+                    ctx.fillRect(p[0], p[1], 1, 1);
+                }
             }
         }
     }
