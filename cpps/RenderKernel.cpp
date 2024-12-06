@@ -212,25 +212,25 @@ std::string RenderCU::BresenhamCircle(const SingleAutomata& graph_model)
     std::vector<std::pair<float, float>> points_part_7;
     std::vector<std::pair<float, float>> points_part_8;
 
-    float xc = init_status["x"];
-    float yc = init_status["y"];
-    float r = terminate_status["radius"];
-
-    int x = 0;
-    int y = r;
-    int d = 3 - 2 * r;
-
     // 若不需要动画效果，更改以下points_part_1~points_part_8为points_part即可。
     auto add_circle_points = [&](int xc, int yc, int x, int y) {
         points_part_1.push_back({ xc + x, yc + y });
         points_part_2.push_back({ xc + y, yc + x });
-        points_part_3.push_back({ xc - y, yc + x });
-        points_part_4.push_back({ xc - x, yc + y });
+        points_part_7.push_back({ xc - y, yc + x });
+        points_part_8.push_back({ xc - x, yc + y });
         points_part_5.push_back({ xc - x, yc - y });
         points_part_6.push_back({ xc - y, yc - x });
-        points_part_7.push_back({ xc + y, yc - x });
-        points_part_8.push_back({ xc + x, yc - y });
+        points_part_3.push_back({ xc + y, yc - x });
+        points_part_4.push_back({ xc + x, yc - y });
         };
+
+    float xc = init_status["x"];
+    float yc = init_status["y"];
+    float r = terminate_status["radius"];
+
+    /*int x = 0;
+    int y = r;
+    int d = 3 - 2 * r;
 
     while (y >= x)
     {
@@ -245,17 +245,33 @@ std::string RenderCU::BresenhamCircle(const SingleAutomata& graph_model)
         {
             d = d + 4 * x + 6;
         }
+    }*/
+
+    int x = 0;
+    int y = r;
+    int dd = 0;
+    int index = 1;
+    while (x <= y)
+    {
+        dd = 2 * index * r - index * index;
+        while (x * x <= dd)
+        {
+            add_circle_points(xc, yc, x, y);
+            x++;
+        }
+        index++;
+        y--;
     }
 
     // 若不需要动画效果，删除以下所有insert
     points_part.insert(points_part.end(), points_part_1.begin(), points_part_1.end());
     points_part.insert(points_part.end(), points_part_2.rbegin(), points_part_2.rend());
-    points_part.insert(points_part.end(), points_part_7.begin(), points_part_7.end());
-    points_part.insert(points_part.end(), points_part_8.rbegin(), points_part_8.rend());
-    points_part.insert(points_part.end(), points_part_5.begin(), points_part_5.end());
-    points_part.insert(points_part.end(), points_part_6.rbegin(), points_part_6.rend());
     points_part.insert(points_part.end(), points_part_3.begin(), points_part_3.end());
     points_part.insert(points_part.end(), points_part_4.rbegin(), points_part_4.rend());
+    points_part.insert(points_part.end(), points_part_5.begin(), points_part_5.end());
+    points_part.insert(points_part.end(), points_part_6.rbegin(), points_part_6.rend());
+    points_part.insert(points_part.end(), points_part_7.begin(), points_part_7.end());
+    points_part.insert(points_part.end(), points_part_8.rbegin(), points_part_8.rend());
 
     json result;
     for (const auto& point : points_part)
