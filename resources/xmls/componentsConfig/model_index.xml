@@ -1,5 +1,5 @@
 <model_list>
 	<model_name name="DiagSegment"/>
 	<model_name name="ArbitraryTriangle"/>
-	<model_name name="FormalCircle"/>
+	<model_name name="FormalEllipse"/>
 </model_list>

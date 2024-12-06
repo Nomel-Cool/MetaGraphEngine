@@ -15,11 +15,7 @@
 class RenderCU
 {
 public:
-    RenderCU()
-    {
-        render_functions["BresenhamLine"] = std::bind(&RenderCU::BresenhamLine, this, std::placeholders::_1);
-        render_functions["BresenhamCircle"] = std::bind(&RenderCU::BresenhamCircle, this, std::placeholders::_1);
-    }
+    RenderCU();
     std::function<std::string(const SingleAutomata&)> GetFunctor(std::string func_name);
 protected:
     /// <summary>
@@ -37,12 +33,12 @@ protected:
     /// <returns></returns>
     virtual std::string BresenhamLine(const SingleAutomata& graph_model);
     /// <summary>
-    /// 递推式：di = sqrt(2 * r * i - i * i)，为了效率取di平方，x往右推进，取八分圆第二部分x<=y为大前提，第二限制x * x < di * di
+    /// 递推式：di = sqrt(2 * r * i - i * i) * a / b，为了效率取di平方再乘b的平方，x往右推进，取八分圆第二部分x<=y为大前提，第二限制x * x < di * di
     /// 每次超过第二限制就让y往下一格
     /// </summary>
     /// <param name="graph_model"></param>
     /// <returns></returns>
-    virtual std::string BresenhamCircle(const SingleAutomata& graph_model);
+    virtual std::string BresenhamEllipse(const SingleAutomata& graph_model);
 private:
     std::map<std::string, std::function<std::string(const SingleAutomata&)>> render_functions;
     FileManager file_manager;
