@@ -1,0 +1,9 @@
+<model name="CircleR100">
+	<automata id="1">
+		<init init_status='{\"x\":100,\"y\":100}'/>
+		<transfer func_name="BresenhamCircle"/>
+		<input current_input="{}"/>
+		<current current_status="{}"/>
+		<terminate terminate_status='{\"radius\":100}'/>
+	</automata>
+</model>

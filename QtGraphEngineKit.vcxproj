@@ -41,7 +41,9 @@
   <ItemGroup>
     <Xml Include="resources\xmls\componentsConfig\model_index.xml" />
     <Xml Include="resources\xmls\componentsConfig\tab_pages.xml" />
+    <Xml Include="resources\xmls\graphAutomata\circle_automata.xml" />
     <Xml Include="resources\xmls\graphAutomata\segment_automata.xml" />
+    <Xml Include="resources\xmls\graphAutomata\triangle_automata.xml" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="headers\alloc.h" />

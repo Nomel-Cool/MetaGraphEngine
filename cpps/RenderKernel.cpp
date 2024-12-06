@@ -8,7 +8,7 @@ QString GraphFactory::Request4Model(const QString& model_name)
     {
          GraphModel graph_model;
          //std::string automata_xml_path = QueryFromDB(model_name)
-         std::string automata_xml_path = "./resources/xmls/graphAutomata/triangle_automata.xml";
+         std::string automata_xml_path = "./resources/xmls/graphAutomata/circle_automata.xml";
          if(automata_xml_path.empty())
              return "";
          auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
@@ -186,6 +186,84 @@ std::string RenderCU::BresenhamLine(const SingleAutomata& graph_model)
 
     return result.dump();
 }
+
+std::string RenderCU::BresenhamCircle(const SingleAutomata& graph_model)
+{
+    json init_status, terminate_status;
+    if (!file_manager.TransStr2JsonObject(graph_model.init_status, init_status))
+    {
+        std::cerr << "Failed to parse JSON: " << graph_model.init_status << std::endl;
+        return "{}";
+    }
+    if (!file_manager.TransStr2JsonObject(graph_model.terminate_status, terminate_status))
+    {
+        std::cerr << "Failed to parse JSON: " << graph_model.terminate_status << std::endl;
+        return "{}";
+    }
+
+    // 若不需要动画效果，去除points_part_1~points_part_8
+    std::vector<std::pair<float, float>> points_part;
+    std::vector<std::pair<float, float>> points_part_1;
+    std::vector<std::pair<float, float>> points_part_2;
+    std::vector<std::pair<float, float>> points_part_3;
+    std::vector<std::pair<float, float>> points_part_4;
+    std::vector<std::pair<float, float>> points_part_5;
+    std::vector<std::pair<float, float>> points_part_6;
+    std::vector<std::pair<float, float>> points_part_7;
+    std::vector<std::pair<float, float>> points_part_8;
+
+    float xc = init_status["x"];
+    float yc = init_status["y"];
+    float r = terminate_status["radius"];
+
+    int x = 0;
+    int y = r;
+    int d = 3 - 2 * r;
+
+    // 若不需要动画效果，更改以下points_part_1~points_part_8为points_part即可。
+    auto add_circle_points = [&](int xc, int yc, int x, int y) {
+        points_part_1.push_back({ xc + x, yc + y });
+        points_part_2.push_back({ xc + y, yc + x });
+        points_part_3.push_back({ xc - y, yc + x });
+        points_part_4.push_back({ xc - x, yc + y });
+        points_part_5.push_back({ xc - x, yc - y });
+        points_part_6.push_back({ xc - y, yc - x });
+        points_part_7.push_back({ xc + y, yc - x });
+        points_part_8.push_back({ xc + x, yc - y });
+        };
+
+    while (y >= x)
+    {
+        add_circle_points(xc, yc, x, y);
+        ++x;
+        if (d > 0)
+        {
+            --y;
+            d = d + 4 * (x - y) + 10;
+        }
+        else
+        {
+            d = d + 4 * x + 6;
+        }
+    }
+
+    // 若不需要动画效果，删除以下所有insert
+    points_part.insert(points_part.end(), points_part_1.begin(), points_part_1.end());
+    points_part.insert(points_part.end(), points_part_2.rbegin(), points_part_2.rend());
+    points_part.insert(points_part.end(), points_part_7.begin(), points_part_7.end());
+    points_part.insert(points_part.end(), points_part_8.rbegin(), points_part_8.rend());
+    points_part.insert(points_part.end(), points_part_5.begin(), points_part_5.end());
+    points_part.insert(points_part.end(), points_part_6.rbegin(), points_part_6.rend());
+    points_part.insert(points_part.end(), points_part_3.begin(), points_part_3.end());
+    points_part.insert(points_part.end(), points_part_4.rbegin(), points_part_4.rend());
+
+    json result;
+    for (const auto& point : points_part)
+        result.push_back({ {"point", {point.first, point.second}} });
+
+    return result.dump();
+}
+
 
 
 std::function<std::string(const SingleAutomata&)> RenderCU::GetFunctor(std::string func_name)
