@@ -14,7 +14,7 @@ QString GraphFactory::Request4Model(const QString& model_name)
     {
          GraphModel graph_model;
          //std::string automata_xml_path = QueryFromDB(model_name)
-         std::string automata_xml_path = "./resources/xmls/graphAutomata/ellipse_automata.xml";
+         std::string automata_xml_path = "./resources/xmls/graphAutomata/segment_automata.xml";
          if(automata_xml_path.empty())
              return "";
          auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
@@ -159,7 +159,7 @@ std::string RenderCU::BresenhamLine(const SingleAutomata& graph_model)
     if (dx > dy) // |m| <= 1
     {
         float p = 2 * dy - dx;
-        while (x != xn) {
+        while (stepX > 0 ? x <= xn : x >= xn) {
             points.emplace_back(std::make_pair(x, y));
             if (p >= 0) {
                 y += stepY;
@@ -172,7 +172,7 @@ std::string RenderCU::BresenhamLine(const SingleAutomata& graph_model)
     else // |m| > 1
     {
         float p = 2 * dx - dy;
-        while (y != yn) {
+        while (stepY > 0 ? y <= yn : y >= yn) {
             points.emplace_back(std::make_pair(x, y));
             if (p >= 0) {
                 x += stepX;

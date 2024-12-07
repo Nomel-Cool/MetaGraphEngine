@@ -3,7 +3,7 @@
 		<init init_status='{\"x\":150,\"y\":150}'/>
 		<transfer func_name="BresenhamEllipse"/>
 		<input current_input='{}'/>
-		<current current_status="{}"/>
+		<current current_status='{}'/>
 		<terminate terminate_status='{\"a\":50,\"b\":100}'/>
 	</automata>
 </model>
