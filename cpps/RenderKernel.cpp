@@ -4,6 +4,7 @@ RenderCU::RenderCU()
 {
     render_functions["BresenhamLine"] = std::bind(&RenderCU::BresenhamLine, this, std::placeholders::_1);
     render_functions["BresenhamEllipse"] = std::bind(&RenderCU::BresenhamEllipse, this, std::placeholders::_1);
+    render_functions["PartitionBezierCurve"] = std::bind(&RenderCU::PartitionBezierCurve, this, std::placeholders::_1);
 }
 
 QString GraphFactory::Request4Model(const QString& model_name)
@@ -14,7 +15,7 @@ QString GraphFactory::Request4Model(const QString& model_name)
     {
          GraphModel graph_model;
          //std::string automata_xml_path = QueryFromDB(model_name)
-         std::string automata_xml_path = "./resources/xmls/graphAutomata/segment_automata.xml";
+         std::string automata_xml_path = "./resources/xmls/graphAutomata/bezier_automata.xml";
          if(automata_xml_path.empty())
              return "";
          auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
@@ -255,6 +256,70 @@ std::string RenderCU::BresenhamEllipse(const SingleAutomata& graph_model)
         result.push_back({ {"point", {point.first, point.second}} });
 
     return result.dump();
+}
+
+std::string RenderCU::PartitionBezierCurve(const SingleAutomata& graph_model)
+{
+    json init_status;
+    if (!file_manager.TransStr2JsonObject(graph_model.init_status, init_status))
+    {
+        std::cerr << "Failed to parse JSON: " << graph_model.init_status << std::endl;
+        return "{}";
+    }
+
+    int n = init_status.size() - 1; // 贝塞尔曲线的阶数为控制点数 - 1
+
+    // 贝塞尔曲线方程
+    auto bezier_formula = [&](float t) {
+        float x = 0.0;
+        float y = 0.0;
+        for (int i = 0; i <= n; ++i) {
+            float binom = binomial_coeff(n, i);
+            float term = std::pow(1 - t, n - i) * std::pow(t, i);
+            x += binom * term * init_status[i]["x"];
+            y += binom * term * init_status[i]["y"];
+        }
+        return std::make_pair(x, y);
+        };
+
+    // 求最左和最右坐标
+    float left = init_status[0]["x"];
+    float right = init_status[0]["x"];
+    for (const auto& p : init_status) {
+        if (p["x"] < left) left = p["x"];
+        if (p["x"] > right) right = p["x"];
+    }
+
+    std::vector<std::pair<float, float>> points_part;
+
+    // 平均分成100份
+    int num_partitions = 100;
+    for (int i = 0; i <= num_partitions; ++i)
+    {
+        float t = static_cast<float>(i) / num_partitions;
+        auto point = bezier_formula(t);
+        float x = std::round(point.first);
+        float y = std::round(point.second);
+        points_part.emplace_back(x, y);
+    }
+
+    json result;
+    for (const auto& point : points_part)
+        result.push_back({ {"point", {point.first, point.second}} });
+
+    return result.dump();
+}
+
+int RenderCU::binomial_coeff(int n, int k)
+{
+    if (k == 0 || k == n) return 1;
+    if (k > n - k) k = n - k;
+    int res = 1;
+    for (int i = 0; i < k; ++i) {
+        res *= (n - i);
+        res /= (i + 1);
+    }
+    return res;
 }
 
 std::function<std::string(const SingleAutomata&)> RenderCU::GetFunctor(std::string func_name)

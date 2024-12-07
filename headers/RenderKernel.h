@@ -4,6 +4,8 @@
 #include <iostream>
 #include <map>
 #include <functional>
+#include <cmath>
+#include <algorithm>
 #include <QObject>
 #include <QString>
 
@@ -11,6 +13,9 @@
 
 #include "FileManager.h"
 #include "RedisClient.h"
+
+// 当像素控件调用生成算法时，默认是查找现有指定算法的Dynamic前缀的动态算法，所以像素控件和预览板可以读取同一份xml。
+// 预览板使用的是静态一次性生成点集，而像素控件中每个点的生成都是可影响的。
 
 class RenderCU
 {
@@ -39,6 +44,11 @@ protected:
     /// <param name="graph_model"></param>
     /// <returns></returns>
     virtual std::string BresenhamEllipse(const SingleAutomata& graph_model);
+
+    virtual std::string PartitionBezierCurve(const SingleAutomata& graph_model);
+
+    // 计算组合数C(n, k)
+    int binomial_coeff(int n, int k);
 private:
     std::map<std::string, std::function<std::string(const SingleAutomata&)>> render_functions;
     FileManager file_manager;
