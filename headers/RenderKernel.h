@@ -10,6 +10,7 @@
 #include <QString>
 
 #include "MetaGraphAutomata.h"
+#include "CoModelGenerator.h"
 
 #include "FileManager.h"
 #include "RedisClient.h"
@@ -22,6 +23,7 @@ class RenderCU
 public:
     RenderCU();
     std::function<std::string(const SingleAutomata&)> GetFunctor(std::string func_name);
+    std::function<ModelGenerator<SingleAutomata>(SingleAutomata&)> GetCoFunctor(std::string func_name);
 protected:
     /// <summary>
     /// 取delta_x, delta_y为起始与终点x与y分量的绝对值
@@ -37,6 +39,8 @@ protected:
     /// <param name="graph_model"></param>
     /// <returns></returns>
     virtual std::string BresenhamLine(const SingleAutomata& graph_model);
+    virtual ModelGenerator<SingleAutomata> CoBresenhamLine(SingleAutomata& graph_model);
+
     /// <summary>
     /// 递推式：di = sqrt(2 * r * i - i * i) * a / b，为了效率取di平方再乘b的平方，x往右推进，取八分圆第二部分x<=y为大前提，第二限制x * x < di * di
     /// 每次超过第二限制就让y往下一格
@@ -51,6 +55,7 @@ protected:
     int binomial_coeff(int n, int k);
 private:
     std::map<std::string, std::function<std::string(const SingleAutomata&)>> render_functions;
+    std::map<std::string, std::function<ModelGenerator<SingleAutomata>(SingleAutomata&)>> render_co_functions;
     FileManager file_manager;
 };
 
@@ -64,6 +69,12 @@ class GraphFactory : public QObject
 public:
     explicit GraphFactory(QObject* parent = nullptr) : QObject(parent){}
     Q_INVOKABLE QString Request4Model(const QString& model_name);
+    /// <summary>
+    /// 传递协程句柄到外部交互环境，通过生成器中定义的GetValue获取当前协程变量值，或者Resume从yield点恢复协程。
+    /// </summary>
+    /// <param name="model_name">请求加入像素空间进行交互的模型名称</param>
+    /// <returns>包含单体自动机的协程句柄</returns>
+    ModelGenerator<SingleAutomata> OfferDynamicModel(const QString& model_name);
 protected:
     bool FillUp(const std::string& json_string, GraphModel& graph_model);
 private:

@@ -5,6 +5,8 @@ RenderCU::RenderCU()
     render_functions["BresenhamLine"] = std::bind(&RenderCU::BresenhamLine, this, std::placeholders::_1);
     render_functions["BresenhamEllipse"] = std::bind(&RenderCU::BresenhamEllipse, this, std::placeholders::_1);
     render_functions["PartitionBezierCurve"] = std::bind(&RenderCU::PartitionBezierCurve, this, std::placeholders::_1);
+
+    render_co_functions["CoBresenhamLine"] = std::bind(&RenderCU::CoBresenhamLine, this, std::placeholders::_1);
 }
 
 QString GraphFactory::Request4Model(const QString& model_name)
@@ -33,6 +35,26 @@ QString GraphFactory::Request4Model(const QString& model_name)
              std::cerr << "Convert XML to Class Failed, Abort calling generating function." << std::endl;
     }
     return QString(model_data.c_str());
+}
+
+ModelGenerator<SingleAutomata> GraphFactory::OfferDynamicModel(const QString& model_name)
+{
+    GraphModel graph_model;
+    //std::string automata_xml_path = QueryFromDB(model_name)
+    std::string automata_xml_path = "./resources/xmls/graphAutomata/segment_automata.xml";
+    if (automata_xml_path.empty())
+        co_return;
+    auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
+    bool trans_result = file_manager.TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
+    std::string str_points_list = "[";
+    if (trans_result)
+    {
+        for (SingleAutomata& sa : graph_model.automatas)
+        {
+            auto gen = render_cu.GetCoFunctor("Co" + sa.func_name)(sa);
+            co_yield gen;
+        }
+    }
 }
 
 bool GraphFactory::FillUp(const std::string& json_string, GraphModel& graph_model) {
@@ -194,6 +216,99 @@ std::string RenderCU::BresenhamLine(const SingleAutomata& graph_model)
     return result.dump();
 }
 
+ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_model)
+{
+    json init_status, current_status, terminate_status;
+    if (!file_manager.TransStr2JsonObject(graph_model.init_status, init_status))
+    {
+        std::cerr << "Failed to parse JSON: " << graph_model.init_status << std::endl;
+        co_return;
+    }
+    if (!file_manager.TransStr2JsonObject(graph_model.terminate_status, terminate_status))
+    {
+        std::cerr << "Failed to parse JSON: " << graph_model.terminate_status << std::endl;
+        co_return;
+    }
+    if (!file_manager.TransStr2JsonObject(graph_model.current_status, current_status))
+    {
+        std::cerr << "Failed to parse JSON: " << graph_model.current_status << std::endl;
+        co_return;
+    }
+    if (current_status.empty()) // 执行初始化
+    {
+        current_status.push_back(init_status["x"]);
+        current_status.push_back(init_status["y"]);
+        graph_model.current_status = current_status.dump();
+    }
+    float x0 = current_status["x"];
+    float y0 = current_status["y"];
+    float xn = terminate_status["x"];
+    float yn = terminate_status["y"];
+    float dx = fabs(xn - x0);
+    float dy = fabs(yn - y0);
+    float stepX = (x0 < xn) ? 1 : -1;
+    float stepY = (y0 < yn) ? 1 : -1;
+    float x = x0;
+    float y = y0;
+
+    if (dx > dy) // |m| <= 1
+    {
+        float p = 2 * dy - dx;
+        while (stepX > 0 ? x <= xn : x >= xn)
+        {
+            json point, ph;
+            point.push_back({"x", x});
+            point.push_back({"y", y});
+            ph.push_back({"p",p});
+            graph_model.current_status = point.dump();
+            graph_model.current_input = ph.dump();
+            // 控制权交到视图交互，视图读写当前graph_model的current_status、current_input或terminate_status后
+            // 在此处重新唤醒协程，然后算法根据（可能修改了）当前状态计算控制系数以及下一个点
+            co_yield graph_model;
+            if (p >= 0) {
+                y += stepY;
+                p -= 2 * dx;
+            }
+            x += stepX;
+            p += 2 * dy;
+            // 更新（可能被修改的）x终点
+            if (!file_manager.TransStr2JsonObject(graph_model.terminate_status, terminate_status))
+            {
+                std::cerr << "Failed to parse JSON: " << graph_model.terminate_status << std::endl;
+                co_return;
+            }
+            xn = terminate_status["x"];
+        }
+    }
+    else // |m| > 1
+    {
+        float p = 2 * dx - dy;
+        while (stepY > 0 ? y <= yn : y >= yn) {
+            json point, ph;
+            point.push_back({ "x", x });
+            point.push_back({ "y", y });
+            ph.push_back({ "p",p });
+            graph_model.current_status = point.dump();
+            graph_model.current_input = ph.dump();
+            co_yield graph_model;
+            if (p >= 0) {
+                x += stepX;
+                p -= 2 * dy;
+            }
+            y += stepY;
+            p += 2 * dx;
+            // 更新（可能被修改的）y终点
+            if (!file_manager.TransStr2JsonObject(graph_model.terminate_status, terminate_status))
+            {
+                std::cerr << "Failed to parse JSON: " << graph_model.terminate_status << std::endl;
+                co_return;
+            }
+            xn = terminate_status["y"];
+        }
+    }
+    co_return;
+}
+
 std::string RenderCU::BresenhamEllipse(const SingleAutomata& graph_model)
 {
     json init_status, terminate_status;
@@ -325,4 +440,9 @@ int RenderCU::binomial_coeff(int n, int k)
 std::function<std::string(const SingleAutomata&)> RenderCU::GetFunctor(std::string func_name)
 {
     return render_functions[func_name];
+}
+
+std::function<ModelGenerator<SingleAutomata>(SingleAutomata&)> RenderCU::GetCoFunctor(std::string func_name)
+{
+    return render_co_functions[func_name];
 }
