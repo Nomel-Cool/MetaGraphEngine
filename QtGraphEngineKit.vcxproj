@@ -29,6 +29,7 @@
     <ClCompile Include="cpps\MetaGraphAutomata.cpp" />
     <ClCompile Include="cpps\RenderKernel.cpp" />
     <ClCompile Include="cpps\XmlDataModel.cpp" />
+    <ClCompile Include="cpps\PixelSpace.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="resources\img.qrc" />
@@ -48,15 +49,19 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="headers\alloc.h" />
+    <ClInclude Include="headers\CoModelGenerator.h" />
+    <ClInclude Include="headers\EventsQueue.h" />
     <ClInclude Include="headers\FileManager.h" />
     <ClInclude Include="headers\hiredis.h" />
     <ClInclude Include="headers\json.hpp" />
     <ClInclude Include="headers\JSONParser.h" />
     <ClInclude Include="headers\MetaGraphAutomata.h" />
     <ClInclude Include="headers\IndexBarModel.h" />
+    <QtMoc Include="headers\PixelSpace.h" />
     <ClInclude Include="headers\read.h" />
     <ClInclude Include="headers\RedisClient.h" />
     <ClInclude Include="headers\sds.h" />
+    <ClInclude Include="headers\ThreadPool.h" />
     <ClInclude Include="headers\tinyxml2.h" />
     <QtMoc Include="headers\XmlDataModel.h" />
     <ClInclude Include="headers\XMLParser.h" />
@@ -129,6 +134,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>F:\WorkPlace\VS\QtGraphEngineKit\dlls;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

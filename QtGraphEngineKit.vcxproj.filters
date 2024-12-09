@@ -65,6 +65,9 @@
     <ClCompile Include="cpps\XmlDataModel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cpps\PixelSpace.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="resources\img.qrc">
@@ -127,12 +130,24 @@
     <ClInclude Include="headers\IndexBarModel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="headers\CoModelGenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\EventsQueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\ThreadPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="headers\RenderKernel.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="headers\XmlDataModel.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="headers\PixelSpace.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

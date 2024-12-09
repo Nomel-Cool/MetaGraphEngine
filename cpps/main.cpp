@@ -6,6 +6,7 @@
 
 #include "RenderKernel.h"
 #include "XmlDataModel.h"
+#include "PixelSpace.h"
 
 int main(int argc, char *argv[])
 {
@@ -19,6 +20,7 @@ int main(int argc, char *argv[])
 
     qmlRegisterType<GraphFactory>("CustomModules", 1, 0, "QGraphFactory");
     qmlRegisterType<XmlDataModelFactory>("CustomModules", 1, 0, "QIndexBarFactory");
+    qmlRegisterType<GraphStudio>("CustomModules", 1, 0, "QGraphStudio");
 
     engine.load(QUrl(QStringLiteral(u"qrc:resources/qmls/MainPage.qml")));
     if (engine.rootObjects().isEmpty())
