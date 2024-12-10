@@ -1,7 +1,9 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import CustomModules 1.0
 import "."
+import "./frame"
 import "./designer"
 import "./engine"
 
@@ -31,7 +33,7 @@ ApplicationWindow {
         id: searchBar
         height: 40
         width: 80
-        anchors.top: parent.top
+        anchors.top: dynamicTabBar.bottom
         anchors.left: parent.horizontalCenter
         onTextCommitted: (receivedText) => {
             indexBar.keyWord = receivedText // 其他控件可以在此处理接收到的字符串
@@ -41,8 +43,8 @@ ApplicationWindow {
     IndexBar {
         id: indexBar
         width: searchBar.width
-        height: parent.height - searchBar.height
-        anchors.top: searchBar.bottom
+        height: parent.height - dynamicTabBar.height
+        anchors.top: dynamicTabBar.bottom
         anchors.left: searchBar.left
         onPreviewItemSelected: (selectedItem) => {
            previewBoard.currentModelName = selectedItem
@@ -54,10 +56,10 @@ ApplicationWindow {
     PreviewBoard {
         id: previewBoard
         width: parent.width - indexBar.x - indexBar.width
-        height: parent.height
+        height: parent.height - dynamicTabBar.height
         anchors.left: indexBar.right
         anchors.right: root.right
-        anchors.top: root.top
+        anchors.top: dynamicTabBar.bottom
         anchors.bottom: root.bottom
         drawSpeed: 50 // ms
     }
@@ -65,15 +67,82 @@ ApplicationWindow {
     DrawBoard {
         id: drawBoard
         visible: dynamicTabBar.pageIndex === 0 ? true : false
-        width: parent.width
         height: parent.height - dynamicTabBar.height
+        width: parent.width - indexBar.width - previewBoard.width
         anchors.top: dynamicTabBar.bottom
+        anchors.left: parent.left
     }
     EngineDesigner {
         id: engineDesigner
         visible: dynamicTabBar.pageIndex === 1 ? true : false
-        width: parent.width
-        height: parent.height - dynamicTabBar.height
+        height:  parent.height - dynamicTabBar.height
+        width: parent.width - indexBar.width - previewBoard.width
         anchors.top: dynamicTabBar.bottom
+        anchors.left: parent.left
+        Component.onCompleted: {
+            console.log("Hello")
+        }
     }
 }
+
+
+//ApplicationWindow {
+    //visible: true
+    //width: 400
+    //height: 600
+    //title: "Custom ListView with ComboBox"
+    //
+    //ColumnLayout {
+    //    anchors.fill: parent
+    //    spacing: 10
+    //
+    //    // Input Row for Adding Words
+    //    RowLayout {
+    //        spacing: 5
+    //        Layout.fillWidth: true // Make RowLayout fill the entire width
+    //
+    //        TextField {
+    //            id: wordInput
+    //            placeholderText: "Enter a word"
+    //            Layout.minimumHeight: 40
+    //            Layout.preferredHeight: 40
+    //            Layout.fillWidth: true
+    //        }
+    //
+    //        Button {
+    //            text: "Add"
+    //            Layout.preferredWidth: 80 // Set appropriate width for the button
+    //            onClicked: indexBar.addWord(wordInput.text)
+    //        }
+    //    }
+    //
+    //    // Input Row for Modifying keyWord
+    //    RowLayout {
+    //        spacing: 5
+    //        Layout.fillWidth: true
+    //
+    //        TextField {
+    //            id: keyWordInput
+    //            placeholderText: "Enter keyword"
+    //            Layout.minimumHeight: 40
+    //            Layout.preferredHeight: 40
+    //            Layout.fillWidth: true
+    //        }
+    //
+    //        Button {
+    //            text: "Set"
+    //            Layout.preferredWidth: 80
+    //            onClicked: {
+    //                indexBar.keyWord = keyWordInput.text; // Update the keyWord property
+    //            }
+    //        }
+    //    }
+    //
+    //    // IndexBar for ComboBox ListView
+    //    IndexBar {
+    //        id: indexBar
+    //        Layout.fillWidth: true
+    //        Layout.fillHeight: true
+    //    }
+    //}
+//}
