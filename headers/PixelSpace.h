@@ -34,11 +34,11 @@ class Hall
 public:
 	Hall(const std::size_t& stage_width, const std::size_t& stage_height): stage(stage_width, std::vector<OnePixel>(stage_height)) {}
 	bool Layout(const std::size_t& row_pixels, const std::size_t& column_pixels);
-	void AddRule(std::function<void()> rule); // global lazzy setting
-	void AddRule(const std::size_t& i, const std::size_t& j, std::function<void()> rule); // one point
-	void AddRule(std::function<void()> set_routine, std::function<void()> rule); // routine
-	void CleanSoft(); // turn the rendered pixels into not being. ** Call the QML function in Canvas will be fine.
-	void CleanHard();// clear the rendered pixels along with its rules entiredly.
+	//void AddRule(std::function<void()> rule); // global lazzy setting
+	//void AddRule(const std::size_t& i, const std::size_t& j, std::function<void()> rule); // one point
+	//void AddRule(std::function<void()> set_routine, std::function<void()> rule); // routine
+	//void CleanSoft(); // turn the rendered pixels into not being. ** Call the QML function in Canvas will be fine.
+	//void CleanHard();// clear the rendered pixels along with its rules entiredly.
 protected:
 	void WhenAccessPixel(const std::size_t& i, const std::size_t& j);
 private:
@@ -64,8 +64,8 @@ public:
 	explicit GraphStudio(QObject* parent = nullptr) : QObject(parent) {}
 	Q_INVOKABLE void InitHall(const std::size_t& width, const std::size_t& height);
 	Q_INVOKABLE void LayoutHall(const std::size_t& row_pixels, const std::size_t& column_pixels);
-	Q_INVOKABLE bool RoleEmplacement();
-	Q_INVOKABLE void Launch();
+	//Q_INVOKABLE bool RoleEmplacement();
+	//Q_INVOKABLE void Launch();
 	// Record
 protected:
 	// SnapShot // For recording

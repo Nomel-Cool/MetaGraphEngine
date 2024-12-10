@@ -22,8 +22,8 @@ bool Hall::Layout(const std::size_t& row_pixels, const std::size_t& column_pixel
         return false;
 
     // 只修改[0,0]位置的大小信息，其余像素使用懒更新
-    stage[0][0].pixel_height = stage.size() % column_pixels;
-    stage[0][0].pixel_width = stage.begin()->size() % row_pixels;
+    stage[0][0].pixel_height = stage.size() / column_pixels;
+    stage[0][0].pixel_width = stage.begin()->size() / row_pixels;
     return true;
 }
 

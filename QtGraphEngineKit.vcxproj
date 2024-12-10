@@ -16,12 +16,13 @@
     <None Include="dlls\hiredis.dll" />
     <None Include="dlls\ShabbyFileManager.dll" />
     <None Include="dlls\ShabbyRedis.dll" />
-    <None Include="resources\qmls\DynamicTabBar.qml" />
-    <None Include="resources\qmls\designer\IndexBar.qml" />
+    <None Include="resources\qmls\designer\DrawBoard.qml" />
     <None Include="resources\qmls\designer\MetaGraphDesigner.qml" />
-    <None Include="resources\qmls\designer\PreviewBoard.qml" />
-    <None Include="resources\qmls\designer\SearchBar.qml" />
     <None Include="resources\qmls\engine\EngineDesigner.qml" />
+    <None Include="resources\qmls\frame\DynamicTabBar.qml" />
+    <None Include="resources\qmls\frame\IndexBar.qml" />
+    <None Include="resources\qmls\frame\PreviewBoard.qml" />
+    <None Include="resources\qmls\frame\SearchBar.qml" />
     <None Include="resources\qmls\MainPage.qml" />
   </ItemGroup>
   <ItemGroup>

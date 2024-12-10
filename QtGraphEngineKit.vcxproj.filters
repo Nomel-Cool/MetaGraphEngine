@@ -24,19 +24,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
-    <None Include="resources\qmls\DynamicTabBar.qml">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="resources\qmls\designer\IndexBar.qml">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="resources\qmls\designer\MetaGraphDesigner.qml">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="resources\qmls\designer\PreviewBoard.qml">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="resources\qmls\designer\SearchBar.qml">
       <Filter>Source Files</Filter>
     </None>
     <None Include="resources\qmls\MainPage.qml">
@@ -51,6 +39,21 @@
     <None Include="dlls\ShabbyFileManager.dll" />
     <None Include="dlls\ShabbyRedis.dll" />
     <None Include="dlls\hiredis.dll" />
+    <None Include="resources\qmls\frame\DynamicTabBar.qml">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="resources\qmls\frame\IndexBar.qml">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="resources\qmls\frame\PreviewBoard.qml">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="resources\qmls\frame\SearchBar.qml">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="resources\qmls\designer\DrawBoard.qml">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpps\main.cpp">
