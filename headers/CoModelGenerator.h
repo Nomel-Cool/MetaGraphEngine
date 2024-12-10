@@ -85,46 +85,19 @@ public:
 		}
 	};
 
-	/**
-	 * @brief 协程句柄，存储了协程上下文，一个非常底层的东西，没有RAII
-	 * 用MyCoroGenerator包裹
-	 */
-	std::coroutine_handle<promise_type> handle;
-
-	/**
-	 * @brief 默认构造函数
-	 *
-	 */
 	ModelGenerator() = default;
 
-	/**
-	 * @brief 通过一个handle构造一个Generator
-	 *
-	 * @param h 从promise_type构造出来的协程句柄
-	 */
-	ModelGenerator(std::coroutine_handle<promise_type> h)
-		: handle(h)
-	{
-	}
+	ModelGenerator(std::coroutine_handle<promise_type> h): handle(h) {}
 
-	/**
-	 * @brief 移动构造函数
-	 *
-	 * @param other 其他ModelGenerator对象
-	 */
-	ModelGenerator(ModelGenerator&& other)
+	ModelGenerator(ModelGenerator&& other) noexcept
 	{
 		if (handle) {
 			handle.destroy();
 		}
 		handle = other.handle;
-		other.handle = nullptr;
+		other.handle = nullptr; // 避免二次销毁
 	}
 
-	/**
-	 * @brief 析构函数
-	 *
-	 */
 	~ModelGenerator()
 	{
 		if (handle && handle.done()) {
@@ -132,44 +105,27 @@ public:
 		}
 	}
 
-
-	ModelGenerator& operator=(ModelGenerator&& other)
-	{
-		if (handle) {
-			handle.destroy();
-		}
-		handle = other.handle;
-		other.handle = nullptr;
-		return *this;
-	}
-
-	/**
-	 * @brief 返回执行结果
-	 *
-	 * @return T& 返回的值
-	 */
 	T& GetValue()
 	{
-		return handle.promise().opt->get();
+		if (handle && !handle.done())
+			return handle.promise().opt->get();
+		else
+			throw std::logic_error("The CoGenerator has done!!!");
 	}
 
-	/**
-	 * @brief 继续执行协程
-	 */
+
 	bool Resume()
 	{
-		if (handle.done())
-		{
-			throw std::runtime_error("Generator done");
+		if (!handle || handle.done())
 			return false;
-		}
 		handle.resume();
-		return true;
+		return !handle.done();
 	}
 
 private:
-	ModelGenerator(const ModelGenerator&) = delete;
-	ModelGenerator& operator=(const ModelGenerator&) = delete;
+	std::coroutine_handle<promise_type> handle;
+	ModelGenerator(const ModelGenerator&) = delete; // 禁止拷贝
+	ModelGenerator& operator=(const ModelGenerator&) = delete; // 禁止拷贝赋值
 };
 
 #endif // !CO_MODEL_GENERATOR_H

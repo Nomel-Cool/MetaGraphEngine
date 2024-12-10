@@ -46,13 +46,16 @@ ModelGenerator<SingleAutomata> GraphFactory::OfferDynamicModel(const QString& mo
         co_return;
     auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
     bool trans_result = file_manager.TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
-    std::string str_points_list = "[";
     if (trans_result)
     {
         for (SingleAutomata& sa : graph_model.automatas)
         {
             auto gen = render_cu.GetCoFunctor("Co" + sa.func_name)(sa);
-            co_yield gen;
+            do
+            {
+                co_yield gen.GetValue();  // 将值传递给外层生成器
+            }
+            while (gen.Resume());
         }
     }
 }
@@ -236,75 +239,95 @@ ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_m
     }
     if (current_status.empty()) // 执行初始化
     {
-        current_status.push_back(init_status["x"]);
-        current_status.push_back(init_status["y"]);
+        float init_x = init_status["x"];
+        float init_y = init_status["y"];
+        current_status["x"] = init_x;
+        current_status["y"] = init_y;
         graph_model.current_status = current_status.dump();
     }
-    float x0 = current_status["x"];
-    float y0 = current_status["y"];
-    float xn = terminate_status["x"];
-    float yn = terminate_status["y"];
-    float dx = fabs(xn - x0);
-    float dy = fabs(yn - y0);
-    float stepX = (x0 < xn) ? 1 : -1;
-    float stepY = (y0 < yn) ? 1 : -1;
-    float x = x0;
-    float y = y0;
+    float x0, y0, xn, yn, dx, dy, stepX, stepY, x, y;
+    loop_mark:
+    x0 = current_status["x"];
+    y0 = current_status["y"];
+    xn = terminate_status["x"];
+    yn = terminate_status["y"];
+    dx = fabs(xn - x0);
+    dy = fabs(yn - y0);
+    stepX = (x0 < xn) ? 1 : -1;
+    stepY = (y0 < yn) ? 1 : -1;
+    x = x0;
+    y = y0;
 
     if (dx > dy) // |m| <= 1
     {
         float p = 2 * dy - dx;
-        while (stepX > 0 ? x <= xn : x >= xn)
+        if (stepX > 0 ? x <= xn : x >= xn)
         {
+            if (p >= 0) 
+            {
+                y += stepY;
+                p -= 2 * dx;
+            }
+            else
+            {
+                x += stepX;
+                p += 2 * dy;
+            }
             json point, ph;
-            point.push_back({"x", x});
-            point.push_back({"y", y});
-            ph.push_back({"p",p});
+            point["x"] = x;
+            point["y"] = y;
+            ph["p"] = p;
             graph_model.current_status = point.dump();
             graph_model.current_input = ph.dump();
             // 控制权交到视图交互，视图读写当前graph_model的current_status、current_input或terminate_status后
             // 在此处重新唤醒协程，然后算法根据（可能修改了）当前状态计算控制系数以及下一个点
             co_yield graph_model;
-            if (p >= 0) {
-                y += stepY;
-                p -= 2 * dx;
+            if (!file_manager.TransStr2JsonObject(graph_model.current_status, current_status))
+            {
+                std::cerr << "Failed to parse JSON: " << graph_model.current_status << std::endl;
+                co_return;
             }
-            x += stepX;
-            p += 2 * dy;
-            // 更新（可能被修改的）x终点
             if (!file_manager.TransStr2JsonObject(graph_model.terminate_status, terminate_status))
             {
                 std::cerr << "Failed to parse JSON: " << graph_model.terminate_status << std::endl;
                 co_return;
             }
-            xn = terminate_status["x"];
         }
+        goto loop_mark;
     }
     else // |m| > 1
     {
         float p = 2 * dx - dy;
-        while (stepY > 0 ? y <= yn : y >= yn) {
-            json point, ph;
-            point.push_back({ "x", x });
-            point.push_back({ "y", y });
-            ph.push_back({ "p",p });
-            graph_model.current_status = point.dump();
-            graph_model.current_input = ph.dump();
-            co_yield graph_model;
+        if (stepY > 0 ? y <= yn : y >= yn)
+        {
             if (p >= 0) {
                 x += stepX;
                 p -= 2 * dy;
             }
-            y += stepY;
-            p += 2 * dx;
-            // 更新（可能被修改的）y终点
+            else
+            {
+                y += stepY;
+                p += 2 * dx;
+            }
+            json point, ph;
+            point["x"] = x;
+            point["y"] = y;
+            ph["p"] = p;
+            graph_model.current_status = point.dump();
+            graph_model.current_input = ph.dump();
+            co_yield graph_model;
+            if (!file_manager.TransStr2JsonObject(graph_model.current_status, current_status))
+            {
+                std::cerr << "Failed to parse JSON: " << graph_model.current_status << std::endl;
+                co_return;
+            }
             if (!file_manager.TransStr2JsonObject(graph_model.terminate_status, terminate_status))
             {
                 std::cerr << "Failed to parse JSON: " << graph_model.terminate_status << std::endl;
                 co_return;
             }
-            xn = terminate_status["y"];
         }
+        goto loop_mark;
     }
     co_return;
 }

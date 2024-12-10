@@ -37,7 +37,7 @@ import CustomModules 1.0
 Item {
     property string keyWord: ""
     signal previewItemSelected(string selectedItem)
-    signal drawItemSelected(string selectedItem)
+    signal engineItemSelected(string selectedItem)
 
     QIndexBarFactory {
         id: indexBarFactoryImpl
@@ -96,7 +96,7 @@ Item {
                             previewItemSelected(currentText);
                         } 
                         else if (mouse.button === Qt.LeftButton) { 
-                            drawItemSelected(currentText);
+                            engineItemSelected(currentText);
                         } 
                     }
                 }

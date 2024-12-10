@@ -24,9 +24,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
-    <None Include="resources\qmls\designer\MetaGraphDesigner.qml">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="resources\qmls\MainPage.qml">
       <Filter>Source Files</Filter>
     </None>

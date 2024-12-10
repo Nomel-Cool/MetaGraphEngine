@@ -10,10 +10,15 @@ import "./engine"
 ApplicationWindow {
     id: root
     visible: true
-    width: 640
-    height: 400
+    width: 800
+    height: 600
+    minimumWidth: 800
+    minimumHeight: 600
+    maximumWidth: 800
+    maximumHeight: 600
 
     QGraphFactory{id: graphFactoryImp}
+    QGraphStudio{id: graphStudio}
 
     DynamicTabBar {
         id: dynamicTabBar
@@ -44,12 +49,15 @@ ApplicationWindow {
         id: indexBar
         width: searchBar.width
         height: parent.height - dynamicTabBar.height
-        anchors.top: dynamicTabBar.bottom
+        anchors.top: searchBar.bottom
         anchors.left: searchBar.left
         onPreviewItemSelected: (selectedItem) => {
            previewBoard.currentModelName = selectedItem
            var strPointsSeries = graphFactoryImp.Request4Model(selectedItem);// 查询Redis关于这个关键词的图元自动机文件
            strPointsSeries.length != 0 ? (previewBoard.strPoints = strPointsSeries) : indexBar.delItem(selectedItem);      
+        }
+        onEngineItemSelected: (selectedItem) => {
+            graphStudio.RoleEmplacement(selectedItem);
         }
     }
 
@@ -80,7 +88,29 @@ ApplicationWindow {
         anchors.top: dynamicTabBar.bottom
         anchors.left: parent.left
         Component.onCompleted: {
-            console.log("Hello")
+            graphStudio.InitHall(width, height);
+            graphStudio.LayoutHall(1); // **Test** 1会是方格最多的了，后续交给控件来调节
+        }
+        Button {
+            id: launchButton
+            width: 100
+            height: 50
+            anchors.bottom: parent.bottom
+            anchors.right: parent.right
+            onClicked: {
+                graphStudio.Launch();
+            }
+        }
+            // 使用 Connections 来监听 C++ 信号
+        Connections {
+            target: graphStudio
+            function onDrawPixeled(x, y, blockSize) {
+                console.log("Signal From C++");
+                engineDesigner.drawnPoints.push({ x: x, y: y, size: 5 });
+                console.log("drawnPoints.length after pushed: ", engineDesigner.drawnPoints.length);
+                engineDesigner.engineCore.requestPaint();
+                console.log("Draw in Connections..")
+            }
         }
     }
 }
