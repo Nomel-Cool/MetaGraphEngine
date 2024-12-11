@@ -2,6 +2,7 @@
 
 void GraphAgency::LoadGraphs(const QString& model_name)
 {
+    std::lock_guard<std::mutex> lock(mtx4co);
     GraphFactory graph_factory;
     auto graph_model_coroutine_handler = graph_factory.OfferDynamicModel(model_name);
     // 存储协程句柄到舞台中
@@ -129,11 +130,13 @@ void GraphStudio::LayoutHall(const std::size_t& scale_extension)
     sp_hall->Layout(common_factors[scale_extension % common_factors.size()]);
 }
 
-bool GraphStudio::RoleEmplacement(const QString& model_name)
+void GraphStudio::RoleEmplacement(const QStringList& model_names)
 {
-    // todo：入参会更改为模型名的数组，需要大量的调用loadgraph
-    sp_graph_agency->LoadGraphs(model_name);
-    return false;
+    for (const QString& model_name : model_names)
+    {
+        pool.Enqueue(&GraphAgency::LoadGraphs, sp_graph_agency, model_name);
+        // 或者调用 sp_graph_agency->LoadGraphs(model_name);
+    }
 }
 
 void GraphStudio::Launch()

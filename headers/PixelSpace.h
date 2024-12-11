@@ -6,6 +6,7 @@
 #include <QTimer>
 #include <vector>
 #include <memory>
+#include <mutex>
 
 #include "RenderKernel.h"
 #include "ThreadPool.h"
@@ -27,6 +28,7 @@ public:
 	bool Empty();
 private:
 	std::vector<std::shared_ptr<ModelGenerator<SingleAutomata>>> graph_series_cache;
+	std::mutex mtx4co;
 };
 class Hall; // Ç°ÏòÉùÃ÷
 class OnePixel
@@ -81,7 +83,7 @@ public:
 	}
 	Q_INVOKABLE void InitHall(const float& width, const float& height);
 	Q_INVOKABLE void LayoutHall(const std::size_t& scale_extension);
-	Q_INVOKABLE bool RoleEmplacement(const QString& model_name);
+	Q_INVOKABLE void RoleEmplacement(const QStringList& model_names);
 	Q_INVOKABLE void Launch();
 	// Record
 
@@ -94,6 +96,7 @@ private:
 	std::shared_ptr<GraphAgency> sp_graph_agency;
 	std::shared_ptr<Hall> sp_hall;   
 	FileManager file_manager;
+	ShabbyThreadPool& pool = ShabbyThreadPool::GetInstance();
 };
 
 #endif // !PIXEL_SPACE_H

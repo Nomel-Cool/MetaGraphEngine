@@ -57,7 +57,9 @@ ApplicationWindow {
            strPointsSeries.length != 0 ? (previewBoard.strPoints = strPointsSeries) : indexBar.delItem(selectedItem);      
         }
         onEngineItemSelected: (selectedItem) => {
-            graphStudio.RoleEmplacement(selectedItem);
+            if(dynamicTabBar.pageIndex === 1) {
+                graph_list.addModel(selectedItem); // 把选中的模型名存放到GraphList中
+            }
         }
     }
 
@@ -80,28 +82,19 @@ ApplicationWindow {
         anchors.top: dynamicTabBar.bottom
         anchors.left: parent.left
     }
+
     EngineDesigner {
         id: engineDesigner
         visible: dynamicTabBar.pageIndex === 1 ? true : false
         height:  parent.height - dynamicTabBar.height
-        width: parent.width - indexBar.width - previewBoard.width
-        anchors.top: dynamicTabBar.bottom
-        anchors.left: parent.left
+        width: parent.width - indexBar.width - previewBoard.width - buttonToolList.width
+        anchors.top: graph_list.bottom
+        anchors.left: buttonToolList.right
         Component.onCompleted: {
             graphStudio.InitHall(width, height);
             graphStudio.LayoutHall(1); // **Test** 1会是方格最多的了，后续交给控件来调节
         }
-        Button {
-            id: launchButton
-            width: 100
-            height: 50
-            anchors.bottom: parent.bottom
-            anchors.right: parent.right
-            onClicked: {
-                graphStudio.Launch();
-            }
-        }
-            // 使用 Connections 来监听 C++ 信号
+
         Connections {
             target: graphStudio
             function onDrawPixeled(x, y, blockSize) {
@@ -113,7 +106,36 @@ ApplicationWindow {
             }
         }
     }
+
+    GraphList {
+        id: graph_list
+        visible: dynamicTabBar.pageIndex === 1 ? true : false
+        width: engineDesigner.width
+        height: 30
+        anchors.top: dynamicTabBar.bottom
+        anchors.left: buttonToolList.right
+        anchors.right: parent.horizontalCenter
+    }
+
+    ButtonToolList {
+        id: buttonToolList
+        visible: dynamicTabBar.pageIndex === 1 ? true : false
+        width: searchBar.width
+        anchors.left: parent.left
+        anchors.top: dynamicTabBar.bottom
+        anchors.bottom: parent.bottom
+        onListCleared: {
+            graph_list.cleanModel();
+        }
+        onListCompiled: {
+            graphStudio.RoleEmplacement(graph_list.modelList);
+        }
+        onListLaunched: {
+            graphStudio.Launch();
+        }
+    }
 }
+
 
 
 //ApplicationWindow {

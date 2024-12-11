@@ -17,7 +17,9 @@
     <None Include="dlls\ShabbyFileManager.dll" />
     <None Include="dlls\ShabbyRedis.dll" />
     <None Include="resources\qmls\designer\DrawBoard.qml" />
+    <None Include="resources\qmls\engine\ButtonToolList.qml" />
     <None Include="resources\qmls\engine\EngineDesigner.qml" />
+    <None Include="resources\qmls\engine\GraphList.qml" />
     <None Include="resources\qmls\frame\DynamicTabBar.qml" />
     <None Include="resources\qmls\frame\IndexBar.qml" />
     <None Include="resources\qmls\frame\PreviewBoard.qml" />

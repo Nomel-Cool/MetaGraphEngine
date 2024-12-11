@@ -51,6 +51,12 @@
     <None Include="resources\qmls\designer\DrawBoard.qml">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="resources\qmls\engine\GraphList.qml">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="resources\qmls\engine\ButtonToolList.qml">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpps\main.cpp">
