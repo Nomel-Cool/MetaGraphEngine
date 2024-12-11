@@ -7,6 +7,7 @@ Rectangle {
     signal listCleared()
     signal listCompiled()
     signal listLaunched()
+    signal listPlayed()
     id: root
     width: parent.width
     height: parent.height
@@ -17,6 +18,18 @@ Rectangle {
         height: parent.height
         spacing: 10
         anchors.centerIn: parent
+
+        Button {
+            id: compileButton
+            width: 100
+            height: 50
+            text: "Compile"
+            Layout.alignment: Qt.AlignHCenter
+            onClicked: {
+                listCompiled()
+                console.log("GraphList compiled");
+            }
+        }
 
         Button {
             id: launchButton
@@ -31,14 +44,14 @@ Rectangle {
         }
 
         Button {
-            id: compileButton
+            id: playButton
             width: 100
             height: 50
-            text: "Compile"
+            text: "Play"
             Layout.alignment: Qt.AlignHCenter
             onClicked: {
-                listCompiled()
-                console.log("GraphList compiled");
+                listPlayed()
+                console.log("GraphList Played");
             }
         }
 

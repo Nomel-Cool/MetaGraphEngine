@@ -33,12 +33,10 @@ Rectangle {
     function addModel(modelName) {
         root.modelList.push(modelName);
         listView.model = root.modelList; // 更新 ListView 的 model
-        console.log("Model list: ", listView.model.length);
     }
 
     function cleanModel() {
         root.modelList = [];
         listView.model = []; // 更新 ListView 的 model
-        console.log("Model list after cleaning: ", listView.model.length);
     }
 }

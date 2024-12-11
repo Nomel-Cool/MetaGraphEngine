@@ -94,17 +94,6 @@ ApplicationWindow {
             graphStudio.InitHall(width, height);
             graphStudio.LayoutHall(1); // **Test** 1会是方格最多的了，后续交给控件来调节
         }
-
-        Connections {
-            target: graphStudio
-            function onDrawPixeled(x, y, blockSize) {
-                console.log("Signal From C++");
-                engineDesigner.drawnPoints.push({ x: x, y: y, size: 5 });
-                console.log("drawnPoints.length after pushed: ", engineDesigner.drawnPoints.length);
-                engineDesigner.engineCore.requestPaint();
-                console.log("Draw in Connections..")
-            }
-        }
     }
 
     GraphList {
@@ -132,6 +121,12 @@ ApplicationWindow {
         }
         onListLaunched: {
             graphStudio.Launch();
+        }
+        onListPlayed: {
+            var str_points_data = graphStudio.Display();
+            console.log(str_points_data);
+            engineDesigner.drawnPoints = JSON.parse(str_points_data);
+            engineDesigner.engineCore.requestPaint();
         }
     }
 }
