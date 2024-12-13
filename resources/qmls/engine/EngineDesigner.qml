@@ -11,7 +11,7 @@ Rectangle {
     property var drawnPoints: [] // 用于保存已绘制的点，初始为空
     property alias engineCore: _drawBoard
     property int currentFrame: 0 // 当前绘制的帧索引
-    property int frameInterval: 33 // 每帧时间间隔（毫秒）
+    property int frameInterval: 8 // 每帧时间间隔（毫秒）
     property bool clearCanvas: false // 是否每帧清空画布
 
     // 画布定义

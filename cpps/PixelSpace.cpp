@@ -250,7 +250,7 @@ void GraphStudio::Launch()
 
     QTimer* timer = new QTimer(this);
     connect(timer, &QTimer::timeout, render_loop);
-    timer->start(33); // FPS ≈ 30
+    timer->start(1000.0f / sp_hall->GetCurrentFPS()); // FPS ≈ 120
 }
 
 void GraphStudio::StandBy()
@@ -305,41 +305,35 @@ void GraphStudio::Interact()
                 s = std::abs(v * delta_t + 0.5f * g * delta_t * delta_t);
                 cur_x = current_status["x"];
                 cur_y = current_status["y"];
+				s = v >= 0 ? s : -s;
                 if (cur_y >= s) 
                 {
-                    if (v <= 0)
-                    {
-                        int i = 0;
-                    }
-                    s = v >= 0 ? s : -s;
                     // 还没有碰撞到地面，正常更新速度和位移
                     cur_y -= s;
                     v += g * delta_t;
                 }
                 else
                 {
-                    // 到达地面，计算剩余的位移和速度更新
-                    float time_to_ground = std::sqrt(2 * cur_y / g);
-
+					if(v >= 0)
+					{
+						// 到达地面，计算剩余的位移和速度更新
+						float time_to_ground = std::sqrt(2 * cur_y / g);
+						// 速度到达地面时
+						v += g * time_to_ground;
+						// 碰撞后的反弹速度衰减
+						v = -v * 0.8f;
+					}
+					else
+						v += g * delta_t;
                     // 位置到地面
-                    cur_x -= cur_x == 0 ? 0 : 1;
-                    cur_y = 0;
-
-                    // 速度到达地面时
-                    v += g * time_to_ground;
-
-                    // 碰撞后的反弹速度衰减
-                    v = -v * 0.8f;
+                    cur_x -= (cur_x == 0 ? 0 : 1);
+                    cur_y = v < 0 ? cur_y + s : 0;
                 }
 
                 // 更新current_status
                 current_status["x"] = cur_x;
                 current_status["y"] = cur_y;
                 current_input["velocity"] = v;
-                if (cur_y < 0)
-                {
-                    std::cerr << "Fuck up" << std::endl;
-                }
                 dest_pixel.x = cur_x;
                 dest_pixel.y = cur_y;
                 SetAutomataInfoAt(indice, std::make_tuple(initial_status, current_status, current_input, terminate_status));

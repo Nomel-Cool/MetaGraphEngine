@@ -110,7 +110,7 @@ private:
 	std::size_t stage_width = 0, stage_height = 0, block_size = 1;
 	std::mutex stage_lock;
 	uint64_t frame_id = 1;
-	uint64_t FPS = 30;
+	uint64_t FPS = 120;
 };
 
 class GraphStudio : public QObject
