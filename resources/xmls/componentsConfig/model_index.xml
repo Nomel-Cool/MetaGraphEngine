@@ -3,4 +3,5 @@
 	<model_name name="ArbitraryTriangle"/>
 	<model_name name="FormalEllipse"/>
 	<model_name name="BezierCurve"/>
+	<model_name name="Point"/>
 </model_list>

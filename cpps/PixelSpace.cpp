@@ -64,74 +64,73 @@ const uint64_t& Hall::GetCurrentFrameID() const
     return frame_id;
 }
 
-const std::map<std::pair<std::size_t, std::size_t>, OnePixel>& Hall::GetStage() const
+const uint64_t& Hall::GetCurrentFPS() const
+{
+    return FPS;
+}
+
+const std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>& Hall::GetStage() const
 {
     return stage;
 }
 
-void Hall::NextFrame()
+bool Hall::Disable(const std::pair<std::size_t, std::size_t>& coordinate)
 {
-    ++frame_id;
+    if (stage.find(coordinate) == stage.end())
+        return false;
+    stage[coordinate]->activate_flag = false;
+    return true;
+}
+
+bool Hall::TransferPixel(const std::pair<std::size_t, std::size_t>& coordinate_begin, const std::pair<std::size_t, std::size_t>& coordinate_end, OnePixel& dest_pixel)
+{
+    if (stage.find(coordinate_begin) == stage.end())
+        return false;
+    dest_pixel = *stage[coordinate_begin]; // 显式使用拷贝赋值符，用于移交所有权相关字段
+    if (stage.find(coordinate_end) == stage.end())
+        stage.insert(std::make_pair(coordinate_end, std::make_shared<OnePixel>(dest_pixel)));
+    else
+        stage[coordinate_end] = std::make_shared<OnePixel>(dest_pixel);
+    return true;
 }
 
 void Hall::PingStage(const std::size_t& x, const std::size_t& y, const std::size_t& graph_pos_in_list)
 {
-    if (stage.find({ x,y }) != stage.end())
+    auto key = std::make_pair(x, y);
+    if (stage.find(key) != stage.end())
     {
-        stage[{x, y}].pre_frame_id = stage[{x, y}].cur_frame_id;
-        stage[{x, y}].cur_frame_id = frame_id;
-        stage[{x, y}].graph_ids.emplace_back(graph_pos_in_list);
+        auto& pixel_ptr = stage[key];
+        pixel_ptr->render_flag = true;
+        pixel_ptr->activate_flag = true;
+        pixel_ptr->x = x;
+        pixel_ptr->y = y;
+        pixel_ptr->cur_frame_id = frame_id;
+        // 确保 graph_ids 中的元素唯一
+        if (std::find(pixel_ptr->graph_ids.begin(), pixel_ptr->graph_ids.end(), graph_pos_in_list) == pixel_ptr->graph_ids.end())
+            pixel_ptr->graph_ids.emplace_back(graph_pos_in_list);
     }
     else
     {
+        // 基础设置
         OnePixel one_pixel;
+        one_pixel.render_flag = true;
+        one_pixel.activate_flag = true;
         one_pixel.x = x;
         one_pixel.y = y;
         one_pixel.cur_frame_id = frame_id;
-        one_pixel.pre_frame_id = frame_id - 1; // 如果该点没有被修改，则应该被摄影到，且正好使得初始化帧id为0
-        one_pixel.graph_ids.emplace_back(graph_pos_in_list);
-        SetRule(x, y);
-        stage.insert(std::make_pair(std::make_pair(x, y), one_pixel));
+        if (std::find(one_pixel.graph_ids.begin(), one_pixel.graph_ids.end(), graph_pos_in_list) == one_pixel.graph_ids.end())
+            one_pixel.graph_ids.emplace_back(graph_pos_in_list);
+
+        // 在堆上分配新内存存放 one_pixel，并由智能指针管理
+        std::shared_ptr<OnePixel> sp_one_pixel = std::make_shared<OnePixel>(one_pixel);
+        stage.insert(std::make_pair(key, sp_one_pixel));
     }
 }
 
-bool Hall::SetRule(const std::size_t& x, const std::size_t& y, int pos)
-{
-    if (stage.find({ x,y }) == stage.end())
-        return false;
-    // Todo: 目前法则未定，肯定的是从一个固定源处获取，直接填入下面被[](){}填充的位置
-    if (pos == -1)
-    {
-        stage[{x, y}].rules.emplace_back([]() {});
-        return true;
-    }
-    else
-    {
-        std::cerr << "Todo: WTF, I don't know how to emplace it." << std::endl;
-        return true;
-    }
-}
 
-void GraphStudio::UpdateGraphList()
+void Hall::NextFrame()
 {
-    sp_graph_agency->UpdateGraphs();
-}
-
-void GraphStudio::SnapShot()
-{
-    auto cur_id = sp_hall->GetCurrentFrameID();
-    for (auto& pixel : sp_hall->GetStage())
-    {
-        if (pixel.second.pre_frame_id == cur_id - 1)
-            film.Store(pixel.second);
-    }
-    sp_hall->NextFrame();
-}
-
-void GraphStudio::InitHall(const float& width, const float& height)
-{
-    // 逻辑像素空间比视图宽高都多一个像素，保证绘制的时候逻辑上能采到点，避免视图中有像素无法出现。
-    sp_hall = std::make_shared<Hall>(static_cast<std::size_t>(width) + 1, static_cast<std::size_t>(height) + 1);
+    ++frame_id;
 }
 
 // 计算一个数的所有因子
@@ -151,13 +150,25 @@ std::vector<std::size_t> GetFactors(std::size_t n)
 }
 
 // 计算两个因子序列的交集
-std::vector<std::size_t> GetCommonFactors(const std::vector<std::size_t>& factors1, const std::vector<std::size_t>& factors2) 
+std::vector<std::size_t> GetCommonFactors(const std::vector<std::size_t>& factors1, const std::vector<std::size_t>& factors2)
 {
     std::vector<std::size_t> common_factors;
     std::set_intersection(factors1.begin(), factors1.end(),
         factors2.begin(), factors2.end(),
         std::back_inserter(common_factors));
     return common_factors;
+}
+
+GraphStudio::GraphStudio(QObject* parent) : QObject(parent)
+{
+    sp_graph_agency = std::make_shared<GraphAgency>();
+    sp_hall = std::make_shared<Hall>();
+}
+
+void GraphStudio::InitHall(const float& width, const float& height)
+{
+    // 逻辑像素空间比视图宽高都多一个像素，保证绘制的时候逻辑上能采到点，避免视图中有像素无法出现。
+    sp_hall = std::make_shared<Hall>(static_cast<std::size_t>(width) + 1, static_cast<std::size_t>(height) + 1);
 }
 
 void GraphStudio::LayoutHall(const std::size_t& scale_extension)
@@ -186,39 +197,6 @@ void GraphStudio::RoleEmplacement(const QStringList& model_names)
     }
 }
 
-void GraphStudio::Launch()
-{
-    // 每1/30秒为一个时间片，在此时间片内需要做：
-    // 1.处理的主要对象：for (auto& model : sp_graph_agency->GetGraphs())
-    // 2.取model的CurrentStatus中的点，执行stage[{x,y}]的rule，可能会修改model的所有信息
-    // 3.由于每条线程负责一个图元，所以不必再开线程画图，每个图元都已经抵达了这里
-    // 4.遍历stage压缩渲染点信息
-    // 5.model执行resume
-    if (sp_graph_agency->Empty())
-    {
-        std::cerr << "No actor..." << std::endl;
-        return;
-    }
-    auto render_loop = [this]() 
-    {
-        static bool running = true;
-        if (!running)
-            return;
-        running = false;
-
-        StandBy(); // 出牌定格
-        Render(); // 变更手牌
-        UpdateGraphList(); // 收牌再来
-        SnapShot(); // 储为快照
-
-        running = true;
-    };
-
-    QTimer* timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, render_loop);
-    timer->start(33); // FPS ≈ 30
-}
-
 QString GraphStudio::Display()
 {
     // 定义 JSON 对象和映射
@@ -241,7 +219,39 @@ QString GraphStudio::Display()
     return QString::fromStdString(frames.dump());
 }
 
+void GraphStudio::Launch()
+{
+    // 每1/30秒为一个时间片，在此时间片内需要做：
+    // 1.处理的主要对象：for (auto& model : sp_graph_agency->GetGraphs())
+    // 2.取model的CurrentStatus中的点，执行stage[{x,y}]的rule，可能会修改model的所有信息
+    // 3.由于每条线程负责一个图元，所以不必再开线程画图，每个图元都已经抵达了这里
+    // 4.遍历stage压缩渲染点信息
+    // 5.model执行resume
+    if (sp_graph_agency->Empty())
+    {
+        std::cerr << "No actor..." << std::endl;
+        return;
+    }
+    auto render_loop = [this]()
+        {
+            static bool running = true;
+            if (!running)
+                return;
+            running = false;
 
+            /**************** 暂定流程四件套 ***************/
+            StandBy(); // 出牌定格
+            Interact(); // 变更手牌
+            UpdateGraphList(); // 收牌再来
+            SnapShot(); // 储为快照
+
+            running = true;
+        };
+
+    QTimer* timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, render_loop);
+    timer->start(33); // FPS ≈ 30
+}
 
 void GraphStudio::StandBy()
 {
@@ -250,26 +260,13 @@ void GraphStudio::StandBy()
     {
         try
         {
-            json current_status, current_input, terminate_status;
+            json current_status;
             auto str_cur_pos = graph_list[i]->GetValue().current_status;
-            auto str_cur_input = graph_list[i]->GetValue().current_input;
-            auto str_final_pos = graph_list[i]->GetValue().terminate_status;
             if (!file_manager.TransStr2JsonObject(str_cur_pos, current_status))
             {
                 std::cerr << "failed to parse json: " << str_cur_pos << std::endl;
                 return;
             }
-            if (!file_manager.TransStr2JsonObject(str_cur_input, current_input))
-            {
-                std::cerr << "failed to parse json: " << str_cur_input << std::endl;
-                return;
-            }
-            if (!file_manager.TransStr2JsonObject(str_final_pos, terminate_status))
-            {
-                std::cerr << "failed to parse json: " << str_final_pos << std::endl;
-                return;
-            }
-
             sp_hall->PingStage(static_cast<std::size_t>(current_status["x"]), static_cast<std::size_t>(current_status["y"]), i);
         }
         catch (std::logic_error e)
@@ -280,16 +277,158 @@ void GraphStudio::StandBy()
     }
 }
 
-void GraphStudio::Render()
+void GraphStudio::Interact()
 {
-    auto graph_list = sp_graph_agency->GetGraphs();
-    auto pixels = sp_hall->GetStage();
-    for (auto& pixel : pixels)
+    auto& graph_list = sp_graph_agency->GetGraphs();
+    const auto& pixels = sp_hall->GetStage();
+
+    for (const auto& pixel : pixels)
     {
-        if (pixel.second.cur_frame_id == sp_hall->GetCurrentFrameID())
+        std::shared_ptr<OnePixel> pixel_object = pixel.second;
+        if (pixel_object->render_flag != true)
+            continue;
+            /****************************** 对该像素的所有者，算出它们的下一个状态 *****************************************/
+            json initial_status, current_status, current_input, terminate_status;
+            OnePixel dest_pixel;
+            float g = 9.8, v = 0, FPS = sp_hall->GetCurrentFPS(), delta_t = 1.0f / FPS, s = 0, cur_x = 0, cur_y = 0;
+            for (const auto& indice : pixel.second->graph_ids)
+            {
+                const auto& automata_param = GetAutomataInfoAt(indice);
+                std::tie(initial_status, current_status, current_input, terminate_status) = automata_param;
+                if (current_status.empty() || current_input.empty())
+                    continue;
+                // 必须假设每个模型的自动机是能够跟当前法则交互的，即它具有那些属性（速度、加速度、质量等等词条）
+                // 假设此处有引力场，且此处只对一个模型的位置属性进行交互
+                // 位置的计算可以由法则给出，也可以把法则属性传递给模型计算后在下一次到来时给出，此处采用前者
+                g = 9.8f;
+                v = current_input["velocity"];
+                s = std::abs(v * delta_t + 0.5f * g * delta_t * delta_t);
+                cur_x = current_status["x"];
+                cur_y = current_status["y"];
+                if (cur_y >= s) 
+                {
+                    if (v <= 0)
+                    {
+                        int i = 0;
+                    }
+                    s = v >= 0 ? s : -s;
+                    // 还没有碰撞到地面，正常更新速度和位移
+                    cur_y -= s;
+                    v += g * delta_t;
+                }
+                else
+                {
+                    // 到达地面，计算剩余的位移和速度更新
+                    float time_to_ground = std::sqrt(2 * cur_y / g);
+
+                    // 位置到地面
+                    cur_x -= cur_x == 0 ? 0 : 1;
+                    cur_y = 0;
+
+                    // 速度到达地面时
+                    v += g * time_to_ground;
+
+                    // 碰撞后的反弹速度衰减
+                    v = -v * 0.8f;
+                }
+
+                // 更新current_status
+                current_status["x"] = cur_x;
+                current_status["y"] = cur_y;
+                current_input["velocity"] = v;
+                if (cur_y < 0)
+                {
+                    std::cerr << "Fuck up" << std::endl;
+                }
+                dest_pixel.x = cur_x;
+                dest_pixel.y = cur_y;
+                SetAutomataInfoAt(indice, std::make_tuple(initial_status, current_status, current_input, terminate_status));
+            }
+        /****************************** 执行移交手续 *****************************************/
+        bool displace_result = sp_hall->TransferPixel(pixel.first, std::make_pair(static_cast<std::size_t>(cur_x), static_cast<std::size_t>(cur_y)), dest_pixel);
+        if (!displace_result)
+            std::cerr << "The displacement is out of range." << std::endl;
+    }
+}
+
+void GraphStudio::UpdateGraphList()
+{
+    for (const auto& pixel : sp_hall->GetStage())
+    {
+        std::shared_ptr<OnePixel> specific_pixel = pixel.second;
+        if (!specific_pixel->activate_flag)
+            continue;
+        sp_hall->Disable(pixel.first); // 置activate_flag为false
+    }
+    sp_graph_agency->UpdateGraphs(); // 返回协程算法
+}
+
+void GraphStudio::SnapShot()
+{
+    auto cur_id = sp_hall->GetCurrentFrameID();
+    for (auto& pixel : sp_hall->GetStage())
+    {
+        std::shared_ptr<OnePixel> specific_pixel = pixel.second;
+        if (specific_pixel->cur_frame_id == cur_id && specific_pixel->render_flag)
+            film.Store(*specific_pixel);
+    }
+    sp_hall->NextFrame();
+}
+
+std::tuple<json, json, json, json> GraphStudio::GetAutomataInfoAt(std::size_t indice)
+{
+    json init_status, current_status, current_input, terminate_status;
+
+    try
+    {
+        auto& graph_list = sp_graph_agency->GetGraphs();
+        auto& graph_model = graph_list[indice]->GetValue();
+
+        if (!file_manager.TransStr2JsonObject(graph_model.init_status, init_status))
         {
-            pixel.second.Execute(sp_graph_agency, sp_hall);
+            std::cerr << "Failed to parse JSON: " << graph_model.init_status << std::endl;
+            throw std::logic_error("Failed to parse init_status JSON");
         }
+        if (!file_manager.TransStr2JsonObject(graph_model.current_status, current_status))
+        {
+            std::cerr << "Failed to parse JSON: " << graph_model.current_status << std::endl;
+            throw std::logic_error("Failed to parse current_status JSON");
+        }
+        if (!file_manager.TransStr2JsonObject(graph_model.current_input, current_input))
+        {
+            std::cerr << "Failed to parse JSON: " << graph_model.current_input << std::endl;
+            throw std::logic_error("Failed to parse current_input JSON");
+        }
+        if (!file_manager.TransStr2JsonObject(graph_model.terminate_status, terminate_status))
+        {
+            std::cerr << "Failed to parse JSON: " << graph_model.terminate_status << std::endl;
+            throw std::logic_error("Failed to parse terminate_status JSON");
+        }
+    }
+    catch (const std::logic_error& e)
+    {
+        //std::cerr << "Error: " << e.what() << std::endl;
+    }
+    return std::make_tuple(init_status, current_status, current_input, terminate_status);
+}
+
+void GraphStudio::SetAutomataInfoAt(std::size_t indice, const std::tuple<json,json,json,json>& automata_status)
+{
+    try
+    {
+        auto& graph_list = sp_graph_agency->GetGraphs();
+        auto& graph_model = graph_list[indice]->GetValue();
+        json init_status, current_status, current_input, terminate_status;
+        std::tie(init_status, current_status, current_input, terminate_status) = automata_status;
+        graph_model.init_status = init_status.dump();
+        graph_model.current_status = current_status.dump();
+        graph_model.current_input = current_input.dump();
+        graph_model.terminate_status = terminate_status.dump();
+    }
+    catch (std::logic_error e)
+    {
+        //std::cerr << "The model is done, break out!!!" << std::endl;
+        return;
     }
 }
 
@@ -303,12 +442,21 @@ const std::vector<OnePixel>& CompressedFrame::Fetch()
     return frames;
 }
 
-void OnePixel::Execute(std::shared_ptr<GraphAgency> p_agency, std::shared_ptr<Hall> p_hall)
+OnePixel& OnePixel::operator=(OnePixel& other)
 {
-    std::cout << "Hello From OnePixel::Execute" << std::endl;
-    // 反转控制 根据当前像素涉及的图元名单，进行调度。
-    for (const auto& indice : graph_ids)
+    if (this != &other)
     {
+        x = other.x;
+        y = other.y;
+        activate_flag = other.activate_flag;
+        render_flag = other.render_flag;
+        cur_frame_id = other.cur_frame_id;
+        graph_ids = other.graph_ids; // 所有图元接受同样的法则，所以所有权完全移交没问题
 
+        // 移交后更新源像素
+        other.graph_ids.clear();
+        other.render_flag = false;
+        other.activate_flag = false;
     }
+    return *this;
 }

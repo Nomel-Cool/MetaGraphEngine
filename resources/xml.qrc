@@ -2,5 +2,10 @@
     <qresource prefix="/resources">
         <file>xmls/graphAutomata/segment_automata.xml</file>
         <file>xmls/componentsConfig/tab_pages.xml</file>
+        <file>xmls/graphAutomata/bezier_automata.xml</file>
+        <file>xmls/graphAutomata/ellipse_automata.xml</file>
+        <file>xmls/graphAutomata/point_automata.xml</file>
+        <file>xmls/graphAutomata/triangle_automata.xml</file>
+        <file>xmls/componentsConfig/model_index.xml</file>
     </qresource>
 </RCC>

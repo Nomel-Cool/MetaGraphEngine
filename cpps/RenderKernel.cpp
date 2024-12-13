@@ -7,6 +7,7 @@ RenderCU::RenderCU()
     render_functions["PartitionBezierCurve"] = std::bind(&RenderCU::PartitionBezierCurve, this, std::placeholders::_1);
 
     render_co_functions["CoBresenhamLine"] = std::bind(&RenderCU::CoBresenhamLine, this, std::placeholders::_1);
+    render_co_functions["CoJustAPoint"] = std::bind(&RenderCU::CoJustAPoint, this, std::placeholders::_1);
 }
 
 QString GraphFactory::Request4Model(const QString& model_name)
@@ -41,7 +42,7 @@ ModelGenerator<SingleAutomata> GraphFactory::OfferDynamicModel(const QString& mo
 {
     GraphModel graph_model;
     //std::string automata_xml_path = QueryFromDB(model_name)
-    std::string automata_xml_path = "./resources/xmls/graphAutomata/segment_automata.xml";
+    std::string automata_xml_path = "./resources/xmls/graphAutomata/point_automata.xml";
     if (automata_xml_path.empty())
         co_return;
     auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
@@ -330,6 +331,40 @@ ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_m
         goto loop_mark;
     }
     co_return;
+}
+
+ModelGenerator<SingleAutomata> RenderCU::CoJustAPoint(SingleAutomata& graph_model)
+{
+    json init_status, current_status;
+    if (!file_manager.TransStr2JsonObject(graph_model.init_status, init_status))
+    {
+        std::cerr << "Failed to parse JSON: " << graph_model.init_status << std::endl;
+        co_return;
+    }
+    if (!file_manager.TransStr2JsonObject(graph_model.current_status, current_status))
+    {
+        std::cerr << "Failed to parse JSON: " << graph_model.current_status << std::endl;
+        co_return;
+    }
+    if (current_status.empty()) // Ö´ÐÐ³õÊ¼»¯
+    {
+        float init_x = init_status["x"];
+        float init_y = init_status["y"];
+        current_status["x"] = init_x;
+        current_status["y"] = init_y;
+        graph_model.current_status = current_status.dump();
+    }
+    while (true)
+    {
+        co_yield graph_model;
+        if (!file_manager.TransStr2JsonObject(graph_model.current_status, current_status))
+        {
+            std::cerr << "Failed to parse JSON: " << graph_model.current_status << std::endl;
+            co_return;
+        }
+        if (current_status["x"] <= 0)
+            break;
+    }
 }
 
 std::string RenderCU::BresenhamEllipse(const SingleAutomata& graph_model)

@@ -39,7 +39,8 @@ Rectangle {
                 // 绘制当前帧的所有点
                 for (var i = 0; i < frame.length; ++i) {
                     var point = frame[i];
-                    ctx.fillRect(point.x, point.y, point.blockSize, point.blockSize);
+                    //ctx.fillRect(point.x, point.y, point.blockSize, point.blockSize);
+                    ctx.fillRect(point.x, point.y, 5, 5);
                 }
             }
         }

@@ -42,6 +42,7 @@
     <Image Include="resources\images\a.png" />
   </ItemGroup>
   <ItemGroup>
+    <Xml Include="resources\xmls\graphAutomata\point_automata.xml" />
     <Xml Include="resources\xmls\componentsConfig\model_index.xml" />
     <Xml Include="resources\xmls\componentsConfig\tab_pages.xml" />
     <Xml Include="resources\xmls\graphAutomata\bezier_automata.xml" />

@@ -40,7 +40,7 @@ protected:
     /// <returns></returns>
     virtual std::string BresenhamLine(const SingleAutomata& graph_model);
     virtual ModelGenerator<SingleAutomata> CoBresenhamLine(SingleAutomata& graph_model);
-
+    virtual ModelGenerator<SingleAutomata> CoJustAPoint(SingleAutomata& graph_model);
     /// <summary>
     /// 递推式：di = sqrt(2 * r * i - i * i) * a / b，为了效率取di平方再乘b的平方，x往右推进，取八分圆第二部分x<=y为大前提，第二限制x * x < di * di
     /// 每次超过第二限制就让y往下一格
