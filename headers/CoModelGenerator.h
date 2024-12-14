@@ -113,7 +113,6 @@ public:
 			throw std::logic_error("The CoGenerator has done!!!");
 	}
 
-
 	bool Resume()
 	{
 		if (!handle || handle.done())

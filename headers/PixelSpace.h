@@ -29,7 +29,8 @@ public:
 	/// <returns>载入成功为true，否则false</returns>
 	void LoadGraphs(const QString& model_name);
 	void UpdateGraphs();
-	std::vector<std::shared_ptr<ModelGenerator<SingleAutomata>>>& GetGraphs();
+	const std::vector<std::shared_ptr<ModelGenerator<SingleAutomata>>>& GetGraphs();
+	void CheckModelProcess();
 	void CleanGraphCache();
 	bool Empty();
 private:
@@ -93,7 +94,7 @@ public:
 	/// <param name="coordinate_begin"></param>
 	/// <param name="coordinate_end"></param>
 	/// <returns></returns>
-	bool TransferPixel(const std::pair<std::size_t, std::size_t>& coordinate_begin, const std::pair<std::size_t, std::size_t>& coordinate_end, OnePixel& dest_pixel);
+	bool TransferPixelFrom(const std::pair<std::size_t, std::size_t>& coordinate_begin, OnePixel& dest_pixel);
 	
 	void PingStage(const std::size_t& x, const std::size_t& y, const std::size_t& graph_pos_in_list);
 

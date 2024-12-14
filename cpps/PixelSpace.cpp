@@ -17,7 +17,7 @@ void GraphAgency::UpdateGraphs()
         graph->Resume();
 }
 
-std::vector<std::shared_ptr<ModelGenerator<SingleAutomata>>>& GraphAgency::GetGraphs()
+const std::vector<std::shared_ptr<ModelGenerator<SingleAutomata>>>& GraphAgency::GetGraphs()
 {
     return graph_series_cache;
 }
@@ -82,15 +82,15 @@ bool Hall::Disable(const std::pair<std::size_t, std::size_t>& coordinate)
     return true;
 }
 
-bool Hall::TransferPixel(const std::pair<std::size_t, std::size_t>& coordinate_begin, const std::pair<std::size_t, std::size_t>& coordinate_end, OnePixel& dest_pixel)
+bool Hall::TransferPixelFrom(const std::pair<std::size_t, std::size_t>& coordinate_begin, OnePixel& dest_pixel)
 {
     if (stage.find(coordinate_begin) == stage.end())
         return false;
     dest_pixel = *stage[coordinate_begin]; // 显式使用拷贝赋值符，用于移交所有权相关字段
-    if (stage.find(coordinate_end) == stage.end())
-        stage.insert(std::make_pair(coordinate_end, std::make_shared<OnePixel>(dest_pixel)));
+    if (stage.find({dest_pixel.x, dest_pixel.y}) == stage.end())
+        stage.insert(std::make_pair(std::make_pair(dest_pixel.x, dest_pixel.y), std::make_shared<OnePixel>(dest_pixel)));
     else
-        stage[coordinate_end] = std::make_shared<OnePixel>(dest_pixel);
+        stage[{dest_pixel.x, dest_pixel.y}] = std::make_shared<OnePixel>(dest_pixel);
     return true;
 }
 
@@ -126,7 +126,6 @@ void Hall::PingStage(const std::size_t& x, const std::size_t& y, const std::size
         stage.insert(std::make_pair(key, sp_one_pixel));
     }
 }
-
 
 void Hall::NextFrame()
 {
@@ -279,7 +278,6 @@ void GraphStudio::StandBy()
 
 void GraphStudio::Interact()
 {
-    auto& graph_list = sp_graph_agency->GetGraphs();
     const auto& pixels = sp_hall->GetStage();
 
     for (const auto& pixel : pixels)
@@ -339,7 +337,7 @@ void GraphStudio::Interact()
                 SetAutomataInfoAt(indice, std::make_tuple(initial_status, current_status, current_input, terminate_status));
             }
         /****************************** 执行移交手续 *****************************************/
-        bool displace_result = sp_hall->TransferPixel(pixel.first, std::make_pair(static_cast<std::size_t>(cur_x), static_cast<std::size_t>(cur_y)), dest_pixel);
+        bool displace_result = sp_hall->TransferPixelFrom(pixel.first, dest_pixel);
         if (!displace_result)
             std::cerr << "The displacement is out of range." << std::endl;
     }
