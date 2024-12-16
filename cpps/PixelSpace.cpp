@@ -132,36 +132,11 @@ void Hall::NextFrame()
     ++frame_id;
 }
 
-// 计算一个数的所有因子
-std::vector<std::size_t> GetFactors(std::size_t n)
-{
-    std::vector<std::size_t> factors;
-    for (std::size_t i = 1; i * i <= n; ++i) {
-        if (n % i == 0) {
-            factors.push_back(i);
-            if (i != n / i) {
-                factors.push_back(n / i);
-            }
-        }
-    }
-    std::sort(factors.begin(), factors.end());
-    return factors;
-}
-
-// 计算两个因子序列的交集
-std::vector<std::size_t> GetCommonFactors(const std::vector<std::size_t>& factors1, const std::vector<std::size_t>& factors2)
-{
-    std::vector<std::size_t> common_factors;
-    std::set_intersection(factors1.begin(), factors1.end(),
-        factors2.begin(), factors2.end(),
-        std::back_inserter(common_factors));
-    return common_factors;
-}
-
 GraphStudio::GraphStudio(QObject* parent) : QObject(parent)
 {
     sp_graph_agency = std::make_shared<GraphAgency>();
     sp_hall = std::make_shared<Hall>();
+    sp_law = std::make_shared<Law>();
 }
 
 void GraphStudio::InitHall(const float& width, const float& height)
@@ -268,7 +243,7 @@ void GraphStudio::StandBy()
             }
             sp_hall->PingStage(static_cast<std::size_t>(current_status["x"]), static_cast<std::size_t>(current_status["y"]), i);
         }
-        catch (std::logic_error e)
+        catch (std::logic_error)
         {
             std::cerr << "The model is done, break out!!!" << std::endl;
             return;
@@ -278,69 +253,7 @@ void GraphStudio::StandBy()
 
 void GraphStudio::Interact()
 {
-    const auto& pixels = sp_hall->GetStage();
-
-    for (const auto& pixel : pixels)
-    {
-        std::shared_ptr<OnePixel> pixel_object = pixel.second;
-        if (pixel_object->render_flag != true)
-            continue;
-            /****************************** 对该像素的所有者，算出它们的下一个状态 *****************************************/
-            json initial_status, current_status, current_input, terminate_status;
-            OnePixel dest_pixel;
-            float g = 9.8, v = 0, FPS = sp_hall->GetCurrentFPS(), delta_t = 1.0f / FPS, s = 0, cur_x = 0, cur_y = 0;
-            for (const auto& indice : pixel.second->graph_ids)
-            {
-                const auto& automata_param = GetAutomataInfoAt(indice);
-                std::tie(initial_status, current_status, current_input, terminate_status) = automata_param;
-                if (current_status.empty() || current_input.empty())
-                    continue;
-                // 必须假设每个模型的自动机是能够跟当前法则交互的，即它具有那些属性（速度、加速度、质量等等词条）
-                // 假设此处有引力场，且此处只对一个模型的位置属性进行交互
-                // 位置的计算可以由法则给出，也可以把法则属性传递给模型计算后在下一次到来时给出，此处采用前者
-                g = 9.8f;
-                v = current_input["velocity"];
-                s = std::abs(v * delta_t + 0.5f * g * delta_t * delta_t);
-                cur_x = current_status["x"];
-                cur_y = current_status["y"];
-				s = v >= 0 ? s : -s;
-                if (cur_y >= s) 
-                {
-                    // 还没有碰撞到地面，正常更新速度和位移
-                    cur_y -= s;
-                    v += g * delta_t;
-                }
-                else
-                {
-					if(v >= 0)
-					{
-						// 到达地面，计算剩余的位移和速度更新
-						float time_to_ground = std::sqrt(2 * cur_y / g);
-						// 速度到达地面时
-						v += g * time_to_ground;
-						// 碰撞后的反弹速度衰减
-						v = -v * 0.8f;
-					}
-					else
-						v += g * delta_t;
-                    // 位置到地面
-                    cur_x -= (cur_x == 0 ? 0 : 1);
-                    cur_y = v < 0 ? cur_y + s : 0;
-                }
-
-                // 更新current_status
-                current_status["x"] = cur_x;
-                current_status["y"] = cur_y;
-                current_input["velocity"] = v;
-                dest_pixel.x = cur_x;
-                dest_pixel.y = cur_y;
-                SetAutomataInfoAt(indice, std::make_tuple(initial_status, current_status, current_input, terminate_status));
-            }
-        /****************************** 执行移交手续 *****************************************/
-        bool displace_result = sp_hall->TransferPixelFrom(pixel.first, dest_pixel);
-        if (!displace_result)
-            std::cerr << "The displacement is out of range." << std::endl;
-    }
+    sp_law->AffectOn<Gravity>(this);
 }
 
 void GraphStudio::UpdateGraphList()
@@ -367,7 +280,7 @@ void GraphStudio::SnapShot()
     sp_hall->NextFrame();
 }
 
-std::tuple<json, json, json, json> GraphStudio::GetAutomataInfoAt(std::size_t indice)
+AutomataElements GraphStudio::GetAutomataInfoAt(std::size_t indice)
 {
     json init_status, current_status, current_input, terminate_status;
 
@@ -404,7 +317,7 @@ std::tuple<json, json, json, json> GraphStudio::GetAutomataInfoAt(std::size_t in
     return std::make_tuple(init_status, current_status, current_input, terminate_status);
 }
 
-void GraphStudio::SetAutomataInfoAt(std::size_t indice, const std::tuple<json,json,json,json>& automata_status)
+void GraphStudio::SetAutomataInfoAt(std::size_t indice, const AutomataElements& automata_status)
 {
     try
     {
@@ -422,6 +335,30 @@ void GraphStudio::SetAutomataInfoAt(std::size_t indice, const std::tuple<json,js
         //std::cerr << "The model is done, break out!!!" << std::endl;
         return;
     }
+}
+
+std::vector<std::size_t> GraphStudio::GetFactors(std::size_t n)
+{
+    std::vector<std::size_t> factors;
+    for (std::size_t i = 1; i * i <= n; ++i) {
+        if (n % i == 0) {
+            factors.push_back(i);
+            if (i != n / i) {
+                factors.push_back(n / i);
+            }
+        }
+    }
+    std::sort(factors.begin(), factors.end());
+    return factors;
+}
+
+std::vector<std::size_t> GraphStudio::GetCommonFactors(const std::vector<std::size_t>& factors1, const std::vector<std::size_t>& factors2)
+{
+    std::vector<std::size_t> common_factors;
+    std::set_intersection(factors1.begin(), factors1.end(),
+        factors2.begin(), factors2.end(),
+        std::back_inserter(common_factors));
+    return common_factors;
 }
 
 void CompressedFrame::Store(const OnePixel& one_pixel)
@@ -450,5 +387,17 @@ OnePixel& OnePixel::operator=(OnePixel& other)
         other.render_flag = false;
         other.activate_flag = false;
     }
+    return *this;
+}
+
+OnePixel& OnePixel::operator=(PixelElements& other)
+{
+    std::tie(x, y, r, g, b, a) = other;
+    this->x = x;
+    this->y = x;
+    this->r = r;
+    this->g = g;
+    this->b = b;
+    this->a = a;
     return *this;
 }

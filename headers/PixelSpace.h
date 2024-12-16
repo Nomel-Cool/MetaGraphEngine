@@ -12,8 +12,8 @@
 #include <type_traits>
 #include <tuple>
 #include <unordered_map>
-
 #include "RenderKernel.h"
+#include "Law.h"
 #include "ThreadPool.h"
 
 /// <summary>
@@ -30,7 +30,6 @@ public:
 	void LoadGraphs(const QString& model_name);
 	void UpdateGraphs();
 	const std::vector<std::shared_ptr<ModelGenerator<SingleAutomata>>>& GetGraphs();
-	void CheckModelProcess();
 	void CleanGraphCache();
 	bool Empty();
 private:
@@ -47,17 +46,17 @@ public:
 	OnePixel() = default;
 	OnePixel(const OnePixel& other) = default;
 	OnePixel& operator=(OnePixel& other); // **重要** 移交像素所有权时会触发赋值构造，每个子类都得自己实现一个。
+	OnePixel& operator=(PixelElements& other);
 	// 多个子类需要多个重载版本的拷贝构造
 	bool render_flag = false;
 	bool activate_flag = false;
 	std::size_t x = 0, y = 0;
+	float r = 255.0f, g = 255.0f, b = 255.0f, a = 0.0f;
 	uint64_t cur_frame_id = 0;
 	std::vector<uint64_t> graph_ids;
-	// 如果有更多子类，就在这里添加更多反转控制指针
-	// color
-	// ...
 	// May be more attributes in a pixel
 };
+
 /// <summary>
 /// 压缩一帧的所有渲染信息
 /// </summary>
@@ -114,8 +113,11 @@ private:
 	uint64_t FPS = 120;
 };
 
+class Law;
+
 class GraphStudio : public QObject
 {
+	friend class Law;
 	Q_OBJECT
 public:
 	explicit GraphStudio(QObject* parent = nullptr);
@@ -131,13 +133,60 @@ protected:
 	void SnapShot();
 
 private:
-	std::tuple<json, json, json, json> GetAutomataInfoAt(std::size_t indice);
-	void SetAutomataInfoAt(std::size_t indice, const std::tuple<json, json, json, json>& automata_status);
+	AutomataElements GetAutomataInfoAt(std::size_t indice);
+	void SetAutomataInfoAt(std::size_t indice, const AutomataElements& automata_status);
+	// 计算一个数的所有因子
+	std::vector<std::size_t> GetFactors(std::size_t n);
+	// 计算两个因子序列的交集
+	std::vector<std::size_t> GetCommonFactors(const std::vector<std::size_t>& factors1, const std::vector<std::size_t>& factors2);
 private:
 	std::shared_ptr<GraphAgency> sp_graph_agency;
 	std::shared_ptr<Hall> sp_hall;   
 	FileManager file_manager;
 	ShabbyThreadPool& pool = ShabbyThreadPool::GetInstance();
+	std::shared_ptr<Law> sp_law; // 由于Law和GraphStudio循环调用了，这里前置声明了Law，使用指针延迟初始化，度过编译期的检查（必须用指针！！！）
 	CompressedFrame film;
 };
+
+/// <summary>
+/// The Law class has been friended by GraphStudio.
+/// </summary>
+class Law
+{
+public:
+	template<typename ATTRIBUTE>
+	void AffectOn(GraphStudio* p_studio)
+	{
+		try
+		{
+			const auto& pixels = p_studio->sp_hall->GetStage();
+
+			for (const auto& pixel : pixels)
+			{
+				std::shared_ptr<OnePixel> pixel_object = pixel.second;
+				if (pixel_object->render_flag != true)
+					continue;
+				for (const auto& indice : pixel.second->graph_ids)
+				{
+					OnePixel dest_pixel;
+					AutomataElements automata_param = p_studio->GetAutomataInfoAt(indice);
+					PixelElements target_pixel = ATTRIBUTE::Apply(automata_param);
+					p_studio->SetAutomataInfoAt(indice, automata_param);
+					dest_pixel = target_pixel;
+					/****************************** 执行移交手续 *****************************************/
+					bool displace_result = p_studio->sp_hall->TransferPixelFrom(pixel.first, dest_pixel);
+					if (!displace_result)
+						std::cerr << "The displacement is out of range." << std::endl;
+				}
+			}
+		}
+		catch (const nlohmann::json::type_error& e)
+		{
+			std::cerr << "JSON type error while updating JSON fields: " << e.what() << std::endl;
+		}
+	}
+
+private:
+};
+
 #endif // !PIXEL_SPACE_H

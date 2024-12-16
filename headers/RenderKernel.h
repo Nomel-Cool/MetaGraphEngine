@@ -66,6 +66,7 @@ private:
 class GraphFactory : public QObject
 {
     Q_OBJECT
+    friend class Law;
 public:
     explicit GraphFactory(QObject* parent = nullptr) : QObject(parent){}
     Q_INVOKABLE QString Request4Model(const QString& model_name);

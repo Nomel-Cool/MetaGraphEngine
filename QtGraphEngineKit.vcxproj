@@ -32,6 +32,7 @@
     <ClCompile Include="cpps\RenderKernel.cpp" />
     <ClCompile Include="cpps\XmlDataModel.cpp" />
     <ClCompile Include="cpps\PixelSpace.cpp" />
+    <ClCompile Include="cpps\Law.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="resources\img.qrc" />
@@ -58,6 +59,7 @@
     <ClInclude Include="headers\hiredis.h" />
     <ClInclude Include="headers\json.hpp" />
     <ClInclude Include="headers\JSONParser.h" />
+    <ClInclude Include="headers\Law.h" />
     <ClInclude Include="headers\MetaGraphAutomata.h" />
     <ClInclude Include="headers\IndexBarModel.h" />
     <QtMoc Include="headers\PixelSpace.h" />
