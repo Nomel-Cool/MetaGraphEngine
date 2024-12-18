@@ -41,11 +41,11 @@ public:
     }
 
     template<typename StructuringClass>
-    bool TransClass2Xml(StructuringClass& target_obj, const std::string& xml_path, const std::function<bool(XMLDocument&, StructuringClass&)>& Depart)
+    bool TransClass2Xml(StructuringClass& target_obj, const std::string& xml_path, const std::function<bool(tinyxml2::XMLDocument&, StructuringClass&)>& Depart)
     {
         try {
             // 创建一个空的 XML 文档
-            XMLDocument doc;
+            tinyxml2::XMLDocument doc;
 
             // 通过 Depart 回调函数填充 XML 文档
             if (!Depart(doc, target_obj)) {
