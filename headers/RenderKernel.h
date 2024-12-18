@@ -14,6 +14,7 @@
 
 #include "FileManager.h"
 #include "RedisClient.h"
+#include "DataBaseManager.h"
 
 // 当像素控件调用生成算法时，默认是查找现有指定算法的Dynamic前缀的动态算法，所以像素控件和预览板可以读取同一份xml。
 // 预览板使用的是静态一次性生成点集，而像素控件中每个点的生成都是可影响的。
@@ -78,6 +79,7 @@ public:
     ModelGenerator<SingleAutomata> OfferDynamicModel(const QString& model_name);
 protected:
     bool FillUp(const std::string& json_string, GraphModel& graph_model);
+    bool Depart(GraphModel& graph_model, tinyxml2::XMLDocument& doc);
 private:
     enum class State {
         WaitingForModel,
@@ -95,6 +97,7 @@ private:
     RenderCU render_cu;
     FileManager file_manager;
     RedisClient redis_client;
+    DatabaseManager database_manager;
 };
 
 #endif // !RENDER_KERNEL
