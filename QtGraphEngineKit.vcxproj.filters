@@ -57,6 +57,13 @@
     <None Include="resources\qmls\engine\ButtonToolList.qml">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="dlls\ShabbyEventQueue.dll" />
+    <None Include="dlls\ShabbyThreadPool.dll" />
+    <None Include="dlls\libmysql.dll" />
+    <None Include="dlls\ShabbyDataBase.dll" />
+    <None Include="sqls\Automata.sql" />
+    <None Include="sqls\FilePath.sql" />
+    <None Include="sqls\ModelBluePrint.sql" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpps\main.cpp">
@@ -75,6 +82,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cpps\Law.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpps\DataBaseManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -152,6 +162,51 @@
     <ClInclude Include="headers\Law.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="headers\DataBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\DataBaseManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\errmsg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\field_types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\my_command.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\my_compress.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\my_list.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\mysql.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\mysql_com.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\mysql_time.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\mysql_version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\mysqld_error.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\mysqlx_ername.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\mysqlx_error.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\mysqlx_version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="headers\RenderKernel.h">
@@ -171,5 +226,9 @@
     <Library Include="libs\ShabbyRedis.lib" />
     <Library Include="libs\ShabbyFileManager.lib" />
     <Library Include="libs\hiredis.lib" />
+    <Library Include="libs\ShabbyEventQueue.lib" />
+    <Library Include="libs\ShabbyThreadPool.lib" />
+    <Library Include="libs\libmysql.lib" />
+    <Library Include="libs\ShabbyDataBase.lib" />
   </ItemGroup>
 </Project>
