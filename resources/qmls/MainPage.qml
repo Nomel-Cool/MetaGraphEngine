@@ -1,4 +1,4 @@
-import QtQuick 2.15
+ï»¿import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import CustomModules 1.0
@@ -19,6 +19,13 @@ ApplicationWindow {
 
     QGraphFactory{id: graphFactoryImp}
     QGraphStudio{id: graphStudio}
+    
+    AutomataInventory {
+        id: automataInventory
+        onDeleverModelData: (data)=>{
+            console.log("Deliverd data: ", data);
+        }
+    }
 
     DynamicTabBar {
         id: dynamicTabBar
@@ -41,7 +48,7 @@ ApplicationWindow {
         anchors.top: dynamicTabBar.bottom
         anchors.left: parent.horizontalCenter
         onTextCommitted: (receivedText) => {
-            indexBar.keyWord = receivedText // ÆäËû¿Ø¼ş¿ÉÒÔÔÚ´Ë´¦Àí½ÓÊÕµ½µÄ×Ö·û´®
+            indexBar.keyWord = receivedText // å…¶ä»–æ§ä»¶å¯ä»¥åœ¨æ­¤å¤„ç†æ¥æ”¶åˆ°çš„å­—ç¬¦ä¸²
         }
     }
 
@@ -53,12 +60,12 @@ ApplicationWindow {
         anchors.left: searchBar.left
         onPreviewItemSelected: (selectedItem) => {
            previewBoard.currentModelName = selectedItem
-           var strPointsSeries = graphFactoryImp.Request4Model(selectedItem);// ²éÑ¯Redis¹ØÓÚÕâ¸ö¹Ø¼ü´ÊµÄÍ¼Ôª×Ô¶¯»úÎÄ¼ş
+           var strPointsSeries = graphFactoryImp.Request4Model(selectedItem);// æŸ¥è¯¢Rediså…³äºè¿™ä¸ªå…³é”®è¯çš„å›¾å…ƒè‡ªåŠ¨æœºæ–‡ä»¶
            strPointsSeries.length != 0 ? (previewBoard.strPoints = strPointsSeries) : indexBar.delItem(selectedItem);      
         }
         onEngineItemSelected: (selectedItem) => {
             if(dynamicTabBar.pageIndex === 1) {
-                graph_list.addModel(selectedItem); // °ÑÑ¡ÖĞµÄÄ£ĞÍÃû´æ·Åµ½GraphListÖĞ
+                graph_list.addModel(selectedItem); // æŠŠé€‰ä¸­çš„æ¨¡å‹åå­˜æ”¾åˆ°GraphListä¸­
             }
         }
     }
@@ -81,6 +88,9 @@ ApplicationWindow {
         width: parent.width - indexBar.width - previewBoard.width
         anchors.top: dynamicTabBar.bottom
         anchors.left: parent.left
+        onShowSavePage: {
+            automataInventory.visible = true;
+        }
     }
 
     EngineDesigner {
@@ -92,7 +102,7 @@ ApplicationWindow {
         anchors.left: buttonToolList.right
         Component.onCompleted: {
             graphStudio.InitHall(width, height);
-            graphStudio.LayoutHall(1); // **Test** 1»áÊÇ·½¸ñ×î¶àµÄÁË£¬ºóĞø½»¸ø¿Ø¼şÀ´µ÷½Ú
+            graphStudio.LayoutHall(1); // **Test** 1ä¼šæ˜¯æ–¹æ ¼æœ€å¤šçš„äº†ï¼Œåç»­äº¤ç»™æ§ä»¶æ¥è°ƒèŠ‚
         }
     }
 

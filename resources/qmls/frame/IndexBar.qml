@@ -1,37 +1,37 @@
-import QtQuick 2.15
+﻿import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import CustomModules 1.0
 /// <summary>
-/// ��26��ComboBox�洢A~Z��ͷ�ĵ��ʣ���֧�ֹؼ��������������ʾ���ö�
+/// 用26个ComboBox存储A~Z开头的单词，并支持关键词搜索后高亮显示到置顶
 /// </summary>
-/// <property name="keyWord">�û���ָ���������ؼ���</param>
+/// <property name="keyWord">用户可指定的搜索关键词</param>
 ///
 /// <signal name="itemSelected">
-/// <param name="selectedItem">ѡ�еĹؼ���</param>
+/// <param name="selectedItem">选中的关键词</param>
 /// </signal>
 ///
 /// <function name="pin2TopInListView">
-/// <summary>���ؼ��ʹ�����ComboBox�ö�</summary>
-/// <param name="list_view">ComboBox���ڵ�ListView��id</param>
-/// <param name="indice">ListView��ComboBox������</param>
+/// <summary>将关键词关联的ComboBox置顶</summary>
+/// <param name="list_view">ComboBox所在的ListView的id</param>
+/// <param name="indice">ListView中ComboBox的索引</param>
 /// </function>
 ///
 /// <function name="openComboBoxInListView">
-/// <summary>��ListView�б�ѡ�е�ComboBoxչ��</summary>
-/// <param name="list_view">ComboBox���ڵ�ListView��id</param>
-/// <param name="indice">ListView��ComboBox������</param>
+/// <summary>将ListView中被选中的ComboBox展开</summary>
+/// <param name="list_view">ComboBox所在的ListView的id</param>
+/// <param name="indice">ListView中ComboBox的索引</param>
 /// </function>
 ///
 /// <function name="focusItemInComboBoxByKeyword">
-/// <summary>���ؼ������У������չ����ComboBox�����</summary>
-/// <param name="list_view">ComboBox���ڵ�ListView��id</param>
-/// <param name="indice">ListView��ComboBox������</param>
+/// <summary>若关键词命中，则高亮展开的ComboBox里的项</summary>
+/// <param name="list_view">ComboBox所在的ListView的id</param>
+/// <param name="indice">ListView中ComboBox的索引</param>
 /// </function>
 ///
 /// <function name="addWord">
-/// <summary>ǰ������ģ�����Ƶ�ͼԪ���Ľӿ�</summary>
-/// <param name="word">�����ӵ�ģ������</param>
+/// <summary>前端添加模型名称到图元栏的接口</summary>
+/// <param name="word">所添加的模型名称</param>
 /// </function>
 
 Item {
@@ -57,7 +57,7 @@ Item {
             var index = firstLetter.charCodeAt(0) - 65; 
             if (index >= 0 && index < 26)
                 wordModel.get(index).words.append({ showText: modelName }); // That is so fucking important to use the attribute name "showText"!!!
-            // �����Ҫ��̬������ͼ���ƺ���Ҫ��model�õ�����set����ǿ�Ƹ��µ���ͼ
+            // 如果需要动态更新视图，似乎需要对model用到它的set方法强制更新到视图
         }
     }
 
@@ -204,7 +204,7 @@ function delItem(selectedItem) {
         }
     }
 
-    // ǿ�Ƹ��²���
+    // 强制更新布局
     listView.forceLayout();
 }
 

@@ -9,5 +9,6 @@
         <file>qmls/frame/SearchBar.qml</file>
         <file>qmls/engine/GraphList.qml</file>
         <file>qmls/engine/ButtonToolList.qml</file>
+        <file>qmls/designer/AutomataInventory.qml</file>
     </qresource>
 </RCC>

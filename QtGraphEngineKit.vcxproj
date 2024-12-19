@@ -20,6 +20,7 @@
     <None Include="dlls\ShabbyFileManager.dll" />
     <None Include="dlls\ShabbyRedis.dll" />
     <None Include="dlls\ShabbyThreadPool.dll" />
+    <None Include="resources\qmls\designer\AutomataInventory.qml" />
     <None Include="resources\qmls\designer\DrawBoard.qml" />
     <None Include="resources\qmls\engine\ButtonToolList.qml" />
     <None Include="resources\qmls\engine\EngineDesigner.qml" />
@@ -41,6 +42,7 @@
     <ClCompile Include="cpps\XmlDataModel.cpp" />
     <ClCompile Include="cpps\PixelSpace.cpp" />
     <ClCompile Include="cpps\Law.cpp" />
+    <ClCompile Include="headers\openssl\applink.c" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="resources\img.qrc" />
@@ -80,6 +82,9 @@
     <ClInclude Include="headers\mysqlx_ername.h" />
     <ClInclude Include="headers\mysqlx_error.h" />
     <ClInclude Include="headers\mysqlx_version.h" />
+    <ClInclude Include="headers\mysql\client_plugin.h" />
+    <ClInclude Include="headers\mysql\plugin_auth_common.h" />
+    <ClInclude Include="headers\mysql\udf_registration_types.h" />
     <ClInclude Include="headers\mysql_com.h" />
     <ClInclude Include="headers\mysql_time.h" />
     <ClInclude Include="headers\mysql_version.h" />

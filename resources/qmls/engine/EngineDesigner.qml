@@ -1,4 +1,4 @@
-import QtQuick 2.15
+ï»¿import QtQuick 2.15
 import QtQuick.Controls 2.15
 
 Rectangle {
@@ -7,36 +7,36 @@ Rectangle {
     width: 800
     height: 600
 
-    // ÊôĞÔ¶¨Òå
-    property var drawnPoints: [] // ÓÃÓÚ±£´æÒÑ»æÖÆµÄµã£¬³õÊ¼Îª¿Õ
+    // å±æ€§å®šä¹‰
+    property var drawnPoints: [] // ç”¨äºä¿å­˜å·²ç»˜åˆ¶çš„ç‚¹ï¼Œåˆå§‹ä¸ºç©º
     property alias engineCore: _drawBoard
-    property int currentFrame: 0 // µ±Ç°»æÖÆµÄÖ¡Ë÷Òı
-    property int frameInterval: 8 // Ã¿Ö¡Ê±¼ä¼ä¸ô£¨ºÁÃë£©
-    property bool clearCanvas: false // ÊÇ·ñÃ¿Ö¡Çå¿Õ»­²¼
+    property int currentFrame: 0 // å½“å‰ç»˜åˆ¶çš„å¸§ç´¢å¼•
+    property int frameInterval: 8 // æ¯å¸§æ—¶é—´é—´éš”ï¼ˆæ¯«ç§’ï¼‰
+    property bool clearCanvas: false // æ˜¯å¦æ¯å¸§æ¸…ç©ºç”»å¸ƒ
 
-    // »­²¼¶¨Òå
+    // ç”»å¸ƒå®šä¹‰
     Canvas {
         id: _drawBoard
         anchors.fill: parent
 
-        // Ã¿´Î»æÖÆÊ±µ÷ÓÃ
+        // æ¯æ¬¡ç»˜åˆ¶æ—¶è°ƒç”¨
         onPaint: {
             var ctx = _drawBoard.getContext("2d");
 
-            // Çå¿Õ»­²¼£¨Èç¹ûĞèÒªÇå¿Õ£©
+            // æ¸…ç©ºç”»å¸ƒï¼ˆå¦‚æœéœ€è¦æ¸…ç©ºï¼‰
             if (clearCanvas) {
                 ctx.clearRect(0, 0, _drawBoard.width, _drawBoard.height);
             }
 
-            // È·±£µ±Ç°Ö¡´æÔÚ
+            // ç¡®ä¿å½“å‰å¸§å­˜åœ¨
             if (currentFrame < drawnPoints.length) {
                 var frame = drawnPoints[currentFrame];
                 console.log("Drawing frame:", currentFrame, "Points in frame:", frame.length);
 
-                // ÉèÖÃ»æÍ¼ÑùÊ½
+                // è®¾ç½®ç»˜å›¾æ ·å¼
                 ctx.fillStyle = "black";
 
-                // »æÖÆµ±Ç°Ö¡µÄËùÓĞµã
+                // ç»˜åˆ¶å½“å‰å¸§çš„æ‰€æœ‰ç‚¹
                 for (var i = 0; i < frame.length; ++i) {
                     var point = frame[i];
                     //ctx.fillRect(point.x, point.y, point.blockSize, point.blockSize);
@@ -46,7 +46,7 @@ Rectangle {
         }
     }
 
-    // ¶¨Ê±Æ÷¿ØÖÆ»æÖÆ½Ú×à
+    // å®šæ—¶å™¨æ§åˆ¶ç»˜åˆ¶èŠ‚å¥
     Timer {
         id: drawTimer
         interval: frameInterval
@@ -54,19 +54,19 @@ Rectangle {
         repeat: true
 
         onTriggered: {
-            // Èç¹û»¹ÓĞÖ¡Î´»æÖÆ£¬´¥·¢»æÖÆ
+            // å¦‚æœè¿˜æœ‰å¸§æœªç»˜åˆ¶ï¼Œè§¦å‘ç»˜åˆ¶
             if (currentFrame < drawnPoints.length) {
                 _drawBoard.requestPaint();
                 currentFrame++;
             } else {
-                // Í£Ö¹¼ÆÊ±Æ÷£¬»æÖÆÍê³É
+                // åœæ­¢è®¡æ—¶å™¨ï¼Œç»˜åˆ¶å®Œæˆ
                 console.log("All frames drawn.");
                 drawTimer.stop();
             }
         }
     }
 
-    // °´Å¥¿ØÖÆ
+    // æŒ‰é’®æ§åˆ¶
     Column {
         spacing: 10
         anchors {
@@ -78,18 +78,18 @@ Rectangle {
         Button {
             text: "Start Drawing"
             onClicked: {
-                currentFrame = 0; // ÖØÖÃÖ¡¼ÆÊıÆ÷
-                drawTimer.start(); // ¿ªÊ¼»æÖÆ
+                currentFrame = 0; // é‡ç½®å¸§è®¡æ•°å™¨
+                drawTimer.start(); // å¼€å§‹ç»˜åˆ¶
             }
         }
 
         Button {
             text: "Clear Canvas"
             onClicked: {
-                clearCanvas = true; // ÆôÓÃ»­²¼Çå¿Õ
-                _drawBoard.requestPaint(); // ÊÖ¶¯´¥·¢Çå¿Õ
-                currentFrame = 0; // ÖØÖÃÖ¡
-                drawnPoints = []; // Çå¿ÕµãÊı¾İ
+                clearCanvas = true; // å¯ç”¨ç”»å¸ƒæ¸…ç©º
+                _drawBoard.requestPaint(); // æ‰‹åŠ¨è§¦å‘æ¸…ç©º
+                currentFrame = 0; // é‡ç½®å¸§
+                drawnPoints = []; // æ¸…ç©ºç‚¹æ•°æ®
                 console.log("Canvas cleared.");
             }
         }

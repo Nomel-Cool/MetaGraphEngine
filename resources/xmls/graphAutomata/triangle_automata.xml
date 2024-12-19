@@ -20,4 +20,5 @@
 		<current current_status="{}"/>
 		<terminate terminate_status='{\"x\":0,\"y\":0}'/>
 	</automata>
+	<!--更多automata-->
 </model>

@@ -1,25 +1,25 @@
-import QtQuick 2.15
+ï»¿import QtQuick 2.15
 import QtQuick.Controls 2.15
 import "qrc:/resources/qmls/"
 
 /// <summary>
-/// Ö÷Òª¹¦ÄÜ£º¾ßÓÐ¸ù¾ÝÀúÊ·¼ÇÂ¼°´tab²¹È«µÄÊäÈë¿ò£¬ÓÃÐÅºÅÓë½«ÊäÈëÄÚÈÝ´«µÝµ½ÆäËü¿Ø¼þÊ¹ÓÃ
+/// ä¸»è¦åŠŸèƒ½ï¼šå…·æœ‰æ ¹æ®åŽ†å²è®°å½•æŒ‰tabè¡¥å…¨çš„è¾“å…¥æ¡†ï¼Œç”¨ä¿¡å·ä¸Žå°†è¾“å…¥å†…å®¹ä¼ é€’åˆ°å…¶å®ƒæŽ§ä»¶ä½¿ç”¨
 /// </summary>
-/// <property name="textCommitted">ÎÄ±¾·¢ËÍÐÅºÅ£¬¿ÉÒÔ±»ÆäËü¿Ø¼þ²¶»ñ</param>
-/// <property name="text">±©Â¶¸ø¿Í»§¶ÁÈ¡µÄÎÄ±¾</param>
-/// <property name="searchHistoryModel">ÀúÊ·¼ÇÂ¼ÈÝÆ÷</param>
+/// <property name="textCommitted">æ–‡æœ¬å‘é€ä¿¡å·ï¼Œå¯ä»¥è¢«å…¶å®ƒæŽ§ä»¶æ•èŽ·</param>
+/// <property name="text">æš´éœ²ç»™å®¢æˆ·è¯»å–çš„æ–‡æœ¬</param>
+/// <property name="searchHistoryModel">åŽ†å²è®°å½•å®¹å™¨</param>
 /// 
 /// <signal name="textCommitted">
-/// <param name="text">ÊäÈë¿òµÄ×Ö·û´®</param>
+/// <param name="text">è¾“å…¥æ¡†çš„å­—ç¬¦ä¸²</param>
 /// </signal>
 ///
 /// <function name="autoComplete">
-/// <summary>°´tab¼ü²¹È«µÄjsº¯Êý</summary>
+/// <summary>æŒ‰tabé”®è¡¥å…¨çš„jså‡½æ•°</summary>
 /// </function>
 ///
 /// <function name="addSearchHistory">
-/// <summary>°´Å¥´¥·¢µÄ°ÑÊäÈë¿òÎÄ±¾¼ÆÈëÀúÊ·¼ÇÂ¼</summary>
-/// <param name="text">µ±Ç°ÊäÈë¿òÎÄ±¾</param>
+/// <summary>æŒ‰é’®è§¦å‘çš„æŠŠè¾“å…¥æ¡†æ–‡æœ¬è®¡å…¥åŽ†å²è®°å½•</summary>
+/// <param name="text">å½“å‰è¾“å…¥æ¡†æ–‡æœ¬</param>
 /// </function>
 Item {
     id: searchBar

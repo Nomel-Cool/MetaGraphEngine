@@ -1,3 +1,8 @@
 <RCC>
-    <qresource prefix="/resources"/>
+    <qresource prefix="/resources">
+        <file>images/check.png</file>
+        <file>images/off.png</file>
+        <file>images/on.png</file>
+        <file>images/uncheck.png</file>
+    </qresource>
 </RCC>

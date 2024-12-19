@@ -1,19 +1,19 @@
-import QtQuick 2.15
+﻿import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQml.XmlListModel
 import QtQuick.Layouts
 
 /// <summary>
-/// ��Ҫ���ܣ�����xml�ļ���ʽ����ҳ���л���ť��������ʾ��Ϣ
+/// 主要功能：利用xml文件格式控制页面切换按钮数量与显示信息
 /// </summary>
-/// <property name="xmlSource">����ʹ�ö�̬���ɼ�������Ҫ�ṩXML�ļ���qrc�ļ��е�·����qrc:path/to/xml_file.xml</param>
-/// <property name="xmlRoute">XML�ж�ȡ��ť��Ϣ�Ľڵ�·����һ��ʹ��/tabs/tab�̶���ʽ</param>
-/// <property name="roleParams">��xmlRouteƥ��Ĳ�������tab��ǩ���ж��ٸ�attribute�����tab��ǩ�²�ֹһ���ӱ�ǩ�������ָ��elementName������ο�XmlListModel�ؼ���Ϣ</param>
-/// <property name="roleParams">���û�ָ����XmlListModelRole��[name, elementName, attributeName]�����Ķ�ά���飬��Ϊ���ܲ�ֻһ��role�������tab��ǩ�²�ֻһ���ӱ�ǩ�����ʹ��</param>
-/// <property name="pageIndex">�ṩ����������ӽ����л���ʾ������</param>
-/// <property name="xmlListModelObject">˽�е����ڱ��涯̬���ɵ�XmlListModel���󣬴��ݸ��ڲ����������ؼ���model����ʹ��</param>
-/// <property name="spacing">����ָ��Tab��ť�������</param>
-/// <note>��ʱ�������ʲôԭ��Qt5��֧��Buttonʹ��background���Եģ���Qt6��û���ˣ�����Ȼ���������������źţ������޵���ν��</note>
+/// <property name="xmlSource">由于使用动态生成技术，需要提供XML文件在qrc文件中的路径：qrc:path/to/xml_file.xml</param>
+/// <property name="xmlRoute">XML中读取按钮信息的节点路径，一般使用/tabs/tab固定格式</param>
+/// <property name="roleParams">与xmlRoute匹配的参数，即tab标签下有多少个attribute，如果tab标签下不止一类子标签，则可以指定elementName，具体参考XmlListModel控件信息</param>
+/// <property name="roleParams">由用户指定的XmlListModelRole的[name, elementName, attributeName]参数的多维数组，因为可能不只一个role，即配合tab标签下不只一类子标签的情况使用</param>
+/// <property name="pageIndex">提供给主界面绑定子界面切换显示的索引</param>
+/// <property name="xmlListModelObject">私有的用于保存动态生成的XmlListModel对象，传递给内部其他派生控件的model属性使用</param>
+/// <property name="spacing">用于指定Tab按钮间隔像素</param>
+/// <note>暂时不清楚是什么原因，Qt5是支持Button使用background属性的，但Qt6就没有了，但依然能用且正常触发信号，所以无吊所谓了</note>
 Rectangle {
     id: dynamicTabBar
     required property string xmlSource

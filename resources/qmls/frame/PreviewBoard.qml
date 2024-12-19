@@ -1,4 +1,4 @@
-import QtQuick 2.15
+ï»¿import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.15
 
@@ -8,13 +8,13 @@ Rectangle {
 
     property var strPoints
     property alias currentModelName: modelName.text
-    property int drawSpeed: 50 // »æÖÆËÙ¶È£¬µ¥Î»£ººÁÃë
+    property int drawSpeed: 50 // ç»˜åˆ¶é€Ÿåº¦ï¼Œå•ä½ï¼šæ¯«ç§’
 
     QtObject {
         id: __private
         property var points: []
-        property int currentLayerIndex: 0 // µ±Ç°»æÖÆµÄ²ãË÷Òı
-        property int currentPointIndex: 0 // µ±Ç°»æÖÆµÄµãË÷Òı
+        property int currentLayerIndex: 0 // å½“å‰ç»˜åˆ¶çš„å±‚ç´¢å¼•
+        property int currentPointIndex: 0 // å½“å‰ç»˜åˆ¶çš„ç‚¹ç´¢å¼•
     }
 
     Timer {
@@ -41,7 +41,7 @@ Rectangle {
         __private.points = JSON.parse(strPoints);
         __private.currentLayerIndex = 0;
         __private.currentPointIndex = 0;
-        drawTimer.start(); // ¿ªÊ¼»æÖÆ¶¯»­
+        drawTimer.start(); // å¼€å§‹ç»˜åˆ¶åŠ¨ç”»
     }
 
     Label {
@@ -72,7 +72,7 @@ Rectangle {
             ctx.clearRect(0, 0, width, height)
             ctx.fillStyle = "black"
             
-            // °´µ±Ç°Ë÷ÒıÖğ²ãÖğµã»æÖÆ
+            // æŒ‰å½“å‰ç´¢å¼•é€å±‚é€ç‚¹ç»˜åˆ¶
             for (var i = 0; i <= __private.currentLayerIndex; ++i) { // automata layers
                 var maxPointIndex = (i < __private.currentLayerIndex) ? __private.points[i].length : __private.currentPointIndex;
                 for (var j = 0; j < maxPointIndex; ++j) { // single automata

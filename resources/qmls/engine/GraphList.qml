@@ -1,4 +1,4 @@
-import QtQuick 2.15
+ï»¿import QtQuick 2.15
 import QtQuick.Controls 2.15
 
 Rectangle {
@@ -17,7 +17,7 @@ Rectangle {
         clip: true
         delegate: Rectangle {
             width: 100
-            height: listView.height // Ê¹ÓÃ listView.height ¶ø²»ÊÇ parent.height
+            height: listView.height // ä½¿ç”¨ listView.height è€Œä¸æ˜¯ parent.height
             anchors.verticalCenter: parent.verticalCenter
             border.width: 1
             Text {
@@ -32,11 +32,11 @@ Rectangle {
 
     function addModel(modelName) {
         root.modelList.push(modelName);
-        listView.model = root.modelList; // ¸üĞÂ ListView µÄ model
+        listView.model = root.modelList; // æ›´æ–° ListView çš„ model
     }
 
     function cleanModel() {
         root.modelList = [];
-        listView.model = []; // ¸üĞÂ ListView µÄ model
+        listView.model = []; // æ›´æ–° ListView çš„ model
     }
 }
