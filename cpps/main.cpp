@@ -5,7 +5,6 @@
 #include <iostream>
 
 #include "RenderKernel.h"
-#include "XmlDataModel.h"
 #include "PixelSpace.h"
 
 int main(int argc, char *argv[])
