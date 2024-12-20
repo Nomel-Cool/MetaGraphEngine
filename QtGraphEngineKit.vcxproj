@@ -54,7 +54,6 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="resources\xmls\graphAutomata\point_automata.xml" />
-    <Xml Include="resources\xmls\componentsConfig\model_index.xml" />
     <Xml Include="resources\xmls\componentsConfig\tab_pages.xml" />
     <Xml Include="resources\xmls\graphAutomata\bezier_automata.xml" />
     <Xml Include="resources\xmls\graphAutomata\ellipse_automata.xml" />
@@ -75,7 +74,6 @@
     <ClInclude Include="headers\JSONParser.h" />
     <ClInclude Include="headers\Law.h" />
     <ClInclude Include="headers\MetaGraphAutomata.h" />
-    <ClInclude Include="headers\IndexBarModel.h" />
     <QtMoc Include="headers\PixelSpace.h" />
     <ClInclude Include="headers\mysql.h" />
     <ClInclude Include="headers\mysqld_error.h" />
