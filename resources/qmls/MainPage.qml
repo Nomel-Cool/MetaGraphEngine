@@ -17,7 +17,7 @@ ApplicationWindow {
     maximumWidth: 800
     maximumHeight: 600
 
-    QGraphFactory{id: graphFactoryImp}
+    QGraphFactory{id: graphFactoryImp} /* This god damn thing has the singleton-object contained, so it can just be clarified once. */
     QGraphStudio{id: graphStudio}
     
     AutomataInventory {
@@ -68,6 +68,17 @@ ApplicationWindow {
             if(dynamicTabBar.pageIndex === 1) {
                 graph_list.addModel(selectedItem); // 把选中的模型名存放到GraphList中
             }
+        }
+        Connections {
+            target: graphFactoryImp
+            onUpdate4NameList: {
+                var nameList = graphFactoryImp.Request4ModelNameList();
+                indexBar.updateModel(nameList);
+            }
+        }
+        Component.onCompleted: {
+            var nameList = graphFactoryImp.Request4ModelNameList();
+            indexBar.updateModel(nameList);
         }
     }
 

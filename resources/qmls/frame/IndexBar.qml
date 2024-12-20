@@ -39,26 +39,8 @@ Item {
     signal previewItemSelected(string selectedItem)
     signal engineItemSelected(string selectedItem)
 
-    QIndexBarFactory {
-        id: indexBarFactoryImpl
-    }
-
     ListModel {
         id: wordModel
-    }
-
-    Component.onCompleted: {
-        for (var i = 0; i < 26; i++)
-            wordModel.append({ letter: String.fromCharCode(65 + i), words: [] });
-        var modelNameList = indexBarFactoryImpl.Request4ModelName();
-        for (var j = 0; j < modelNameList.length; ++j) { 
-            var modelName = modelNameList[j];
-            var firstLetter = modelName.charAt(0).toUpperCase(); 
-            var index = firstLetter.charCodeAt(0) - 65; 
-            if (index >= 0 && index < 26)
-                wordModel.get(index).words.append({ showText: modelName }); // That is so fucking important to use the attribute name "showText"!!!
-            // 如果需要动态更新视图，似乎需要对model用到它的set方法强制更新到视图
-        }
     }
 
     ListView {
@@ -175,37 +157,50 @@ Item {
         dataItem.words.append({ showText: word });
         console.log("Updated words for letter", dataItem.letter, ":", dataItem.words);
     }
-function delItem(selectedItem) {
-    if (!selectedItem || selectedItem.length === 0) {
-        console.log("Empty selectedItem");
-        return;
+    function delItem(selectedItem) {
+        if (!selectedItem || selectedItem.length === 0) {
+            console.log("Empty selectedItem");
+            return;
+        }
+
+        var firstLetter = selectedItem[0].toUpperCase();
+        var index = firstLetter.charCodeAt(0) - 65;
+
+        if (index < 0 || index > 25) {
+            console.log("Invalid selectedItem");
+            return;
+        }
+
+        var dataItem = wordModel.get(index);
+
+        if (!dataItem.words) {
+            console.error("words is undefined for letter", dataItem.letter);
+            return;
+        }
+
+        for (var i = 0; i < dataItem.words.count; i++) {
+            if (dataItem.words.get(i).showText === selectedItem) {
+                dataItem.words.remove(i, 1);
+                console.log("Deleted item:", selectedItem);
+                break;
+            }
+        }
+
+        // 强制更新布局
+        listView.forceLayout();
     }
-
-    var firstLetter = selectedItem[0].toUpperCase();
-    var index = firstLetter.charCodeAt(0) - 65;
-
-    if (index < 0 || index > 25) {
-        console.log("Invalid selectedItem");
-        return;
-    }
-
-    var dataItem = wordModel.get(index);
-
-    if (!dataItem.words) {
-        console.error("words is undefined for letter", dataItem.letter);
-        return;
-    }
-
-    for (var i = 0; i < dataItem.words.count; i++) {
-        if (dataItem.words.get(i).showText === selectedItem) {
-            dataItem.words.remove(i, 1);
-            console.log("Deleted item:", selectedItem);
-            break;
+    function updateModel(nameList) {
+        wordModel.clear();
+        for (var i = 0; i < 26; i++)
+            wordModel.append({ letter: String.fromCharCode(65 + i), words: [] });
+        var modelNameList = nameList;
+        for (var j = 0; j < modelNameList.length; ++j) { 
+            var modelName = modelNameList[j];
+            var firstLetter = modelName.charAt(0).toUpperCase(); 
+            var index = firstLetter.charCodeAt(0) - 65; 
+            if (index >= 0 && index < 26)
+                wordModel.get(index).words.append({ showText: modelName }); // That is so fucking important to use the attribute name "showText"!!!
+            // 如果需要动态更新视图，似乎需要对model用到它的set方法强制更新到视图
         }
     }
-
-    // 强制更新布局
-    listView.forceLayout();
-}
-
 }
