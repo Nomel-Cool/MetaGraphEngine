@@ -19,8 +19,6 @@ QString GraphFactory::Request4Model(const QString& model_name)
          GraphModel graph_model;
          std::string automata_xml_path = database_manager.QueryFilePathByModelName(model_name.toStdString());
          /*std::string automata_xml_path = "./resources/xmls/graphAutomata/bezier_automata.xml";*/
-         if (automata_xml_path.empty()) // 若数据库中没有蓝图文件的位置，则尝试重建它
-             automata_xml_path = database_manager.RebuildXmlFileByModelName(model_name.toStdString());
          auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
          bool trans_result = file_manager.TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
          if(trans_result)
@@ -32,11 +30,25 @@ QString GraphFactory::Request4Model(const QString& model_name)
              redis_client.Set(model_name.toStdString(), str_points_list);
              return QString(str_points_list.c_str());
          }
-         else // 否则重建失败，该模型不存在
+         else // 若数据库中没有蓝图文件无效，则尝试重建它
          {
-             std::cerr << "Convert XML to Class Failed, Abort calling generating function." << std::endl;
-             return "";
+             if (automata_xml_path.empty()) 
+                 automata_xml_path = database_manager.RebuildXmlFileByModelName(model_name.toStdString());
+             auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
+             bool trans_result = file_manager.TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
+             if (trans_result)
+             {
+                 std::string str_points_list = "[";
+                 for (const SingleAutomata& sa : graph_model.automatas)
+                     str_points_list += render_cu.GetFunctor(sa.func_name)(sa) + ",";
+                 str_points_list.replace(str_points_list.end() - 1, str_points_list.end(), "]");
+                 redis_client.Set(model_name.toStdString(), str_points_list);
+                 return QString(str_points_list.c_str());
+             }
          }
+         // 重建失败，则认为该模型损坏，从图元索引中删除它
+         std::cerr << "Convert XML to Class Failed, Abort calling generating function." << std::endl;
+         return "";
     }
     return QString(model_data.c_str());
 }
@@ -87,6 +99,7 @@ void GraphFactory::Registry4Model(const QString& model_name, const QString& str_
         }
         for (int j = 0; j < raw_model_data[i]["singleAutomata"].size(); ++j)
         {
+            graph_model.automatas[i].id = std::to_string(i + 1);
             if (raw_model_data[i]["singleAutomata"][j]["type"] == "init")
                 graph_model.automatas[i].init_status = raw_model_data[i]["singleAutomata"][j]["init_status"];
             if (raw_model_data[i]["singleAutomata"][j]["type"] == "transfer")
@@ -151,8 +164,6 @@ ModelGenerator<SingleAutomata> GraphFactory::OfferDynamicModel(const QString& mo
     GraphModel graph_model;
     //std::string automata_xml_path = "./resources/xmls/graphAutomata/point_automata.xml";
     std::string automata_xml_path = database_manager.QueryFilePathByModelName(model_name.toStdString());
-    if (automata_xml_path.empty())
-        automata_xml_path = database_manager.RebuildXmlFileByModelName(model_name.toStdString());
     auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
     bool trans_result = file_manager.TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
     if (trans_result)
@@ -165,6 +176,23 @@ ModelGenerator<SingleAutomata> GraphFactory::OfferDynamicModel(const QString& mo
                 co_yield gen.GetValue();  // 将值传递给外层生成器
             }
             while (gen.Resume());
+        }
+    }
+    else
+    {
+        automata_xml_path = database_manager.RebuildXmlFileByModelName(model_name.toStdString());
+        auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
+        bool trans_result = file_manager.TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
+        if (trans_result)
+        {
+            for (SingleAutomata& sa : graph_model.automatas)
+            {
+                auto gen = render_cu.GetCoFunctor("Co" + sa.func_name)(sa);
+                do
+                {
+                    co_yield gen.GetValue();  // 将值传递给外层生成器
+                } while (gen.Resume());
+            }
         }
     }
     co_return;
@@ -281,33 +309,50 @@ bool GraphFactory::Depart(tinyxml2::XMLDocument& doc, GraphModel& graph_model)
             tinyxml2::XMLElement* automata = doc.NewElement("automata");
             automata->SetAttribute("id", automata_source.id.c_str());
 
+            // 自定义属性值转义函数
+            auto escapeAttribute = [](const std::string& input) -> std::string {
+                std::string escaped;
+                for (char c : input)
+                {
+                    switch (c)
+                    {
+                    case '\"': escaped += "\\\""; break; // 转义双引号
+                    case '\'': escaped += "\\\'"; break; // 转义单引号
+                    case '&': escaped += "&amp;"; break; // 转义 & 为 &amp;
+                    case '<': escaped += "&lt;"; break;  // 转义 < 为 &lt;
+                    case '>': escaped += "&gt;"; break;  // 转义 > 为 &gt;
+                    default: escaped += c; break;        // 其他字符不变
+                    }
+                }
+                return escaped;
+                };
+
+            // 设置子元素及其属性
             tinyxml2::XMLElement* initStatus = doc.NewElement("init");
-            initStatus->SetAttribute("init_status", automata_source.init_status.c_str());
+            initStatus->SetAttribute("init_status", escapeAttribute(automata_source.init_status).c_str());
 
             tinyxml2::XMLElement* transferFunction = doc.NewElement("transfer");
             transferFunction->SetAttribute("func_name", automata_source.func_name.c_str());
 
             tinyxml2::XMLElement* currentInput = doc.NewElement("input");
-            currentInput->SetAttribute("current_input", automata_source.current_input.c_str());
+            currentInput->SetAttribute("current_input", escapeAttribute(automata_source.current_input).c_str());
 
             tinyxml2::XMLElement* currentStatus = doc.NewElement("current");
-            currentStatus->SetAttribute("current_status", automata_source.current_status.c_str());
+            currentStatus->SetAttribute("current_status", escapeAttribute(automata_source.current_status).c_str());
 
             tinyxml2::XMLElement* terminateStatus = doc.NewElement("terminate");
-            terminateStatus->SetAttribute("terminate_status", automata_source.terminate_status.c_str());
+            terminateStatus->SetAttribute("terminate_status", escapeAttribute(automata_source.terminate_status).c_str());
 
             automata->InsertFirstChild(initStatus);
             automata->InsertAfterChild(initStatus, transferFunction);
             automata->InsertAfterChild(transferFunction, currentInput);
             automata->InsertAfterChild(currentInput, currentStatus);
             automata->InsertAfterChild(currentStatus, terminateStatus);
-            automata->InsertEndChild(terminateStatus);
             root->InsertEndChild(automata);
         }
 
-        // **关键步骤：将根元素设置为文档的根元素**
+        // 设置根元素
         doc.InsertFirstChild(root);
-
     }
     catch (std::exception& e)
     {
@@ -316,6 +361,8 @@ bool GraphFactory::Depart(tinyxml2::XMLDocument& doc, GraphModel& graph_model)
     }
     return true;
 }
+
+
 
 std::string RenderCU::BresenhamLine(const SingleAutomata& graph_model)
 {

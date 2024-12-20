@@ -51,7 +51,7 @@ std::string DatabaseManager::QueryFilePathByModelName(const std::string& model_n
     return file_path;
 }
 
-std::optional<std::vector<std::vector<std::string>>> DatabaseManager::QueryAutomataData(const std::string& model_name) 
+std::optional<std::vector<std::vector<std::string>>> DatabaseManager::QueryAutomataData(const std::string& model_name)
 {
     if (!mysql_db.IsConnected())
     {
@@ -59,9 +59,28 @@ std::optional<std::vector<std::vector<std::string>>> DatabaseManager::QueryAutom
         return std::nullopt;
     }
 
-    // 查询 Automata 表的所有字段
-    std::string query = "SELECT id, init_status, func_name, current_input, current_status, terminate_status FROM AutoMata WHERE model_name = '" + model_name + "'";
+    MYSQL* conn = mysql_db.GetConnection();
+    if (!conn)
+    {
+        std::cerr << "Failed to get MySQL connection!" << std::endl;
+        return std::nullopt;
+    }
 
+    // 使用 std::vector 替代 VLAs
+    size_t buffer_size = 2 * model_name.size() + 1;
+    std::vector<char> escaped_model_name(buffer_size);
+
+    // 转义字符串
+    mysql_real_escape_string(conn, escaped_model_name.data(), model_name.c_str(), model_name.size());
+
+    // 构建查询语句
+    std::string query =
+        "SELECT a.automata_id, a.init_status, a.transfer_func, a.current_input, a.current_status, a.terminate_status "
+        "FROM Automata AS a "
+        "JOIN ModelBluePrint AS m ON a.model_id = m.model_id "
+        "WHERE m.name = '" + std::string(escaped_model_name.data()) + "'";
+
+    // 执行查询
     auto result_opt = mysql_db.Query(query);
     if (!result_opt.has_value())
     {
@@ -78,18 +97,78 @@ std::optional<std::vector<std::vector<std::string>>> DatabaseManager::QueryAutom
     {
         std::vector<std::string> automata_row;
         for (int i = 0; i < mysql_num_fields(result); ++i)
+        {
             automata_row.emplace_back(row[i] ? row[i] : "");
+        }
         rows.push_back(std::move(automata_row));
     }
 
+    // 释放查询结果
     mysql_free_result(result);
     return rows;
 }
 
+
 bool DatabaseManager::UpdateXmlPathInDatabase(const std::string& model_name, const std::string& xml_path)
 {
-    std::string update_query = "UPDATE ModelFilePath SET file_path = '" + xml_path + "' WHERE model_name = '" + model_name + "'";
-    return mysql_db.Execute(update_query);
+    if (!mysql_db.IsConnected())
+    {
+        std::cerr << "Database is not connected!" << std::endl;
+        return false;
+    }
+
+    MYSQL* conn = mysql_db.GetConnection();
+    if (!conn)
+    {
+        std::cerr << "Failed to get MySQL connection!" << std::endl;
+        return false;
+    }
+
+    // 动态分配缓冲区并转义 model_name 和 xml_path
+    std::vector<char> escaped_model_name(2 * model_name.size() + 1);
+    std::vector<char> escaped_xml_path(2 * xml_path.size() + 1);
+
+    mysql_real_escape_string(conn, escaped_model_name.data(), model_name.c_str(), model_name.size());
+    mysql_real_escape_string(conn, escaped_xml_path.data(), xml_path.c_str(), xml_path.size());
+
+    // 使用转义后的字符串构建查询
+    std::string update_query =
+        "UPDATE FilePath "
+        "SET file_path = '" + std::string(escaped_xml_path.data()) + "' "
+        "WHERE model_id = (SELECT model_id FROM ModelBluePrint WHERE name = '" + std::string(escaped_model_name.data()) + "')";
+
+    if (!mysql_db.Execute(update_query))
+    {
+        std::cerr << "Failed to update file path for model: " << model_name << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+
+
+
+#include <fstream>
+#include <filesystem>
+#include <iostream>
+#include <vector>
+#include <string>
+#include <optional>
+#include <algorithm>
+
+// 转义函数：将双引号（"）转义为反斜杠双引号（\"）
+std::string escapeJsonString(const std::string& input) {
+    std::string escaped;
+    for (char c : input) {
+        if (c == '\"') {
+            escaped += "\\\""; // 转义双引号
+        }
+        else {
+            escaped += c;
+        }
+    }
+    return escaped;
 }
 
 std::string DatabaseManager::RebuildXmlFileByModelName(const std::string& model_name)
@@ -104,11 +183,11 @@ std::string DatabaseManager::RebuildXmlFileByModelName(const std::string& model_
 
     // 2. 生成 XML 文件路径
     std::string file_name = model_name + "_Autogen.xml";
-    std::filesystem::path file_path = std::filesystem::current_path() / file_name;
+    std::filesystem::path file_path = std::filesystem::current_path() / "resources\\xmls\\graphAutomata" / file_name;
 
     // 3. 写入 XML 文件
     std::ofstream ofs(file_path);
-    if (!ofs.is_open()) 
+    if (!ofs.is_open())
     {
         std::cerr << "Failed to create XML file: " << file_path << std::endl;
         return "";
@@ -120,11 +199,12 @@ std::string DatabaseManager::RebuildXmlFileByModelName(const std::string& model_
     for (const auto& row : automata_data_opt.value())
     {
         ofs << "  <automata id=\"" << row[0] << "\">\n";
-        ofs << "    <init init_status='" << row[1] << "'/>\n";
+        // 对 JSON 字符串进行转义
+        ofs << "    <init init_status='" << escapeJsonString(row[1]) << "'/>\n";
         ofs << "    <transfer func_name=\"" << row[2] << "\"/>\n";
-        ofs << "    <input current_input='" << row[3] << "'/>\n";
-        ofs << "    <current current_status='" << row[4] << "'/>\n";
-        ofs << "    <terminate terminate_status='" << row[5] << "'/>\n";
+        ofs << "    <input current_input='" << escapeJsonString(row[3]) << "'/>\n";
+        ofs << "    <current current_status='" << escapeJsonString(row[4]) << "'/>\n";
+        ofs << "    <terminate terminate_status='" << escapeJsonString(row[5]) << "'/>\n";
         ofs << "  </automata>\n";
     }
 
@@ -141,6 +221,7 @@ std::string DatabaseManager::RebuildXmlFileByModelName(const std::string& model_
     // 5. 返回生成的 XML 文件路径
     return file_path.string();
 }
+
 
 bool DatabaseManager::RegistryModelIndex2DB(const std::string& model_name, const std::string& file_path) {
     try {

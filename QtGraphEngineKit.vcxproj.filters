@@ -67,6 +67,7 @@
     <None Include="resources\qmls\designer\AutomataInventory.qml">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="sqls\TruncateAll.sql" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpps\main.cpp">

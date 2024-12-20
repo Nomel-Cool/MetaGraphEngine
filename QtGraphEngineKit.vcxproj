@@ -33,6 +33,7 @@
     <None Include="sqls\Automata.sql" />
     <None Include="sqls\FilePath.sql" />
     <None Include="sqls\ModelBluePrint.sql" />
+    <None Include="sqls\TruncateAll.sql" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpps\DataBaseManager.cpp" />
