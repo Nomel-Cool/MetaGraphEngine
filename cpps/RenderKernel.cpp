@@ -41,6 +41,111 @@ QString GraphFactory::Request4Model(const QString& model_name)
     return QString(model_data.c_str());
 }
 
+void GraphFactory::Registry4Model(const QString& model_name, const QString& str_model_data)
+{
+    // 1. 首先把json数据转换为一个类
+    GraphModel graph_model;
+    graph_model.model_name = model_name.toStdString();
+    json raw_model_data;
+    if (!file_manager.TransStr2JsonObject(str_model_data.toStdString(), raw_model_data))
+    {
+        std::cerr << "Registration Failed: The jsonization of " << str_model_data.toStdString() << " is invalid." << std::endl;
+        return;
+    }
+    // [
+    //     { "singleAutomata":
+    //       [
+    //         {"type":"init", "init_status" : ""},
+    //         { "type":"transfer","func_name" : "" },
+    //         { "type":"input","current_input" : "" },
+    //         { "type":"current","current_status" : "" },
+    //         { "type":"terminate","terminate_status" : "" }
+    //      ]
+    //     },
+    //     { "singleAutomata":
+    //       [
+    //         {"type":"init","init_status" : ""},
+    //         {"type":"transfer","func_name" : ""},
+    //         {"type":"input","current_input" : ""},
+    //         {"type":"current","current_status" : ""},
+    //         {"type":"terminate","terminate_status" : ""}
+    //      ] 
+    //    }
+    // ]
+    if (!raw_model_data.is_array())
+    {
+        std::cerr << "Expected " << str_model_data.toStdString() << " as a array." << std::endl;
+        return;
+    }
+    for (int i = 0; i < raw_model_data.size(); ++i)
+    {
+        graph_model.automatas.emplace_back(SingleAutomata());
+        if (!raw_model_data[i]["singleAutomata"].is_array())
+        {
+            std::cerr << "Expected " << raw_model_data[i]["singleAutomata"] << " as a array." << std::endl;
+            return;
+        }
+        for (int j = 0; j < raw_model_data[i]["singleAutomata"].size(); ++j)
+        {
+            if (raw_model_data[i]["singleAutomata"][j]["type"] == "init")
+                graph_model.automatas[i].init_status = raw_model_data[i]["singleAutomata"][j]["init_status"];
+            if (raw_model_data[i]["singleAutomata"][j]["type"] == "transfer")
+                graph_model.automatas[i].func_name = raw_model_data[i]["singleAutomata"][j]["func_name"];
+            if (raw_model_data[i]["singleAutomata"][j]["type"] == "input")
+                graph_model.automatas[i].current_input = raw_model_data[i]["singleAutomata"][j]["current_input"];
+            if (raw_model_data[i]["singleAutomata"][j]["type"] == "current")
+                graph_model.automatas[i].current_status = raw_model_data[i]["singleAutomata"][j]["current_status"];
+            if (raw_model_data[i]["singleAutomata"][j]["type"] == "terminate")
+                graph_model.automatas[i].terminate_status = raw_model_data[i]["singleAutomata"][j]["terminate_status"];
+        }
+    }
+    //2. 把装填好的类写入文件
+    std::string default_model_path = "./resources/xmls/graphAutomata/" + model_name.toStdString() + ".xml";
+    auto bound_func = std::bind(&GraphFactory::Depart, this, std::placeholders::_1, std::placeholders::_2);
+    bool file_trans_result = file_manager.TransClass2Xml<GraphModel>(graph_model, default_model_path, bound_func);
+    if (!file_trans_result)
+    {
+        std::cerr << "Failed to write class to XML file: " << default_model_path << std::endl;
+        return;
+    }
+
+    //3. 把模型名与文件路径写进数据库
+    bool registration_result = database_manager.RegistryModelIndex2DB(model_name.toStdString(), default_model_path);
+    if (!registration_result)
+    {
+        std::cerr << "Failed to insert model NAME into database.";
+        return;
+    }
+
+    //4. 把模型写入自动机数据库表
+    bool record_result = database_manager.RecordModelPieces2DB(graph_model);
+    if (!record_result)
+    {
+        std::cerr << "Failed to insert model DATA into database.";
+        return;
+    }
+
+    //5.发送信号更新视图索引
+    emit update4NameList();
+}
+
+QStringList GraphFactory::Request4ModelNameList() 
+{
+    QStringList modelNames;
+
+    try {
+        auto name_vec = database_manager.GetModelNameList();
+        for (const auto& model_name : name_vec)
+            modelNames.emplaceBack(QString::fromStdString(model_name));
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Exception occurred:" << e.what() << std::endl;
+    }
+
+    return modelNames;
+}
+
+
 ModelGenerator<SingleAutomata> GraphFactory::OfferDynamicModel(const QString& model_name)
 {
     GraphModel graph_model;
@@ -162,7 +267,7 @@ bool GraphFactory::FillUp(const std::string& json_string, GraphModel& graph_mode
     return true;
 }
 
-bool GraphFactory::Depart(GraphModel& graph_model, tinyxml2::XMLDocument& doc)
+bool GraphFactory::Depart(tinyxml2::XMLDocument& doc, GraphModel& graph_model)
 {
     try
     {

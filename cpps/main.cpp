@@ -19,7 +19,6 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
 
     qmlRegisterType<GraphFactory>("CustomModules", 1, 0, "QGraphFactory");
-    qmlRegisterType<XmlDataModelFactory>("CustomModules", 1, 0, "QIndexBarFactory");
     qmlRegisterType<GraphStudio>("CustomModules", 1, 0, "QGraphStudio");
 
     engine.load(QUrl(QStringLiteral(u"qrc:resources/qmls/MainPage.qml")));
