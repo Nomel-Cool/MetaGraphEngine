@@ -6,6 +6,5 @@
         <file>xmls/graphAutomata/ellipse_automata.xml</file>
         <file>xmls/graphAutomata/point_automata.xml</file>
         <file>xmls/graphAutomata/triangle_automata.xml</file>
-        <file>xmls/componentsConfig/model_index.xml</file>
     </qresource>
 </RCC>
