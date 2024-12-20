@@ -22,8 +22,9 @@ ApplicationWindow {
     
     AutomataInventory {
         id: automataInventory
-        onDeleverModelData: (data)=>{
-            console.log("Deliverd data: ", data);
+        onDeleverModelData: (modelName, data)=>{
+            console.log("Deliverd data: ", modelName + " " + data);
+            graphFactoryImp.Registry4Model(modelName, data);
         }
     }
 

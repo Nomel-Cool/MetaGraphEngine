@@ -22,7 +22,7 @@ ApplicationWindow {
     property string modelName: ""
 
     signal closeSavePage();
-    signal deleverModelData(string data);
+    signal deleverModelData(string modelName, string data);
 
     ScrollView {
         anchors.fill: parent
@@ -115,7 +115,7 @@ ApplicationWindow {
             Button {
                 text: qsTr("提交")
                 onClicked: {
-                    deleverModelData(JSON.stringify(automataChildren));
+                    deleverModelData(root.modelName, JSON.stringify(automataChildren));
                     resetCustomAutomata();
                     root.close();
                 }
