@@ -78,6 +78,7 @@ Item {
                             previewItemSelected(currentText);
                         } 
                         else if (mouse.button === Qt.LeftButton) { 
+                            comboBox.currentIndex = index; 
                             engineItemSelected(currentText);
                         } 
                     }
