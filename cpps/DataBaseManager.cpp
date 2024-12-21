@@ -3,9 +3,10 @@
 DatabaseManager::DatabaseManager()
 {
     // 个人能力精力所限，没加入任何数据库连接加密过程
-    mysql_db.Init("localhost", "root", "123456", "meta_graph_model");
     if (mysql_db.IsConnected())
         std::cout << "The database has connected." << std::endl;
+    else
+        mysql_db.Init("localhost", "root", "123456", "meta_graph_model");
 }
 
 std::string DatabaseManager::QueryFilePathByModelName(const std::string& model_name) 
