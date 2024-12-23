@@ -7,13 +7,14 @@
 #include <tuple>
 #include "json.hpp"
 
+#include "PixelType.h"
+
 using json = nlohmann::json;
-using AutomataElements = std::tuple<json, json, json, json>;
-using PixelElements = std::tuple<float, float, float, float, float, float>;
+
 class Gravity
 {
 public:
-    static PixelElements Apply(AutomataElements& automata_param);
+    static void Apply(std::shared_ptr<OnePixel> p_one_pixel);
 };
 
 #endif // !LAW_H

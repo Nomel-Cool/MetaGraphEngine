@@ -12,10 +12,12 @@
 #include <type_traits>
 #include <tuple>
 #include <unordered_map>
+
+#include "ThreadPool.h"
 #include "RenderKernel.h"
 #include "Law.h"
-#include "ThreadPool.h"
-
+#include "PixelType.h"
+using AutomataElements = std::tuple<json, json, json, json>;
 /// <summary>
 /// 负责协调各个图元进入和退出舞台等候厅
 /// </summary>
@@ -35,26 +37,6 @@ public:
 private:
 	std::vector<std::shared_ptr<ModelGenerator<SingleAutomata>>> graph_series_cache;
 	std::mutex mtx4co;
-};
-
-/// <summary>
-/// 像素基类，负责表示最基本的坐标信息，以及与舞台相关的操作
-/// </summary>
-class OnePixel
-{
-public:
-	OnePixel() = default;
-	OnePixel(const OnePixel& other) = default;
-	OnePixel& operator=(OnePixel& other); // **重要** 移交像素所有权时会触发赋值构造，每个子类都得自己实现一个。
-	OnePixel& operator=(PixelElements& other);
-	// 多个子类需要多个重载版本的拷贝构造
-	bool render_flag = false;
-	bool activate_flag = false;
-	std::size_t x = 0, y = 0;
-	float r = 255.0f, g = 255.0f, b = 255.0f, a = 0.0f;
-	uint64_t cur_frame_id = 0;
-	std::vector<uint64_t> graph_ids;
-	// May be more attributes in a pixel
 };
 
 /// <summary>
@@ -93,7 +75,7 @@ public:
 	/// <param name="coordinate_begin"></param>
 	/// <param name="coordinate_end"></param>
 	/// <returns></returns>
-	bool TransferPixelFrom(const std::pair<std::size_t, std::size_t>& coordinate_begin, OnePixel& dest_pixel);
+	bool TransferPixelFrom(const std::pair<std::size_t, std::size_t>& coordinate_begin);
 	
 	void PingStage(const std::size_t& x, const std::size_t& y, const std::size_t& graph_pos_in_list);
 
@@ -126,6 +108,7 @@ public:
 	Q_INVOKABLE void RoleEmplacement(const QStringList& model_names);
 	Q_INVOKABLE QString Display();
 	Q_INVOKABLE void Launch();
+	Q_INVOKABLE void Stop();
 protected:
 	void StandBy();
 	void Interact();
@@ -146,6 +129,7 @@ private:
 	ShabbyThreadPool& pool = ShabbyThreadPool::GetInstance();
 	std::shared_ptr<Law> sp_law; // 由于Law和GraphStudio循环调用了，这里前置声明了Law，使用指针延迟初始化，度过编译期的检查（必须用指针！！！）
 	CompressedFrame film;
+	std::shared_ptr<QTimer> sp_timer;
 };
 
 /// <summary>
@@ -160,24 +144,20 @@ public:
 		try
 		{
 			const auto& pixels = p_studio->sp_hall->GetStage();
-
+			std::vector<std::pair<std::size_t, std::size_t>> rendered_pixels;
 			for (const auto& pixel : pixels)
 			{
-				std::shared_ptr<OnePixel> pixel_object = pixel.second;
-				if (pixel_object->render_flag != true)
+				if (pixel.second->render_flag != true)
 					continue;
-				for (const auto& indice : pixel.second->graph_ids)
-				{
-					OnePixel dest_pixel;
-					AutomataElements automata_param = p_studio->GetAutomataInfoAt(indice);
-					PixelElements target_pixel = ATTRIBUTE::Apply(automata_param);
-					p_studio->SetAutomataInfoAt(indice, automata_param);
-					dest_pixel = target_pixel;
-					/****************************** 执行移交手续 *****************************************/
-					bool displace_result = p_studio->sp_hall->TransferPixelFrom(pixel.first, dest_pixel);
-					if (!displace_result)
-						std::cerr << "The displacement is out of range." << std::endl;
-				}
+				ATTRIBUTE::Apply(pixel.second);
+				rendered_pixels.emplace_back(pixel.first);
+			}
+			/****************************** 执行移交手续 *****************************************/
+			for (const auto& pos : rendered_pixels)
+			{
+				bool displace_result = p_studio->sp_hall->TransferPixelFrom(pos);
+				if (!displace_result)
+					std::cerr << "The displacement is out of range." << std::endl;
 			}
 		}
 		catch (const nlohmann::json::type_error& e)

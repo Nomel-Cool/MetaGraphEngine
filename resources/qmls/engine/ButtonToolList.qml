@@ -8,10 +8,13 @@ Rectangle {
     signal listCompiled()
     signal listLaunched()
     signal listPlayed()
+    signal listStopped()
+
     id: root
     width: parent.width
     height: parent.height
     border.width: 1
+
     ColumnLayout {
         id: buttonColumn
         width: 100
@@ -64,6 +67,18 @@ Rectangle {
             onClicked: {
                 listCleared();
                 console.log("GraphList cleared");
+            }
+        }
+
+        Button {
+            id: stopButton
+            width: 100
+            height: 50
+            text: "Stop"
+            Layout.alignment: Qt.AlignHCenter
+            onClicked: {
+                listStopped()
+                console.log("GraphList stopped");
             }
         }
     }

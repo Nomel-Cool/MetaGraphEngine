@@ -91,6 +91,7 @@
     <ClInclude Include="headers\my_command.h" />
     <ClInclude Include="headers\my_compress.h" />
     <ClInclude Include="headers\my_list.h" />
+    <ClInclude Include="headers\PixelType.h" />
     <ClInclude Include="headers\read.h" />
     <ClInclude Include="headers\RedisClient.h" />
     <ClInclude Include="headers\RenderCU.h" />

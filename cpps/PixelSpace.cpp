@@ -82,11 +82,13 @@ bool Hall::Disable(const std::pair<std::size_t, std::size_t>& coordinate)
     return true;
 }
 
-bool Hall::TransferPixelFrom(const std::pair<std::size_t, std::size_t>& coordinate_begin, OnePixel& dest_pixel)
+bool Hall::TransferPixelFrom(const std::pair<std::size_t, std::size_t>& coordinate_begin)
 {
     if (stage.find(coordinate_begin) == stage.end())
         return false;
+    OnePixel dest_pixel;
     dest_pixel = *stage[coordinate_begin]; // 显式使用拷贝赋值符，用于移交所有权相关字段
+    dest_pixel.cur_frame_id = GetCurrentFrameID(); // 移交后由于render_flag仍是true，需要更新为当前帧，才能被快照
     if (stage.find({dest_pixel.x, dest_pixel.y}) == stage.end())
         stage.insert(std::make_pair(std::make_pair(dest_pixel.x, dest_pixel.y), std::make_shared<OnePixel>(dest_pixel)));
     else
@@ -137,6 +139,7 @@ GraphStudio::GraphStudio(QObject* parent) : QObject(parent)
     sp_graph_agency = std::make_shared<GraphAgency>();
     sp_hall = std::make_shared<Hall>();
     sp_law = std::make_shared<Law>();
+    sp_timer = std::make_shared<QTimer>(this);
 }
 
 void GraphStudio::InitHall(const float& width, const float& height)
@@ -180,7 +183,15 @@ QString GraphStudio::Display()
     // 遍历 film 的数据并构建 frameMap
     for (const auto& pic : film.Fetch())
     {
-        frameMap[pic.cur_frame_id].push_back({ {"x", pic.x}, {"y", pic.y}, {"blockSize", sp_hall->GetBlockSize()}});
+        frameMap[pic.cur_frame_id].push_back({
+            {"id", pic.cur_frame_id},
+            {"x", pic.x}, 
+            {"y", pic.y},
+            {"r", pic.r},
+            {"g", pic.g},
+            {"b", pic.b}, 
+            {"blockSize", sp_hall->GetBlockSize()}
+            });
     }
 
     // 将 frameMap 中的每一组点添加到 frames 中
@@ -195,36 +206,47 @@ QString GraphStudio::Display()
 
 void GraphStudio::Launch()
 {
-    // 每1/30秒为一个时间片，在此时间片内需要做：
-    // 1.处理的主要对象：for (auto& model : sp_graph_agency->GetGraphs())
-    // 2.取model的CurrentStatus中的点，执行stage[{x,y}]的rule，可能会修改model的所有信息
-    // 3.由于每条线程负责一个图元，所以不必再开线程画图，每个图元都已经抵达了这里
-    // 4.遍历stage压缩渲染点信息
-    // 5.model执行resume
-    if (sp_graph_agency->Empty())
+    try
     {
-        std::cerr << "No actor..." << std::endl;
-        return;
-    }
-    auto render_loop = [this]()
+        // 每1/30秒为一个时间片，在此时间片内需要做：
+        // 1.处理的主要对象：for (auto& model : sp_graph_agency->GetGraphs())
+        // 2.取model的CurrentStatus中的点，执行stage[{x,y}]的rule，可能会修改model的所有信息
+        // 3.由于每条线程负责一个图元，所以不必再开线程画图，每个图元都已经抵达了这里
+        // 4.遍历stage压缩渲染点信息
+        // 5.model执行resume
+        if (sp_graph_agency->Empty())
         {
-            static bool running = true;
-            if (!running)
-                return;
-            running = false;
+            std::cerr << "No actor..." << std::endl;
+            return;
+        }
+        auto render_loop = [this]()
+            {
+                static bool running = true;
+                if (!running)
+                    return;
+                running = false;
 
-            /**************** 暂定流程四件套 ***************/
-            StandBy(); // 出牌定格
-            Interact(); // 变更手牌
-            UpdateGraphList(); // 收牌再来
-            SnapShot(); // 储为快照
+                /**************** 暂定流程四件套 ***************/
+                StandBy(); // 出牌定格
+                Interact(); // 变更手牌
+                UpdateGraphList(); // 收牌再来
+                SnapShot(); // 储为快照
 
-            running = true;
-        };
+                running = true;
+            };
+        connect(sp_timer.get(), &QTimer::timeout, render_loop);
+        sp_timer->start(1000.0f / sp_hall->GetCurrentFPS()); // FPS ≈ 120
+    }
+    catch (const std::logic_error)
+    {
+        Stop();
+    }
+}
 
-    QTimer* timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, render_loop);
-    timer->start(1000.0f / sp_hall->GetCurrentFPS()); // FPS ≈ 120
+void GraphStudio::Stop()
+{
+    sp_timer->stop();
+    disconnect(sp_timer.get(), &QTimer::timeout, nullptr, nullptr);
 }
 
 void GraphStudio::StandBy()
@@ -246,7 +268,7 @@ void GraphStudio::StandBy()
         catch (std::logic_error)
         {
             std::cerr << "The model is done, break out!!!" << std::endl;
-            return;
+            Stop();
         }
     }
 }
@@ -258,14 +280,38 @@ void GraphStudio::Interact()
 
 void GraphStudio::UpdateGraphList()
 {
-    for (const auto& pixel : sp_hall->GetStage())
+    try
     {
-        std::shared_ptr<OnePixel> specific_pixel = pixel.second;
-        if (!specific_pixel->activate_flag)
-            continue;
-        sp_hall->Disable(pixel.first); // 置activate_flag为false
+        for (const auto& pixel : sp_hall->GetStage())
+        {
+            if (pixel.second->activate_flag)
+            {
+                for (const auto& indice : pixel.second->graph_ids)
+                {
+                    AutomataElements automata_param = GetAutomataInfoAt(indice);
+                    // 此处可以手动更新当前渲染点的自动机信息
+                    // 我并没有做边界检测，可能是个空的json，而一旦读取空json就会抛出异常使得程序崩溃，所以请确保你的图元蓝图里确实具有该字段
+                    json initial_status, current_status, current_input, terminate_status;
+                    std::tie(initial_status, current_status, current_input, terminate_status) = automata_param;
+                    // 因为不清楚这个自动机有哪些字段，应当做函数指针传入来处理，这里先手动更新位置
+
+                    current_status["x"] = pixel.second->x;
+                    current_status["y"] = pixel.second->y;
+
+                    /*******************************************************************/
+                    automata_param = std::make_tuple(initial_status, current_status, current_input, terminate_status);
+                    SetAutomataInfoAt(indice, automata_param);
+                }
+                sp_hall->Disable(pixel.first); // 置activate_flag为false
+            }
+        }
+        sp_graph_agency->UpdateGraphs(); // 返回协程算法
     }
-    sp_graph_agency->UpdateGraphs(); // 返回协程算法
+    catch (std::logic_error)
+    {
+        std::cerr << "The model is done, break out!!!" << std::endl;
+        Stop();
+    }
 }
 
 void GraphStudio::SnapShot()
@@ -387,17 +433,5 @@ OnePixel& OnePixel::operator=(OnePixel& other)
         other.render_flag = false;
         other.activate_flag = false;
     }
-    return *this;
-}
-
-OnePixel& OnePixel::operator=(PixelElements& other)
-{
-    std::tie(x, y, r, g, b, a) = other;
-    this->x = x;
-    this->y = x;
-    this->r = r;
-    this->g = g;
-    this->b = b;
-    this->a = a;
     return *this;
 }

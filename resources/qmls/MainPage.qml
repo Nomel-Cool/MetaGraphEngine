@@ -150,6 +150,9 @@ ApplicationWindow {
             engineDesigner.drawnPoints = JSON.parse(str_points_data);
             engineDesigner.engineCore.requestPaint();
         }
+        onListStopped: {
+            graphStudio.Stop();
+        }
     }
 }
 
