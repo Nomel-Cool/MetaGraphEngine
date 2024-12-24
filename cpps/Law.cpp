@@ -1,9 +1,10 @@
 #include "Law.h"
-
+#include <cmath>
 static float t = 0.0f;
 void Gravity::Apply(std::shared_ptr<OnePixel> one_pixel)
 {
-    float x = 0, y = 0, R = 255.0f, G = 255.0f, B = 255.0f, A = 0.0;
-    // 简单地将像素y轴上移动 10 个像素
     one_pixel->y += 10;
+    one_pixel->r = std::fmod(one_pixel->r * 255.0 + 10.0f, 255.0f) / 255.0;
+    one_pixel->g = std::fmod(one_pixel->g * 255.0 + 10.0f, 255.0f) / 255.0;
+    one_pixel->b = std::fmod(one_pixel->b * 255.0 + 10.0f, 255.0f) / 255.0;
 }

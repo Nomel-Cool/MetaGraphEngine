@@ -77,7 +77,7 @@ public:
 	/// <returns></returns>
 	bool TransferPixelFrom(const std::pair<std::size_t, std::size_t>& coordinate_begin);
 	
-	void PingStage(const std::size_t& x, const std::size_t& y, const std::size_t& graph_pos_in_list);
+	void PingStage(const OnePixel& one_pixel, const std::size_t& graph_pos_in_list);
 
 	//bool SetRule(const std::size_t& x, const std::size_t& y, int pos = -1);
 	//void SetRule(std::function<void()> rule); // global lazzy setting

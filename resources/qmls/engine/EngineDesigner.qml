@@ -33,13 +33,11 @@ Rectangle {
                 var frame = drawnPoints[currentFrame];
                 console.log("Drawing frame:", currentFrame, "Points in frame:", frame.length);
 
-                // 设置绘图样式
-                ctx.fillStyle = "black";
-
                 // 绘制当前帧的所有点
                 for (var i = 0; i < frame.length; ++i) {
                     var point = frame[i];
                     //ctx.fillRect(point.x, point.y, point.blockSize, point.blockSize);
+                    ctx.fillStyle = Qt.rgba(point.r, point.g, point.b, point.a); // 设置绘图样式
                     ctx.fillRect(point.x, point.y, 5, 5);
                 }
             }

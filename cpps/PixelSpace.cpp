@@ -96,16 +96,20 @@ bool Hall::TransferPixelFrom(const std::pair<std::size_t, std::size_t>& coordina
     return true;
 }
 
-void Hall::PingStage(const std::size_t& x, const std::size_t& y, const std::size_t& graph_pos_in_list)
+void Hall::PingStage(const OnePixel& ping_pixel, const std::size_t& graph_pos_in_list)
 {
-    auto key = std::make_pair(x, y);
+    auto key = std::make_pair(ping_pixel.x, ping_pixel.y);
     if (stage.find(key) != stage.end())
     {
         auto& pixel_ptr = stage[key];
         pixel_ptr->render_flag = true;
         pixel_ptr->activate_flag = true;
-        pixel_ptr->x = x;
-        pixel_ptr->y = y;
+        pixel_ptr->x = ping_pixel.x;
+        pixel_ptr->y = ping_pixel.y;
+        pixel_ptr->r = ping_pixel.r;
+        pixel_ptr->g = ping_pixel.g;
+        pixel_ptr->b = ping_pixel.b;
+        pixel_ptr->a = ping_pixel.a;
         pixel_ptr->cur_frame_id = frame_id;
         // 确保 graph_ids 中的元素唯一
         if (std::find(pixel_ptr->graph_ids.begin(), pixel_ptr->graph_ids.end(), graph_pos_in_list) == pixel_ptr->graph_ids.end())
@@ -117,8 +121,12 @@ void Hall::PingStage(const std::size_t& x, const std::size_t& y, const std::size
         OnePixel one_pixel;
         one_pixel.render_flag = true;
         one_pixel.activate_flag = true;
-        one_pixel.x = x;
-        one_pixel.y = y;
+        one_pixel.x = ping_pixel.x;
+        one_pixel.y = ping_pixel.y;
+        one_pixel.r = ping_pixel.r;
+        one_pixel.g = ping_pixel.g;
+        one_pixel.b = ping_pixel.b;
+        one_pixel.a = ping_pixel.a;
         one_pixel.cur_frame_id = frame_id;
         if (std::find(one_pixel.graph_ids.begin(), one_pixel.graph_ids.end(), graph_pos_in_list) == one_pixel.graph_ids.end())
             one_pixel.graph_ids.emplace_back(graph_pos_in_list);
@@ -190,6 +198,7 @@ QString GraphStudio::Display()
             {"r", pic.r},
             {"g", pic.g},
             {"b", pic.b}, 
+            {"a", pic.a}, 
             {"blockSize", sp_hall->GetBlockSize()}
             });
     }
@@ -263,7 +272,14 @@ void GraphStudio::StandBy()
                 std::cerr << "failed to parse json: " << str_cur_pos << std::endl;
                 return;
             }
-            sp_hall->PingStage(static_cast<std::size_t>(current_status["x"]), static_cast<std::size_t>(current_status["y"]), i);
+            OnePixel ping_pixel;
+            ping_pixel.x = current_status["x"];
+            ping_pixel.y = current_status["y"];
+            ping_pixel.r = current_status["r"];
+            ping_pixel.g = current_status["g"];
+            ping_pixel.b = current_status["b"];
+            ping_pixel.a = current_status["a"];
+            sp_hall->PingStage(ping_pixel, i);
         }
         catch (std::logic_error)
         {
@@ -297,6 +313,10 @@ void GraphStudio::UpdateGraphList()
 
                     current_status["x"] = pixel.second->x;
                     current_status["y"] = pixel.second->y;
+                    current_status["r"] = pixel.second->r;
+                    current_status["g"] = pixel.second->g;
+                    current_status["b"] = pixel.second->b;
+                    current_status["a"] = pixel.second->a;
 
                     /*******************************************************************/
                     automata_param = std::make_tuple(initial_status, current_status, current_input, terminate_status);
@@ -423,6 +443,10 @@ OnePixel& OnePixel::operator=(OnePixel& other)
     {
         x = other.x;
         y = other.y;
+        r = other.r;
+        g = other.g;
+        b = other.b;
+        a = other.a;
         activate_flag = other.activate_flag;
         render_flag = other.render_flag;
         cur_frame_id = other.cur_frame_id;
