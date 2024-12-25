@@ -74,6 +74,14 @@ const std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>& 
     return stage;
 }
 
+std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>::iterator Hall::DeleteElementAt(const std::pair<std::size_t, std::size_t>& pos)
+{
+    auto it = stage.find(pos);
+    if (it != stage.end())
+        return stage.erase(it);
+    return stage.end();
+}
+
 bool Hall::Disable(const std::pair<std::size_t, std::size_t>& coordinate)
 {
     if (stage.find(coordinate) == stage.end())
@@ -240,6 +248,7 @@ void GraphStudio::Launch()
                 Interact(); // 变更手牌
                 UpdateGraphList(); // 收牌再来
                 SnapShot(); // 储为快照
+                TidyUp(); // 清理非渲染像素
 
                 running = true;
             };
@@ -344,6 +353,15 @@ void GraphStudio::SnapShot()
             film.Store(*specific_pixel);
     }
     sp_hall->NextFrame();
+}
+
+void GraphStudio::TidyUp()
+{
+    for (auto iter = sp_hall->GetStage().begin(); iter != sp_hall->GetStage().end();)
+        if (!iter->second->render_flag)
+            iter = sp_hall->DeleteElementAt(iter->first);
+        else
+            ++iter;
 }
 
 AutomataElements GraphStudio::GetAutomataInfoAt(std::size_t indice)

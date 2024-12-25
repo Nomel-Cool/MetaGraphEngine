@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QHash>
+#include <algorithm>
 #include <vector>
 #include <memory>
 #include <mutex>
@@ -66,6 +67,7 @@ public:
 	const uint64_t& GetCurrentFrameID() const;
 	const uint64_t& GetCurrentFPS() const;
 	const std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>& GetStage() const;
+	std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>::iterator DeleteElementAt(const std::pair<std::size_t, std::size_t>& pos);
 	bool Disable(const std::pair<std::size_t, std::size_t>& coordinate);
 
 	/// <summary>
@@ -114,6 +116,7 @@ protected:
 	void Interact();
 	void UpdateGraphList();
 	void SnapShot();
+	void TidyUp();
 
 private:
 	AutomataElements GetAutomataInfoAt(std::size_t indice);
