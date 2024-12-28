@@ -17,6 +17,7 @@
 #include "ThreadPool.h"
 #include "RenderKernel.h"
 #include "Law.h"
+#include "PhotoGrapher.h"
 #include "PixelType.h"
 #include "GLShader.h"
 
@@ -40,19 +41,6 @@ public:
 private:
 	std::vector<std::shared_ptr<ModelGenerator<SingleAutomata>>> graph_series_cache;
 	std::mutex mtx4co;
-};
-
-/// <summary>
-/// 压缩一帧的所有渲染信息
-/// </summary>
-class CompressedFrame
-{
-public:
-	void Store(const std::string film_name, std::vector<OnePixel>& pixels);
-	const std::vector<OnePixel>& Fetch(const std::string& film_name);
-private:
-	std::pair<float, float> start_pos;
-	std::map<std::string, std::vector<OnePixel>> frames;
 };
 
 /// <summary>
@@ -103,11 +91,10 @@ public:
 	explicit GraphStudio(QObject* parent = nullptr);
 	Q_INVOKABLE void InitHall(const float& width, const float& height);
 	Q_INVOKABLE void RoleEmplacement(const QStringList& model_names);
-	Q_INVOKABLE QString Display();
+	Q_INVOKABLE QString Display(const QString& film_name);
 	Q_INVOKABLE void Launch();
 	Q_INVOKABLE void Stop();
 	Q_INVOKABLE void CreateGLWindow();
-	Q_INVOKABLE void SetFilmName(const QString& cur_film_name);
 protected:
 	void StandBy();
 	void Interact();
@@ -124,11 +111,8 @@ private:
 	FileManager file_manager;
 	ShabbyThreadPool& pool = ShabbyThreadPool::GetInstance();
 	std::shared_ptr<Law> sp_law; // 由于Law和GraphStudio循环调用了，这里前置声明了Law，使用指针延迟初始化，度过编译期的检查（必须用指针！！！）
-	CompressedFrame film;
+	PhotoGrapher photo_grapher;
 	std::shared_ptr<QTimer> sp_timer;
-private:
-	std::string current_film_name = "";
-	std::vector<OnePixel> film_cache;
 };
 
 /// <summary>

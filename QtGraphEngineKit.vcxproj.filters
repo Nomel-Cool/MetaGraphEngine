@@ -97,6 +97,18 @@
     <ClCompile Include="cpps\RenderCU.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cpps\PixelType.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpps\GLShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpps\glad.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpps\PhotoGrapher.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="resources\img.qrc">
@@ -228,6 +240,12 @@
     <ClInclude Include="headers\PixelType.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="headers\GLShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\PhotoGrapher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="headers\RenderKernel.h">
@@ -251,5 +269,6 @@
     <Library Include="libs\ShabbyThreadPool.lib" />
     <Library Include="libs\libmysql.lib" />
     <Library Include="libs\ShabbyDataBase.lib" />
+    <Library Include="libs\glfw3.lib" />
   </ItemGroup>
 </Project>

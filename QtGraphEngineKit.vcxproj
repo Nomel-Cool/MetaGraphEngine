@@ -37,13 +37,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpps\DataBaseManager.cpp" />
+    <ClCompile Include="cpps\PhotoGrapher.cpp" />
+    <ClCompile Include="cpps\glad.c" />
     <ClCompile Include="cpps\main.cpp" />
     <ClCompile Include="cpps\MetaGraphAutomata.cpp" />
+    <ClCompile Include="cpps\PixelType.cpp" />
     <ClCompile Include="cpps\RenderCU.cpp" />
     <ClCompile Include="cpps\RenderKernel.cpp" />
     <ClCompile Include="cpps\XmlDataModel.cpp" />
     <ClCompile Include="cpps\PixelSpace.cpp" />
     <ClCompile Include="cpps\Law.cpp" />
+    <ClCompile Include="cpps\GLShader.cpp" />
     <ClCompile Include="headers\openssl\applink.c" />
   </ItemGroup>
   <ItemGroup>
@@ -71,6 +75,8 @@
     <ClInclude Include="headers\EventsQueue.h" />
     <ClInclude Include="headers\field_types.h" />
     <ClInclude Include="headers\FileManager.h" />
+    <ClInclude Include="headers\PhotoGrapher.h" />
+    <ClInclude Include="headers\GLShader.h" />
     <ClInclude Include="headers\hiredis.h" />
     <ClInclude Include="headers\json.hpp" />
     <ClInclude Include="headers\JSONParser.h" />
@@ -106,6 +112,7 @@
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
+    <Library Include="libs\glfw3.lib" />
     <Library Include="libs\hiredis.lib" />
     <Library Include="libs\libmysql.lib" />
     <Library Include="libs\ShabbyDataBase.lib" />

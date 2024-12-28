@@ -165,14 +165,14 @@ void GraphStudio::RoleEmplacement(const QStringList& model_names)
     }
 }
 
-QString GraphStudio::Display()
+QString GraphStudio::Display(const QString& film_name)
 {
     // 定义 JSON 对象和映射
     json frames;
     std::unordered_map<uint64_t, json> frameMap;
 
     // 遍历 film 的数据并构建 frameMap
-    auto vec_pics = film.Fetch(current_film_name);
+    auto vec_pics = photo_grapher.Fetch(film_name.toStdString());
     if (vec_pics.empty())
         return QString::fromStdString("{}");
 
@@ -204,11 +204,6 @@ void GraphStudio::CreateGLWindow()
 {
     GLWindow window(800, 600, "GLFW Window");
     window.MainLoop();
-}
-
-void GraphStudio::SetFilmName(const QString& cur_film_name)
-{
-    current_film_name = cur_film_name.toStdString();
 }
 
 void GraphStudio::Launch()
@@ -255,7 +250,7 @@ void GraphStudio::Stop()
 {
     sp_timer->stop();
     disconnect(sp_timer.get(), &QTimer::timeout, nullptr, nullptr);
-    film.Store(current_film_name, film_cache);
+    photo_grapher.Store();
 }
 
 void GraphStudio::StandBy()
@@ -343,7 +338,7 @@ void GraphStudio::SnapShot()
     {
         std::shared_ptr<OnePixel> specific_pixel = pixel.second;
         if (specific_pixel->cur_frame_id == cur_id && specific_pixel->render_flag)
-            film_cache.emplace_back(*specific_pixel);
+            photo_grapher.Filming(*specific_pixel);
     }
     sp_hall->NextFrame();
 }
@@ -412,23 +407,5 @@ void GraphStudio::SetAutomataInfoAt(std::size_t indice, const AutomataElements& 
         //std::cerr << "The model is done, break out!!!" << std::endl;
         return;
     }
-}
-
-void CompressedFrame::Store(const std::string film_name, std::vector<OnePixel>& pixels)
-{
-    if (film_name.empty())
-        return;
-    if (frames.find(film_name) == frames.end())
-        frames.insert(std::make_pair(film_name, pixels));
-    frames[film_name] = pixels;
-    pixels.clear();
-}
-
-const std::vector<OnePixel>& CompressedFrame::Fetch(const std::string& film_name)
-{
-    static const std::vector<OnePixel> empty_film;
-    if (film_name.empty() || frames.find(film_name) == frames.end())
-        return empty_film;
-    return frames[film_name];
 }
 
