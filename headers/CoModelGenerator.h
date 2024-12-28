@@ -121,6 +121,13 @@ public:
 		return !handle.done();
 	}
 
+	bool Done()
+	{
+		if (!handle)
+			return false;
+		return handle.done();
+	}
+
 private:
 	std::coroutine_handle<promise_type> handle;
 	ModelGenerator(const ModelGenerator&) = delete; // ½ûÖ¹¿½±´

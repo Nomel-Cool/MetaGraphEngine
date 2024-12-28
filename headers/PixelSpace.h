@@ -36,6 +36,7 @@ public:
 	void LoadGraphs(const QString& model_name);
 	void UpdateGraphs();
 	const std::vector<std::shared_ptr<ModelGenerator<SingleAutomata>>>& GetGraphs();
+	bool Inspect();
 	void CleanGraphCache();
 	bool Empty();
 private:
@@ -93,13 +94,14 @@ public:
 	Q_INVOKABLE void RoleEmplacement(const QStringList& model_names);
 	Q_INVOKABLE QString Display(const QString& film_name);
 	Q_INVOKABLE void Launch();
-	Q_INVOKABLE void Stop();
+	Q_INVOKABLE void Ceize();
 	Q_INVOKABLE void CreateGLWindow();
 protected:
 	void StandBy();
 	void Interact();
 	void UpdateGraphList();
 	void SnapShot();
+	void Stop();
 	void TidyUp();
 
 private:

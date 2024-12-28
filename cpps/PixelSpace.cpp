@@ -22,6 +22,14 @@ const std::vector<std::shared_ptr<ModelGenerator<SingleAutomata>>>& GraphAgency:
     return graph_series_cache;
 }
 
+bool GraphAgency::Inspect()
+{
+    bool check_result = true;
+    for (const auto& actor : graph_series_cache)
+        check_result &= actor->Done();
+    return check_result;
+}
+
 void GraphAgency::CleanGraphCache()
 {
     if(!graph_series_cache.empty())
@@ -246,8 +254,17 @@ void GraphStudio::Launch()
     }
 }
 
+void GraphStudio::Ceize()
+{
+    sp_timer->stop();
+    disconnect(sp_timer.get(), &QTimer::timeout, nullptr, nullptr);
+    photo_grapher.Store();
+}
+
 void GraphStudio::Stop()
 {
+    if (!sp_graph_agency->Inspect())
+        return;
     sp_timer->stop();
     disconnect(sp_timer.get(), &QTimer::timeout, nullptr, nullptr);
     photo_grapher.Store();
