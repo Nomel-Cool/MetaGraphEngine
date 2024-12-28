@@ -1,9 +1,0 @@
-<model name="DiagSegment">
-    <automata id="1">
-        <init init_status="{\&quot;x\&quot;:100,\&quot;y\&quot;:100,\&quot;r\&quot;:0,\&quot;g\&quot;:0,\&quot;b\&quot;:0,\&quot;a\&quot;:1.0,\&quot;blockSize\&quot;:2.0}"/>
-        <transfer func_name="BresenhamLine"/>
-        <input current_input="{}"/>
-        <current current_status="{}"/>
-        <terminate terminate_status="{\&quot;x\&quot;:0.1,\&quot;y\&quot;:0.1}"/>
-    </automata>
-</model>
