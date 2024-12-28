@@ -10,6 +10,7 @@ OnePixel& OnePixel::operator=(OnePixel& other)
         g = other.g;
         b = other.b;
         a = other.a;
+        block_size = other.block_size;
         activate_flag = other.activate_flag;
         render_flag = other.render_flag;
         cur_frame_id = other.cur_frame_id;

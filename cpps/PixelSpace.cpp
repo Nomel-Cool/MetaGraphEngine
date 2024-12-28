@@ -33,30 +33,20 @@ bool GraphAgency::Empty()
     return graph_series_cache.empty();
 }
 
-Hall::Hall(const std::size_t& stage_width, const std::size_t& stage_height)
+Hall::Hall(const float& stage_width, const float& stage_height)
 {
     this->stage_width = stage_width;
     this->stage_height = stage_height;
 }
 
-void Hall::Layout(const std::size_t& block_size)
-{
-    this->block_size = block_size;
-}
-
-const std::size_t& Hall::GetStageHeight() const
+const float& Hall::GetStageHeight() const
 {
     return stage_height;
 }
 
-const std::size_t& Hall::GetStageWidth() const
+const float& Hall::GetStageWidth() const
 {
     return stage_width;
-}
-
-const std::size_t& Hall::GetBlockSize() const
-{
-    return block_size;
 }
 
 const uint64_t& Hall::GetCurrentFrameID() const
@@ -118,6 +108,7 @@ void Hall::PingStage(const OnePixel& ping_pixel, const std::size_t& graph_pos_in
         pixel_ptr->g = ping_pixel.g;
         pixel_ptr->b = ping_pixel.b;
         pixel_ptr->a = ping_pixel.a;
+        pixel_ptr->block_size = ping_pixel.block_size;
         pixel_ptr->cur_frame_id = frame_id;
         // 确保 graph_ids 中的元素唯一
         if (std::find(pixel_ptr->graph_ids.begin(), pixel_ptr->graph_ids.end(), graph_pos_in_list) == pixel_ptr->graph_ids.end())
@@ -135,6 +126,7 @@ void Hall::PingStage(const OnePixel& ping_pixel, const std::size_t& graph_pos_in
         one_pixel.g = ping_pixel.g;
         one_pixel.b = ping_pixel.b;
         one_pixel.a = ping_pixel.a;
+        one_pixel.block_size = ping_pixel.block_size;
         one_pixel.cur_frame_id = frame_id;
         if (std::find(one_pixel.graph_ids.begin(), one_pixel.graph_ids.end(), graph_pos_in_list) == one_pixel.graph_ids.end())
             one_pixel.graph_ids.emplace_back(graph_pos_in_list);
@@ -164,23 +156,6 @@ void GraphStudio::InitHall(const float& width, const float& height)
     sp_hall = std::make_shared<Hall>(static_cast<std::size_t>(width), static_cast<std::size_t>(height));
 }
 
-void GraphStudio::LayoutHall(const std::size_t& scale_extension)
-{
-    // 获取窗口逻辑宽高
-    std::size_t logic_width = sp_hall->GetStageWidth();
-    std::size_t logic_height = sp_hall->GetStageHeight();
-
-    // 分别计算宽和高的所有因子
-    std::vector<std::size_t> factors_width = GetFactors(logic_width);
-    std::vector<std::size_t> factors_height = GetFactors(logic_height);
-
-    // 获取公共因子
-    std::vector<std::size_t> common_factors = GetCommonFactors(factors_width, factors_height);
-
-    // 方格数量随下标增长而增长
-    sp_hall->Layout(common_factors[scale_extension % common_factors.size()]);
-}
-
 void GraphStudio::RoleEmplacement(const QStringList& model_names)
 {
     for (const QString& model_name : model_names)
@@ -197,7 +172,11 @@ QString GraphStudio::Display()
     std::unordered_map<uint64_t, json> frameMap;
 
     // 遍历 film 的数据并构建 frameMap
-    for (const auto& pic : film.Fetch())
+    auto vec_pics = film.Fetch(current_film_name);
+    if (vec_pics.empty())
+        return QString::fromStdString("{}");
+
+    for (const auto& pic : vec_pics)
     {
         frameMap[pic.cur_frame_id].push_back({
             {"id", pic.cur_frame_id},
@@ -206,8 +185,8 @@ QString GraphStudio::Display()
             {"r", pic.r},
             {"g", pic.g},
             {"b", pic.b}, 
-            {"a", pic.a}, 
-            {"blockSize", sp_hall->GetBlockSize()}
+            {"a", pic.a},
+            {"s", pic.block_size}
             });
     }
 
@@ -219,6 +198,17 @@ QString GraphStudio::Display()
 
     // 将 frames 转换为 JSON 字符串并返回
     return QString::fromStdString(frames.dump());
+}
+
+void GraphStudio::CreateGLWindow()
+{
+    GLWindow window(800, 600, "GLFW Window");
+    window.MainLoop();
+}
+
+void GraphStudio::SetFilmName(const QString& cur_film_name)
+{
+    current_film_name = cur_film_name.toStdString();
 }
 
 void GraphStudio::Launch()
@@ -265,6 +255,7 @@ void GraphStudio::Stop()
 {
     sp_timer->stop();
     disconnect(sp_timer.get(), &QTimer::timeout, nullptr, nullptr);
+    film.Store(current_film_name, film_cache);
 }
 
 void GraphStudio::StandBy()
@@ -288,6 +279,7 @@ void GraphStudio::StandBy()
             ping_pixel.g = current_status["g"];
             ping_pixel.b = current_status["b"];
             ping_pixel.a = current_status["a"];
+            ping_pixel.block_size = current_status["blockSize"];
             sp_hall->PingStage(ping_pixel, i);
         }
         catch (std::logic_error)
@@ -326,6 +318,7 @@ void GraphStudio::UpdateGraphList()
                     current_status["g"] = pixel.second->g;
                     current_status["b"] = pixel.second->b;
                     current_status["a"] = pixel.second->a;
+                    current_status["blockSize"] = pixel.second->block_size;
 
                     /*******************************************************************/
                     automata_param = std::make_tuple(initial_status, current_status, current_input, terminate_status);
@@ -350,7 +343,7 @@ void GraphStudio::SnapShot()
     {
         std::shared_ptr<OnePixel> specific_pixel = pixel.second;
         if (specific_pixel->cur_frame_id == cur_id && specific_pixel->render_flag)
-            film.Store(*specific_pixel);
+            film_cache.emplace_back(*specific_pixel);
     }
     sp_hall->NextFrame();
 }
@@ -421,37 +414,21 @@ void GraphStudio::SetAutomataInfoAt(std::size_t indice, const AutomataElements& 
     }
 }
 
-std::vector<std::size_t> GraphStudio::GetFactors(std::size_t n)
+void CompressedFrame::Store(const std::string film_name, std::vector<OnePixel>& pixels)
 {
-    std::vector<std::size_t> factors;
-    for (std::size_t i = 1; i * i <= n; ++i) {
-        if (n % i == 0) {
-            factors.push_back(i);
-            if (i != n / i) {
-                factors.push_back(n / i);
-            }
-        }
-    }
-    std::sort(factors.begin(), factors.end());
-    return factors;
+    if (film_name.empty())
+        return;
+    if (frames.find(film_name) == frames.end())
+        frames.insert(std::make_pair(film_name, pixels));
+    frames[film_name] = pixels;
+    pixels.clear();
 }
 
-std::vector<std::size_t> GraphStudio::GetCommonFactors(const std::vector<std::size_t>& factors1, const std::vector<std::size_t>& factors2)
+const std::vector<OnePixel>& CompressedFrame::Fetch(const std::string& film_name)
 {
-    std::vector<std::size_t> common_factors;
-    std::set_intersection(factors1.begin(), factors1.end(),
-        factors2.begin(), factors2.end(),
-        std::back_inserter(common_factors));
-    return common_factors;
-}
-
-void CompressedFrame::Store(const OnePixel& one_pixel)
-{
-    frames.emplace_back(one_pixel);
-}
-
-const std::vector<OnePixel>& CompressedFrame::Fetch()
-{
-    return frames;
+    static const std::vector<OnePixel> empty_film;
+    if (film_name.empty() || frames.find(film_name) == frames.end())
+        return empty_film;
+    return frames[film_name];
 }
 

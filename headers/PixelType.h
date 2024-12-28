@@ -16,7 +16,7 @@ public:
 	bool render_flag = false;
 	bool activate_flag = false;
 	std::size_t x = 0, y = 0;
-	float r = 255.0f, g = 255.0f, b = 255.0f, a = 0.0f;
+	float r = 255.0f, g = 255.0f, b = 255.0f, a = 0.0f, block_size = 1.0f;
 	uint64_t cur_frame_id = 0;
 	std::vector<uint64_t> graph_ids;
 	// May be more attributes in a pixel

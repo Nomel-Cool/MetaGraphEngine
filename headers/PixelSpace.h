@@ -18,6 +18,8 @@
 #include "RenderKernel.h"
 #include "Law.h"
 #include "PixelType.h"
+#include "GLShader.h"
+
 using AutomataElements = std::tuple<json, json, json, json>;
 /// <summary>
 /// 负责协调各个图元进入和退出舞台等候厅
@@ -46,10 +48,11 @@ private:
 class CompressedFrame
 {
 public:
-	void Store(const OnePixel& one_pixel);
-	const std::vector<OnePixel>& Fetch();
+	void Store(const std::string film_name, std::vector<OnePixel>& pixels);
+	const std::vector<OnePixel>& Fetch(const std::string& film_name);
 private:
-	std::vector<OnePixel> frames;
+	std::pair<float, float> start_pos;
+	std::map<std::string, std::vector<OnePixel>> frames;
 };
 
 /// <summary>
@@ -59,11 +62,9 @@ class Hall
 {
 public:
 	Hall() = default;
-	Hall(const std::size_t& stage_width, const std::size_t& stage_height);
-	void Layout(const std::size_t& block_size);
-	const std::size_t& GetStageHeight() const;
-	const std::size_t& GetStageWidth() const;
-	const std::size_t& GetBlockSize() const;
+	Hall(const float& stage_width, const float& stage_height);
+	const float& GetStageHeight() const;
+	const float& GetStageWidth() const;
 	const uint64_t& GetCurrentFrameID() const;
 	const uint64_t& GetCurrentFPS() const;
 	const std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>& GetStage() const;
@@ -81,17 +82,12 @@ public:
 	
 	void PingStage(const OnePixel& one_pixel, const std::size_t& graph_pos_in_list);
 
-	//bool SetRule(const std::size_t& x, const std::size_t& y, int pos = -1);
-	//void SetRule(std::function<void()> rule); // global lazzy setting
-	//void SetRule(std::function<void()> set_routine, std::function<void()> rule); // routine
-	//void CleanSoft(); // turn the rendered pixels into not being. ** Call the QML function in Canvas will be fine.
-	//void CleanHard();// clear the rendered pixels along with its rules entiredly.
 	void NextFrame();
 
 protected:
 private:
 	std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>> stage;
-	std::size_t stage_width = 0, stage_height = 0, block_size = 1;
+	float stage_width = 0, stage_height = 0;
 	std::mutex stage_lock;
 	uint64_t frame_id = 1;
 	uint64_t FPS = 120;
@@ -106,11 +102,12 @@ class GraphStudio : public QObject
 public:
 	explicit GraphStudio(QObject* parent = nullptr);
 	Q_INVOKABLE void InitHall(const float& width, const float& height);
-	Q_INVOKABLE void LayoutHall(const std::size_t& scale_extension);
 	Q_INVOKABLE void RoleEmplacement(const QStringList& model_names);
 	Q_INVOKABLE QString Display();
 	Q_INVOKABLE void Launch();
 	Q_INVOKABLE void Stop();
+	Q_INVOKABLE void CreateGLWindow();
+	Q_INVOKABLE void SetFilmName(const QString& cur_film_name);
 protected:
 	void StandBy();
 	void Interact();
@@ -121,10 +118,6 @@ protected:
 private:
 	AutomataElements GetAutomataInfoAt(std::size_t indice);
 	void SetAutomataInfoAt(std::size_t indice, const AutomataElements& automata_status);
-	// 计算一个数的所有因子
-	std::vector<std::size_t> GetFactors(std::size_t n);
-	// 计算两个因子序列的交集
-	std::vector<std::size_t> GetCommonFactors(const std::vector<std::size_t>& factors1, const std::vector<std::size_t>& factors2);
 private:
 	std::shared_ptr<GraphAgency> sp_graph_agency;
 	std::shared_ptr<Hall> sp_hall;   
@@ -133,6 +126,9 @@ private:
 	std::shared_ptr<Law> sp_law; // 由于Law和GraphStudio循环调用了，这里前置声明了Law，使用指针延迟初始化，度过编译期的检查（必须用指针！！！）
 	CompressedFrame film;
 	std::shared_ptr<QTimer> sp_timer;
+private:
+	std::string current_film_name = "";
+	std::vector<OnePixel> film_cache;
 };
 
 /// <summary>

@@ -151,12 +151,14 @@ ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_m
         float init_g = init_status["g"];
         float init_b = init_status["b"];
         float init_a = init_status["a"];
+        float init_size = init_status["blockSize"];
         current_status["x"] = init_x;
         current_status["y"] = init_y;
         current_status["r"] = init_r;
         current_status["g"] = init_g;
         current_status["b"] = init_b;
         current_status["a"] = init_a;
+        current_status["blockSize"] = init_size;
         graph_model.current_status = current_status.dump();
     }
 

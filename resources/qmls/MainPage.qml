@@ -114,7 +114,6 @@ ApplicationWindow {
         anchors.left: buttonToolList.right
         Component.onCompleted: {
             graphStudio.InitHall(width, height);
-            graphStudio.LayoutHall(1); // **Test** 1会是方格最多的了，后续交给控件来调节
         }
     }
 

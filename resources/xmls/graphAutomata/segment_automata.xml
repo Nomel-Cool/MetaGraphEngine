@@ -9,7 +9,7 @@
 </model>
 <model name="DiagSegment">
 	<automata id="1">
-		<init init_status='{"x":100,"y":100,"r":0,"g":0,"b":0,"a":1.0}'/>
+		<init init_status='{"x":100,"y":100,"r":0,"g":0,"b":0,"a":1.0,"blockSize":2.0}'/>
 		<transfer func_name="BresenhamLine"/>
 		<input current_input='{}'/>
 		<current current_status='{}'/>

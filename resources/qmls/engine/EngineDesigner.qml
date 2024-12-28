@@ -38,7 +38,7 @@ Rectangle {
                     var point = frame[i];
                     //ctx.fillRect(point.x, point.y, point.blockSize, point.blockSize);
                     ctx.fillStyle = Qt.rgba(point.r, point.g, point.b, point.a); // 设置绘图样式
-                    ctx.fillRect(point.x, point.y, 5, 5);
+                    ctx.fillRect(point.x, point.y, point.s, point.s);
                 }
             }
         }
