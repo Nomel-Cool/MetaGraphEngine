@@ -20,7 +20,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
 find_package(Qt6 COMPONENTS Core Gui Qml Quick REQUIRED)
 
 # 使用 file(GLOB ...) 捕获所有源文件和头文件 以及 链接dlls和libs目录中的库文件
-file(GLOB SOURCES "cpps/*.cpp")
+file(GLOB SOURCES "cpps/*.c" "cpps/*.cpp")
 file(GLOB HEADERS "headers/*.h" "headers/*.hpp")
 # 值得注意的是这里千万不要去链接把dll当lib链接了（也就是不用去找dll的位置，只需要加载lib，对应就会找到dll了，亲测即使不同名也可以）
 file(GLOB LIB_FILES "${CMAKE_CURRENT_SOURCE_DIR}/libs/*.lib") 

@@ -161,7 +161,7 @@ GraphStudio::GraphStudio(QObject* parent) : QObject(parent)
 void GraphStudio::InitHall(const float& width, const float& height)
 {
     // 逻辑像素空间比视图宽高都多一个像素，保证绘制的时候逻辑上能采到点，避免视图中有像素无法出现。
-    sp_hall = std::make_shared<Hall>(static_cast<std::size_t>(width) + 1, static_cast<std::size_t>(height) + 1);
+    sp_hall = std::make_shared<Hall>(static_cast<std::size_t>(width), static_cast<std::size_t>(height));
 }
 
 void GraphStudio::LayoutHall(const std::size_t& scale_extension)
@@ -455,25 +455,3 @@ const std::vector<OnePixel>& CompressedFrame::Fetch()
     return frames;
 }
 
-OnePixel& OnePixel::operator=(OnePixel& other)
-{
-    if (this != &other)
-    {
-        x = other.x;
-        y = other.y;
-        r = other.r;
-        g = other.g;
-        b = other.b;
-        a = other.a;
-        activate_flag = other.activate_flag;
-        render_flag = other.render_flag;
-        cur_frame_id = other.cur_frame_id;
-        graph_ids = other.graph_ids; // 所有图元接受同样的法则，所以所有权完全移交没问题
-
-        // 移交后更新源像素
-        other.graph_ids.clear();
-        other.render_flag = false;
-        other.activate_flag = false;
-    }
-    return *this;
-}
