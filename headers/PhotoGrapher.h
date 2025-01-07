@@ -26,8 +26,10 @@ class PhotoGrapher
 {
 public:
 	void Store();
-	const std::vector<OnePixel> Fetch(const std::string& film_name);
+	const CompressedFrame Fetch(const std::string& film_name);
 	void Filming(const OnePixel one_pixel);
+	void RecordFilmName(const std::string& film_name);
+	std::string GetCurrentFilmName();
 private:
 	std::string current_film_name = "";
 	std::map<std::string, CompressedFrame> film_storage;

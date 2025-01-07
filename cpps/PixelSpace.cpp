@@ -41,22 +41,6 @@ bool GraphAgency::Empty()
     return graph_series_cache.empty();
 }
 
-Hall::Hall(const float& stage_width, const float& stage_height)
-{
-    this->stage_width = stage_width;
-    this->stage_height = stage_height;
-}
-
-const float& Hall::GetStageHeight() const
-{
-    return stage_height;
-}
-
-const float& Hall::GetStageWidth() const
-{
-    return stage_width;
-}
-
 const uint64_t& Hall::GetCurrentFrameID() const
 {
     return frame_id;
@@ -80,11 +64,11 @@ std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>::iterat
     return stage.end();
 }
 
-bool Hall::Disable(const std::pair<std::size_t, std::size_t>& coordinate)
+bool Hall::Disable(const std::pair<std::size_t, std::size_t>& coordinate, std::size_t graph_id)
 {
     if (stage.find(coordinate) == stage.end())
         return false;
-    stage[coordinate]->activate_flag = false;
+    stage[coordinate]->graph_ids[graph_id] = false;
     return true;
 }
 
@@ -102,47 +86,60 @@ bool Hall::TransferPixelFrom(const std::pair<std::size_t, std::size_t>& coordina
     return true;
 }
 
-void Hall::PingStage(const OnePixel& ping_pixel, const std::size_t& graph_pos_in_list)
+void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::size_t& graph_pos_in_list)
 {
-    auto key = std::make_pair(ping_pixel.x, ping_pixel.y);
-    if (stage.find(key) != stage.end())
+    for (const auto& ping_pixel : ping_pixel_list)
     {
-        auto& pixel_ptr = stage[key];
-        pixel_ptr->render_flag = true;
-        pixel_ptr->activate_flag = true;
-        pixel_ptr->x = ping_pixel.x;
-        pixel_ptr->y = ping_pixel.y;
-        pixel_ptr->r = ping_pixel.r;
-        pixel_ptr->g = ping_pixel.g;
-        pixel_ptr->b = ping_pixel.b;
-        pixel_ptr->a = ping_pixel.a;
-        pixel_ptr->block_size = ping_pixel.block_size;
-        pixel_ptr->cur_frame_id = frame_id;
-        // 确保 graph_ids 中的元素唯一
-        if (std::find(pixel_ptr->graph_ids.begin(), pixel_ptr->graph_ids.end(), graph_pos_in_list) == pixel_ptr->graph_ids.end())
-            pixel_ptr->graph_ids.emplace_back(graph_pos_in_list);
-    }
-    else
-    {
-        // 基础设置
-        OnePixel one_pixel;
-        one_pixel.render_flag = true;
-        one_pixel.activate_flag = true;
-        one_pixel.x = ping_pixel.x;
-        one_pixel.y = ping_pixel.y;
-        one_pixel.r = ping_pixel.r;
-        one_pixel.g = ping_pixel.g;
-        one_pixel.b = ping_pixel.b;
-        one_pixel.a = ping_pixel.a;
-        one_pixel.block_size = ping_pixel.block_size;
-        one_pixel.cur_frame_id = frame_id;
-        if (std::find(one_pixel.graph_ids.begin(), one_pixel.graph_ids.end(), graph_pos_in_list) == one_pixel.graph_ids.end())
-            one_pixel.graph_ids.emplace_back(graph_pos_in_list);
+        auto key = std::make_pair(ping_pixel.x, ping_pixel.y);
+        if (stage.find(key) != stage.end())
+        {
+            auto& pixel_ptr = stage[key];
+            pixel_ptr->render_flag = true;
+            pixel_ptr->x = ping_pixel.x;
+            pixel_ptr->y = ping_pixel.y;
+            pixel_ptr->r = ping_pixel.r;
+            pixel_ptr->g = ping_pixel.g;
+            pixel_ptr->b = ping_pixel.b;
+            pixel_ptr->a = ping_pixel.a;
+            pixel_ptr->block_size = ping_pixel.block_size;
+            pixel_ptr->cur_frame_id = frame_id;
+            // 确保 graph_ids 中的元素唯一
+            pixel_ptr->graph_ids[graph_pos_in_list] = true;
+            checkin_sequence[graph_pos_in_list].push(pixel_ptr);
+        }
+        else
+        {
+            // 基础设置
+            OnePixel one_pixel;
+            one_pixel.render_flag = true;
+            one_pixel.x = ping_pixel.x;
+            one_pixel.y = ping_pixel.y;
+            one_pixel.r = ping_pixel.r;
+            one_pixel.g = ping_pixel.g;
+            one_pixel.b = ping_pixel.b;
+            one_pixel.a = ping_pixel.a;
+            one_pixel.block_size = ping_pixel.block_size;
+            one_pixel.cur_frame_id = frame_id;
+            one_pixel.graph_ids[graph_pos_in_list] = true;
 
-        // 在堆上分配新内存存放 one_pixel，并由智能指针管理
-        std::shared_ptr<OnePixel> sp_one_pixel = std::make_shared<OnePixel>(one_pixel);
-        stage.insert(std::make_pair(key, sp_one_pixel));
+            // 在堆上分配新内存存放 one_pixel，并由智能指针管理
+            std::shared_ptr<OnePixel> sp_one_pixel = std::make_shared<OnePixel>(one_pixel);
+            stage.insert(std::make_pair(key, sp_one_pixel));
+            checkin_sequence[graph_pos_in_list].push(sp_one_pixel);
+        }
     }
+}
+
+std::map<std::size_t, std::vector<OnePixel>> Hall::CollectStage()
+{
+    std::map<std::size_t, std::vector<OnePixel>> collected_pixels;
+    for (auto& pixel : checkin_sequence)
+    {
+        collected_pixels[pixel.first].emplace_back(*(pixel.second.front()));
+        pixel.second.pop();
+    }
+    checkin_sequence.clear();
+    return collected_pixels;
 }
 
 void Hall::NextFrame()
@@ -156,12 +153,17 @@ GraphStudio::GraphStudio(QObject* parent) : QObject(parent)
     sp_hall = std::make_shared<Hall>();
     sp_law = std::make_shared<Law>();
     sp_timer = std::make_shared<QTimer>(this);
+    sp_gl_screen = std::make_shared<GLScreen>();
 }
 
-void GraphStudio::InitHall(const float& width, const float& height)
+void GraphStudio::InitWindow(int width, int height)
 {
-    // 逻辑像素空间比视图宽高都多一个像素，保证绘制的时候逻辑上能采到点，避免视图中有像素无法出现。
-    sp_hall = std::make_shared<Hall>(static_cast<std::size_t>(width), static_cast<std::size_t>(height));
+
+}
+
+void GraphStudio::SetFilmName(const QString& film_name)
+{
+    photo_grapher.RecordFilmName(film_name.toStdString());
 }
 
 void GraphStudio::RoleEmplacement(const QStringList& model_names)
@@ -173,45 +175,27 @@ void GraphStudio::RoleEmplacement(const QStringList& model_names)
     }
 }
 
-QString GraphStudio::Display(const QString& film_name)
+void GraphStudio::Display(const QStringList& film_name_list)
 {
-    // 定义 JSON 对象和映射
-    json frames;
-    std::unordered_map<uint64_t, json> frameMap;
+    // 创建窗口
+    // (Todo)
 
-    // 遍历 film 的数据并构建 frameMap
-    auto vec_pics = photo_grapher.Fetch(film_name.toStdString());
-    if (vec_pics.empty())
-        return QString::fromStdString("{}");
-
-    for (const auto& pic : vec_pics)
+    // 遍历所有需要播放的帧数据名
+    for (const auto& film_name : film_name_list)
     {
-        frameMap[pic.cur_frame_id].push_back({
-            {"id", pic.cur_frame_id},
-            {"x", pic.x}, 
-            {"y", pic.y},
-            {"r", pic.r},
-            {"g", pic.g},
-            {"b", pic.b}, 
-            {"a", pic.a},
-            {"s", pic.block_size}
-            });
+        auto compressed_pics = photo_grapher.Fetch(film_name.toStdString());
+        auto vec_pics = compressed_pics.GetFrames();
+        const auto& pin_pos = compressed_pics.GetPinPos();
+
+        for (OnePixel pic : vec_pics)
+        {
+            pic.x += pin_pos.first;
+            pic.y += pin_pos.second;
+        }
     }
 
-    // 将 frameMap 中的每一组点添加到 frames 中
-    for (const auto& [id, points] : frameMap)
-    {
-        frames.push_back(points);
-    }
-
-    // 将 frames 转换为 JSON 字符串并返回
-    return QString::fromStdString(frames.dump());
-}
-
-void GraphStudio::CreateGLWindow()
-{
-    GLWindow window(800, 600, "GLFW Window");
-    window.MainLoop();
+    // 播放
+    // (Todo)
 }
 
 void GraphStudio::Launch()
@@ -261,12 +245,18 @@ void GraphStudio::Ceize()
     photo_grapher.Store();
 }
 
+void GraphStudio::RoleDismiss()
+{
+    sp_graph_agency->CleanGraphCache();
+}
+
 void GraphStudio::Stop()
 {
     if (!sp_graph_agency->Inspect())
         return;
     sp_timer->stop();
     disconnect(sp_timer.get(), &QTimer::timeout, nullptr, nullptr);
+    emit filmTerminated(QString::fromStdString(photo_grapher.GetCurrentFilmName()));
     photo_grapher.Store();
 }
 
@@ -284,15 +274,23 @@ void GraphStudio::StandBy()
                 std::cerr << "failed to parse json: " << str_cur_pos << std::endl;
                 return;
             }
-            OnePixel ping_pixel;
-            ping_pixel.x = current_status["x"];
-            ping_pixel.y = current_status["y"];
-            ping_pixel.r = current_status["r"];
-            ping_pixel.g = current_status["g"];
-            ping_pixel.b = current_status["b"];
-            ping_pixel.a = current_status["a"];
-            ping_pixel.block_size = current_status["blockSize"];
-            sp_hall->PingStage(ping_pixel, i);
+            // 根据协议，所有字段均为数组
+            if (!current_status.is_array())
+                return;
+            std::vector<OnePixel> point_list;
+            for (const auto& point : current_status)
+            {
+                OnePixel ping_pixel;
+                ping_pixel.x = point["x"];
+                ping_pixel.y = point["y"];
+                ping_pixel.r = point["r"];
+                ping_pixel.g = point["g"];
+                ping_pixel.b = point["b"];
+                ping_pixel.a = point["a"];
+                ping_pixel.block_size = point["blockSize"];
+                point_list.emplace_back(ping_pixel);
+            }
+            sp_hall->PingStage(point_list, i);
         }
         catch (std::logic_error)
         {
@@ -311,33 +309,32 @@ void GraphStudio::UpdateGraphList()
 {
     try
     {
-        for (const auto& pixel : sp_hall->GetStage())
+        const auto activating_pixels = sp_hall->CollectStage();
+        for (const auto& pixels : activating_pixels)
         {
-            if (pixel.second->activate_flag)
+            AutomataElements automata_param = GetAutomataInfoAt(pixels.first);
+            // 此处可以手动更新当前渲染点的自动机信息
+            // 我并没有做边界检测，可能是个空的json，而一旦读取空json就会抛出异常使得程序崩溃，所以请确保你的图元蓝图里确实具有该字段
+            json initial_status, current_status, current_input, terminate_status;
+            std::tie(initial_status, current_status, current_input, terminate_status) = automata_param;
+            // 因为不清楚这个自动机有哪些字段，应当做函数指针传入来处理，这里先手动更新位置
+            current_status.clear();
+            for (const auto& activate_pixel : pixels.second)
             {
-                for (const auto& indice : pixel.second->graph_ids)
-                {
-                    AutomataElements automata_param = GetAutomataInfoAt(indice);
-                    // 此处可以手动更新当前渲染点的自动机信息
-                    // 我并没有做边界检测，可能是个空的json，而一旦读取空json就会抛出异常使得程序崩溃，所以请确保你的图元蓝图里确实具有该字段
-                    json initial_status, current_status, current_input, terminate_status;
-                    std::tie(initial_status, current_status, current_input, terminate_status) = automata_param;
-                    // 因为不清楚这个自动机有哪些字段，应当做函数指针传入来处理，这里先手动更新位置
-
-                    current_status["x"] = pixel.second->x;
-                    current_status["y"] = pixel.second->y;
-                    current_status["r"] = pixel.second->r;
-                    current_status["g"] = pixel.second->g;
-                    current_status["b"] = pixel.second->b;
-                    current_status["a"] = pixel.second->a;
-                    current_status["blockSize"] = pixel.second->block_size;
-
-                    /*******************************************************************/
-                    automata_param = std::make_tuple(initial_status, current_status, current_input, terminate_status);
-                    SetAutomataInfoAt(indice, automata_param);
-                }
-                sp_hall->Disable(pixel.first); // 置activate_flag为false
+                current_status.push_back({
+                    { "x",activate_pixel.x },
+                    { "y",activate_pixel.y },
+                    { "r",activate_pixel.r },
+                    { "g",activate_pixel.g },
+                    { "b",activate_pixel.b },
+                    { "a",activate_pixel.a },
+                    { "size",activate_pixel.block_size }
+                });
+                sp_hall->Disable({ activate_pixel.x, activate_pixel.y }, pixels.first); // 置activate_flag为false
             }
+            /*******************************************************************/
+            automata_param = std::make_tuple(initial_status, current_status, current_input, terminate_status);
+            SetAutomataInfoAt(pixels.first, automata_param);
         }
         sp_graph_agency->UpdateGraphs(); // 返回协程算法
     }

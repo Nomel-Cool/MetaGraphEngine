@@ -24,7 +24,9 @@
     <None Include="resources\qmls\designer\DrawBoard.qml" />
     <None Include="resources\qmls\engine\ButtonToolList.qml" />
     <None Include="resources\qmls\engine\EngineDesigner.qml" />
+    <None Include="resources\qmls\engine\FilmSelector.qml" />
     <None Include="resources\qmls\engine\GraphList.qml" />
+    <None Include="resources\qmls\engine\WindowSettings.qml" />
     <None Include="resources\qmls\frame\DynamicTabBar.qml" />
     <None Include="resources\qmls\frame\IndexBar.qml" />
     <None Include="resources\qmls\frame\PreviewBoard.qml" />
@@ -37,6 +39,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpps\DataBaseManager.cpp" />
+    <ClCompile Include="cpps\GLBuffers.cpp" />
+    <ClCompile Include="cpps\GLCamera.cpp" />
+    <ClCompile Include="cpps\GLContext.cpp" />
+    <ClCompile Include="cpps\GLManager.cpp" />
+    <ClCompile Include="cpps\GLShaders.cpp" />
+    <ClCompile Include="cpps\GLTexture.cpp" />
     <ClCompile Include="cpps\PhotoGrapher.cpp" />
     <ClCompile Include="cpps\glad.c" />
     <ClCompile Include="cpps\main.cpp" />
@@ -57,6 +65,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\images\a.png" />
+    <Image Include="resources\images\container.jpg" />
+    <Image Include="resources\images\container2.png" />
+    <Image Include="resources\images\container2_specular.png" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="resources\xmls\graphAutomata\point_automata.xml" />
@@ -75,6 +86,14 @@
     <ClInclude Include="headers\EventsQueue.h" />
     <ClInclude Include="headers\field_types.h" />
     <ClInclude Include="headers\FileManager.h" />
+    <ClInclude Include="headers\GLBuffers.h" />
+    <ClInclude Include="headers\GLCamera.h" />
+    <ClInclude Include="headers\GLContext.h" />
+    <ClInclude Include="headers\GLManager.h" />
+    <ClInclude Include="headers\GLScreen.h" />
+    <ClInclude Include="headers\GLShaders.h" />
+    <ClInclude Include="headers\GLTexture.h" />
+    <ClInclude Include="headers\ImageLoader.h" />
     <ClInclude Include="headers\PhotoGrapher.h" />
     <ClInclude Include="headers\GLShader.h" />
     <ClInclude Include="headers\hiredis.h" />
@@ -102,6 +121,7 @@
     <ClInclude Include="headers\RedisClient.h" />
     <ClInclude Include="headers\RenderCU.h" />
     <ClInclude Include="headers\sds.h" />
+    <ClInclude Include="headers\stb_image.h" />
     <ClInclude Include="headers\ThreadPool.h" />
     <ClInclude Include="headers\tinyxml2.h" />
     <QtMoc Include="headers\XmlDataModel.h" />
@@ -115,6 +135,7 @@
     <Library Include="libs\glfw3.lib" />
     <Library Include="libs\hiredis.lib" />
     <Library Include="libs\libmysql.lib" />
+    <Library Include="libs\OpenGL32.Lib" />
     <Library Include="libs\ShabbyDataBase.lib" />
     <Library Include="libs\ShabbyEventQueue.lib" />
     <Library Include="libs\ShabbyFileManager.lib" />

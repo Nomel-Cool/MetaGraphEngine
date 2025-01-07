@@ -68,6 +68,12 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="sqls\TruncateAll.sql" />
+    <None Include="resources\qmls\engine\FilmSelector.qml">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="resources\qmls\engine\WindowSettings.qml">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpps\main.cpp">
@@ -109,6 +115,24 @@
     <ClCompile Include="cpps\PhotoGrapher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cpps\GLManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpps\GLBuffers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpps\GLCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpps\GLContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpps\GLShaders.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpps\GLTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="resources\img.qrc">
@@ -123,6 +147,15 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\images\a.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\images\container.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\images\container2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\images\container2_specular.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
@@ -246,6 +279,33 @@
     <ClInclude Include="headers\PhotoGrapher.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="headers\GLManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\GLScreen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\GLBuffers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\GLCamera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\GLContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\GLShaders.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\GLTexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\ImageLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\stb_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="headers\RenderKernel.h">
@@ -270,5 +330,6 @@
     <Library Include="libs\libmysql.lib" />
     <Library Include="libs\ShabbyDataBase.lib" />
     <Library Include="libs\glfw3.lib" />
+    <Library Include="libs\OpenGL32.Lib" />
   </ItemGroup>
 </Project>

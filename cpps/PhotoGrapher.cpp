@@ -29,14 +29,24 @@ void PhotoGrapher::Store()
     current_film_name = "";
 }
 
-const std::vector<OnePixel> PhotoGrapher::Fetch(const std::string& film_name)
+const CompressedFrame PhotoGrapher::Fetch(const std::string& film_name)
 {
     if (film_name.empty() || film_storage.find(film_name) == film_storage.end())
         return {};
-    return film_storage[film_name].GetFrames();
+    return film_storage[film_name];
 }
 
 void PhotoGrapher::Filming(const OnePixel one_pixel)
 {
     film_cache.emplace_back(one_pixel);
+}
+
+void PhotoGrapher::RecordFilmName(const std::string& film_name)
+{
+    current_film_name = film_name;
+}
+
+std::string PhotoGrapher::GetCurrentFilmName()
+{
+    return current_film_name;
 }

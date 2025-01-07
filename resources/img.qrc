@@ -1,3 +1,7 @@
 <RCC>
-    <qresource prefix="/resources"/>
+    <qresource prefix="/resources">
+        <file>images/container.jpg</file>
+        <file>images/container2.png</file>
+        <file>images/container2_specular.png</file>
+    </qresource>
 </RCC>

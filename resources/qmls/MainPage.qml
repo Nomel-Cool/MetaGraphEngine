@@ -66,7 +66,7 @@ ApplicationWindow {
         }
         onEngineItemSelected: (selectedItem) => {
             if(dynamicTabBar.pageIndex === 1) {
-                graph_list.addModel(selectedItem); // 把选中的模型名存放到GraphList中
+                engineDesigner.addModelToGraphList(selectedItem); // 把选中的模型名存放到GraphList中
             }
         }
         Connections {
@@ -108,49 +108,37 @@ ApplicationWindow {
     EngineDesigner {
         id: engineDesigner
         visible: dynamicTabBar.pageIndex === 1 ? true : false
-        height:  parent.height - dynamicTabBar.height
-        width: parent.width - indexBar.width - previewBoard.width - buttonToolList.width
-        anchors.top: graph_list.bottom
-        anchors.left: buttonToolList.right
-        Component.onCompleted: {
-            graphStudio.InitHall(width, height);
-        }
-    }
-
-    GraphList {
-        id: graph_list
-        visible: dynamicTabBar.pageIndex === 1 ? true : false
-        width: engineDesigner.width
-        height: 30
+        height: parent.height - dynamicTabBar.height
+        width: parent.width - indexBar.width - previewBoard.width
         anchors.top: dynamicTabBar.bottom
-        anchors.left: buttonToolList.right
-        anchors.right: parent.horizontalCenter
-    }
-
-    ButtonToolList {
-        id: buttonToolList
-        visible: dynamicTabBar.pageIndex === 1 ? true : false
-        width: searchBar.width
         anchors.left: parent.left
-        anchors.top: dynamicTabBar.bottom
-        anchors.bottom: parent.bottom
-        onListCleared: {
-            graph_list.cleanModel();
+        onFilmNameRecorded: (filmName) => {
+            graphStudio.SetFilmName(filmName);
         }
-        onListCompiled: {
-            graphStudio.RoleEmplacement(graph_list.modelList);
+        onDeliveredListCompiled: {
+            graphStudio.RoleEmplacement(engineDesigner.deliveredModelList);
         }
-        onListLaunched: {
+        onDeliveredListLaunched: {
             graphStudio.Launch();
         }
-        onListPlayed: {
-            var str_points_data = graphStudio.Display();
-            console.log(str_points_data);
-            engineDesigner.drawnPoints = JSON.parse(str_points_data);
-            engineDesigner.engineCore.requestPaint();
+        onDeliveredListPlayInGL: (nameList) => {
+            graphStudio.Display(nameList);
         }
-        onListStopped: {
-            graphStudio.Stop();
+        onDeliveredListStopped: {
+            graphStudio.Ceize();
+        }        
+        onDeliveredListCleared: {
+            graphStudio.RoleDismiss();
+        }
+        onWindowSeted: (w,h) => {
+            graphStudio.InitWindow(w,h);
+        }
+        Connections {
+            target: graphStudio
+            onFilmTerminated: (filmName) => {
+                engineDesigner.resetBtnStatus();
+                engineDesigner.addFilmToSelector(filmName);
+            }
         }
     }
 }

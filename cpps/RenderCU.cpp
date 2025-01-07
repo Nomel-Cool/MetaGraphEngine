@@ -34,12 +34,13 @@ ModelGenerator<SingleAutomata> RenderCU::CoJustAPoint(SingleAutomata& graph_mode
         std::cerr << "Failed to parse JSON: " << graph_model.current_status << std::endl;
         co_return;
     }
+    // 根据协议，所有自动机字段都是数组
     if (current_status.empty()) // 执行初始化
     {
-        float init_x = init_status["x"];
-        float init_y = init_status["y"];
-        current_status["x"] = init_x;
-        current_status["y"] = init_y;
+        float init_x = init_status[0]["x"];
+        float init_y = init_status[0]["y"];
+        current_status[0]["x"] = init_x;
+        current_status[0]["y"] = init_y;
         graph_model.current_status = current_status.dump();
     }
     while (true)
@@ -50,7 +51,7 @@ ModelGenerator<SingleAutomata> RenderCU::CoJustAPoint(SingleAutomata& graph_mode
             std::cerr << "Failed to parse JSON: " << graph_model.current_status << std::endl;
             co_return;
         }
-        if (current_status["x"] <= 0)
+        if (current_status[0]["x"] <= 0)
             break;
     }
 }
@@ -69,10 +70,10 @@ std::string RenderCU::BresenhamLine(const SingleAutomata& graph_model)
         return "{}";
     }
     std::vector<std::pair<float, float>> points;
-    float x0 = init_status["x"];
-    float y0 = init_status["y"];
-    float xn = terminate_status["x"];
-    float yn = terminate_status["y"];
+    float x0 = init_status[0]["x"];
+    float y0 = init_status[0]["y"];
+    float xn = terminate_status[0]["x"];
+    float yn = terminate_status[0]["y"];
     float dx = fabs(xn - x0);
     float dy = fabs(yn - y0);
     float stepX = (x0 < xn) ? 1 : -1;
@@ -145,27 +146,27 @@ ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_m
     // Initialize current_status as a JSON array if it's empty
     if (current_status.empty())
     {
-        float init_x = init_status["x"];
-        float init_y = init_status["y"];
-        float init_r = init_status["r"];
-        float init_g = init_status["g"];
-        float init_b = init_status["b"];
-        float init_a = init_status["a"];
-        float init_size = init_status["blockSize"];
-        current_status["x"] = init_x;
-        current_status["y"] = init_y;
-        current_status["r"] = init_r;
-        current_status["g"] = init_g;
-        current_status["b"] = init_b;
-        current_status["a"] = init_a;
-        current_status["blockSize"] = init_size;
+        float init_x = init_status[0]["x"];
+        float init_y = init_status[0]["y"];
+        float init_r = init_status[0]["r"];
+        float init_g = init_status[0]["g"];
+        float init_b = init_status[0]["b"];
+        float init_a = init_status[0]["a"];
+        float init_size = init_status[0]["blockSize"];
+        current_status[0]["x"] = init_x;
+        current_status[0]["y"] = init_y;
+        current_status[0]["r"] = init_r;
+        current_status[0]["g"] = init_g;
+        current_status[0]["b"] = init_b;
+        current_status[0]["a"] = init_a;
+        current_status[0]["blockSize"] = init_size;
         graph_model.current_status = current_status.dump();
     }
 
-    float x0 = init_status["x"];
-    float y0 = init_status["y"];
-    float xn = terminate_status["x"];
-    float yn = terminate_status["y"];
+    float x0 = init_status[0]["x"];
+    float y0 = init_status[0]["y"];
+    float xn = terminate_status[0]["x"];
+    float yn = terminate_status[0]["y"];
     float dx = fabs(xn - x0);
     float dy = fabs(yn - y0);
     float stepX = (x0 < xn) ? 1 : -1;
@@ -187,8 +188,8 @@ ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_m
             x += stepX;
             p += 2 * dy;
 
-            current_status["x"] = x;
-            current_status["y"] = y;
+            current_status[0]["x"] = x;
+            current_status[0]["y"] = y;
             graph_model.current_status = current_status.dump();
         }
     }
@@ -206,8 +207,8 @@ ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_m
             y += stepY;
             p += 2 * dx;
 
-            current_status["x"] = x;
-            current_status["y"] = y;
+            current_status[0]["x"] = x;
+            current_status[0]["y"] = y;
             graph_model.current_status = current_status.dump();
         }
     }

@@ -10,5 +10,7 @@
         <file>qmls/engine/GraphList.qml</file>
         <file>qmls/engine/ButtonToolList.qml</file>
         <file>qmls/designer/AutomataInventory.qml</file>
+        <file>qmls/engine/FilmSelector.qml</file>
+        <file>qmls/engine/WindowSettings.qml</file>
     </qresource>
 </RCC>

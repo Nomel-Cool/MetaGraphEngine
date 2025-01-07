@@ -19,7 +19,7 @@
 #include "Law.h"
 #include "PhotoGrapher.h"
 #include "PixelType.h"
-#include "GLShader.h"
+#include "GLScreen.h"
 
 using AutomataElements = std::tuple<json, json, json, json>;
 /// <summary>
@@ -51,14 +51,11 @@ class Hall
 {
 public:
 	Hall() = default;
-	Hall(const float& stage_width, const float& stage_height);
-	const float& GetStageHeight() const;
-	const float& GetStageWidth() const;
 	const uint64_t& GetCurrentFrameID() const;
 	const uint64_t& GetCurrentFPS() const;
 	const std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>& GetStage() const;
 	std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>::iterator DeleteElementAt(const std::pair<std::size_t, std::size_t>& pos);
-	bool Disable(const std::pair<std::size_t, std::size_t>& coordinate);
+	bool Disable(const std::pair<std::size_t, std::size_t>& coordinate, std::size_t graph_id);
 
 	/// <summary>
 	/// 通知移交像素所有权，像素类必须实现拷贝赋值符号
@@ -69,14 +66,15 @@ public:
 	/// <returns></returns>
 	bool TransferPixelFrom(const std::pair<std::size_t, std::size_t>& coordinate_begin);
 	
-	void PingStage(const OnePixel& one_pixel, const std::size_t& graph_pos_in_list);
+	void PingStage(const std::vector<OnePixel>& pixel_list, const std::size_t& graph_pos_in_list);
+	std::map<std::size_t, std::vector<OnePixel>> CollectStage();
 
 	void NextFrame();
 
 protected:
 private:
 	std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>> stage;
-	float stage_width = 0, stage_height = 0;
+	std::map<std::size_t, std::queue<std::shared_ptr<OnePixel>>> checkin_sequence; // <graph_id, {pixel1,...,pixeln}>
 	std::mutex stage_lock;
 	uint64_t frame_id = 1;
 	uint64_t FPS = 120;
@@ -90,12 +88,17 @@ class GraphStudio : public QObject
 	Q_OBJECT
 public:
 	explicit GraphStudio(QObject* parent = nullptr);
-	Q_INVOKABLE void InitHall(const float& width, const float& height);
+	Q_INVOKABLE void InitWindow(int width, int height);
+	Q_INVOKABLE void SetFilmName(const QString& film_name);
 	Q_INVOKABLE void RoleEmplacement(const QStringList& model_names);
-	Q_INVOKABLE QString Display(const QString& film_name);
 	Q_INVOKABLE void Launch();
 	Q_INVOKABLE void Ceize();
-	Q_INVOKABLE void CreateGLWindow();
+	Q_INVOKABLE void RoleDismiss();
+	Q_INVOKABLE void Display(const QStringList& film_name_list);
+
+signals:
+	bool filmTerminated(QString film_name);
+
 protected:
 	void StandBy();
 	void Interact();
@@ -115,6 +118,7 @@ private:
 	std::shared_ptr<Law> sp_law; // 由于Law和GraphStudio循环调用了，这里前置声明了Law，使用指针延迟初始化，度过编译期的检查（必须用指针！！！）
 	PhotoGrapher photo_grapher;
 	std::shared_ptr<QTimer> sp_timer;
+	std::shared_ptr<GLScreen> sp_gl_screen;
 };
 
 /// <summary>
