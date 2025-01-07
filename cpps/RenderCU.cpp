@@ -148,6 +148,7 @@ ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_m
     {
         float init_x = init_status[0]["x"];
         float init_y = init_status[0]["y"];
+        float init_z = init_status[0]["z"];
         float init_r = init_status[0]["r"];
         float init_g = init_status[0]["g"];
         float init_b = init_status[0]["b"];
@@ -155,6 +156,7 @@ ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_m
         float init_size = init_status[0]["blockSize"];
         current_status[0]["x"] = init_x;
         current_status[0]["y"] = init_y;
+        current_status[0]["z"] = init_z;
         current_status[0]["r"] = init_r;
         current_status[0]["g"] = init_g;
         current_status[0]["b"] = init_b;

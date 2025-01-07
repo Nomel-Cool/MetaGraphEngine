@@ -97,6 +97,7 @@ void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::si
             pixel_ptr->render_flag = true;
             pixel_ptr->x = ping_pixel.x;
             pixel_ptr->y = ping_pixel.y;
+            pixel_ptr->z = ping_pixel.z;
             pixel_ptr->r = ping_pixel.r;
             pixel_ptr->g = ping_pixel.g;
             pixel_ptr->b = ping_pixel.b;
@@ -114,6 +115,7 @@ void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::si
             one_pixel.render_flag = true;
             one_pixel.x = ping_pixel.x;
             one_pixel.y = ping_pixel.y;
+            one_pixel.z = ping_pixel.z;
             one_pixel.r = ping_pixel.r;
             one_pixel.g = ping_pixel.g;
             one_pixel.b = ping_pixel.b;
@@ -158,7 +160,7 @@ GraphStudio::GraphStudio(QObject* parent) : QObject(parent)
 
 void GraphStudio::InitWindow(int width, int height)
 {
-
+    sp_gl_screen->InitScreen(width, height);
 }
 
 void GraphStudio::SetFilmName(const QString& film_name)
@@ -177,25 +179,21 @@ void GraphStudio::RoleEmplacement(const QStringList& model_names)
 
 void GraphStudio::Display(const QStringList& film_name_list)
 {
-    // 创建窗口
-    // (Todo)
-
     // 遍历所有需要播放的帧数据名
     for (const auto& film_name : film_name_list)
     {
+        std::vector<CubePixel> vec_cubes;
         auto compressed_pics = photo_grapher.Fetch(film_name.toStdString());
+        compressed_pics.SetPinPos();
         auto vec_pics = compressed_pics.GetFrames();
-        const auto& pin_pos = compressed_pics.GetPinPos();
-
-        for (OnePixel pic : vec_pics)
-        {
-            pic.x += pin_pos.first;
-            pic.y += pin_pos.second;
-        }
+        for (const OnePixel& pic : vec_pics)
+            vec_cubes.emplace_back(pic);
+        sp_gl_screen->SetVerticesData(vec_cubes); // 按帧顺序设置顶点数据
     }
 
-    // 播放
-    // (Todo)
+    // 创建窗口 并 执行渲染
+    sp_gl_screen->Rendering();
+
 }
 
 void GraphStudio::Launch()
@@ -283,6 +281,7 @@ void GraphStudio::StandBy()
                 OnePixel ping_pixel;
                 ping_pixel.x = point["x"];
                 ping_pixel.y = point["y"];
+                ping_pixel.z = point["z"];
                 ping_pixel.r = point["r"];
                 ping_pixel.g = point["g"];
                 ping_pixel.b = point["b"];
@@ -324,6 +323,7 @@ void GraphStudio::UpdateGraphList()
                 current_status.push_back({
                     { "x",activate_pixel.x },
                     { "y",activate_pixel.y },
+                    { "z",activate_pixel.z },
                     { "r",activate_pixel.r },
                     { "g",activate_pixel.g },
                     { "b",activate_pixel.b },

@@ -1,8 +1,12 @@
 #include "PhotoGrapher.h"
 
-const std::pair<float, float> CompressedFrame::GetPinPos() const
+void CompressedFrame::SetPinPos()
 {
-    return pin_pos;
+    for (OnePixel& pic : frames)
+    {
+        pic.x += pin_pos.first;
+        pic.y += pin_pos.second;
+    }
 }
 
 std::vector<OnePixel> CompressedFrame::GetFrames()

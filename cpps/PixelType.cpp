@@ -33,6 +33,7 @@ CubePixel::CubePixel(const OnePixel& basePixel)
     b = basePixel.b;
     a = basePixel.a;
     block_size = basePixel.block_size;
+    cur_frame_id = basePixel.cur_frame_id;
 
     // ≥ı ºªØ±‰ªª
     InitializeTransformation();
@@ -41,7 +42,17 @@ CubePixel::CubePixel(const OnePixel& basePixel)
     InitializeVertices();
 }
 
-glm::mat4 CubePixel::GetTransformMat()
+const std::vector<float> CubePixel::GetVertices()
+{
+    return vertices;
+}
+
+const std::vector<unsigned int> CubePixel::GetIndices()
+{
+    return indices;
+}
+
+const glm::mat4 CubePixel::GetTransformMat()
 {
     return T * R * S;
 }

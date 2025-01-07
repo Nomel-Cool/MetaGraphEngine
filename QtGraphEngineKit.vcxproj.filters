@@ -74,6 +74,11 @@
     <None Include="resources\qmls\engine\WindowSettings.qml">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="shaders_codes\vertex\vetex_with_color.vs" />
+    <None Include="shaders_codes\fragment\ExperienceColor.fs" />
+    <None Include="shaders_codes\fragment\Light.fs" />
+    <None Include="shaders_codes\fragment\PureGreen.fs" />
+    <None Include="shaders_codes\fragment\PureOrange.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpps\main.cpp">
@@ -131,6 +136,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cpps\GLTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpps\GLScreen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

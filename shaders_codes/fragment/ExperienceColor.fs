@@ -1,7 +1,7 @@
 #version 330 core
 //in vec3 colorPos;// Same name & type in vertexShaderSource, it is corresponding. \n"
 in vec2 TexCoord; // 纹理取样点
-
+in vec3 vertexColor;
 // 定义了 某种材质的 【光照强度】
 struct Material {
     //vec3 ambient;    // 因为环境光颜色在几乎所有情况下都等于漫反射颜色，所以去除
@@ -45,21 +45,22 @@ void main()
    // 简化全局光照，对 “打在本物体的光” 乘上一个固有系数，只要不是黑色的都有微光
    //float ambientStrength = 0.3;
    //vec3 ambient = material.ambient * light.ambient;
-    vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoord)); // 使用材质颜色替代物体接受的环境光颜色
+    //vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoord)); // 使用材质颜色替代物体接受的环境光颜色
+    vec3 ambient = light.ambient * vertexColor; // 使用材质颜色替代物体接受的环境光颜色
 
     // 计算漫反射theta值
     vec3 norm = normalize(Norm);
     vec3 lightDir = normalize(light.position - FragPos); // 物体指向光源的方向向量
     float diff = max(dot(norm, lightDir), 0.0); // 避免夹角超过 90°，导致theta为负数，它没有定义，所以取0黑色。
     //vec3 diffuse = light.diffuse * (diff * material.diffuse) * lightColor; // 光源导致的漫反射再乘上材质的漫反射强度
-    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoord)); // 去除固定漫射光，颜色光取为材质颜色
+    vec3 diffuse = light.diffuse * diff * vertexColor; // 去除固定漫射光，颜色光取为材质颜色
 
     // 镜面强度（高光亮度）
     //float specularStrength = 0.5;
     vec3 viewDir = normalize(viewPos - FragPos); // 得到从物体到相机的方向向量
     vec3 reflectDir = reflect(-lightDir, norm); // 光线方向取反，reflect函数要求第一个向量是从光源指向片段位置的向量，但是lightDir当前正好相反
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess); // 这个32是高光的反光度(Shininess)。一个物体的反光度越高，反射光的能力越强，散射得越少，高光点就会越小
-    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoord));
+    vec3 specular = light.specular * spec * vertexColor;
 
     // 最终结算
     //vec3 result = (ambient + diffuse + specular) * objectColor;

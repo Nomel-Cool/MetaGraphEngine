@@ -32,6 +32,11 @@
     <None Include="resources\qmls\frame\PreviewBoard.qml" />
     <None Include="resources\qmls\frame\SearchBar.qml" />
     <None Include="resources\qmls\MainPage.qml" />
+    <None Include="shaders_codes\fragment\ExperienceColor.fs" />
+    <None Include="shaders_codes\fragment\Light.fs" />
+    <None Include="shaders_codes\fragment\PureGreen.fs" />
+    <None Include="shaders_codes\fragment\PureOrange.fs" />
+    <None Include="shaders_codes\vertex\vetex_with_color.vs" />
     <None Include="sqls\Automata.sql" />
     <None Include="sqls\FilePath.sql" />
     <None Include="sqls\ModelBluePrint.sql" />
@@ -56,6 +61,7 @@
     <ClCompile Include="cpps\PixelSpace.cpp" />
     <ClCompile Include="cpps\Law.cpp" />
     <ClCompile Include="cpps\GLShader.cpp" />
+    <ClCompile Include="cpps\GLScreen.cpp" />
     <ClCompile Include="headers\openssl\applink.c" />
   </ItemGroup>
   <ItemGroup>

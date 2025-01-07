@@ -1,18 +1,18 @@
 <model name="DiagSegment">
-    <automata id="1">
-        <init init_status='{\"x\":100,\"y\":100,\"r\":0,\"g\":0,\"b\":0,\"a\":1.0}'/>
-        <transfer func_name="BresenhamLine"/>
-        <input current_input='{}'/>
-        <current current_status='{}'/>
-        <terminate terminate_status='{\"x\":0.1,\"y\":0.1}'/>
-    </automata>
+	<automata id="1">
+		<init init_status='[{\"x\":100,\"y\":100,\"z\":1,\"r\":1.0,\"g\":0.5,\"b\":0.31,\"a\":1.0,\"blockSize\":1.0}]'/>
+		<transfer func_name="BresenhamLine"/>
+		<input current_input='[]'/>
+		<current current_status='[]'/>
+		<terminate terminate_status='[{\"x\":0.1,\"y\":0.1,\"z\":1}]'/>
+	</automata>
 </model>
 <model name="DiagSegment">
 	<automata id="1">
-		<init init_status='[{"x":100,"y":100,"r":0,"g":0,"b":0,"a":1.0,"blockSize":2.0}]'/>
+		<init init_status='[{"x":100,"y":100,"z":1,"r":1.0,"g":0.5,"b":0.31,"a":1.0,"blockSize":1.0}]'/>
 		<transfer func_name="BresenhamLine"/>
-		<input current_input='{}'/>
-		<current current_status='{}'/>
-		<terminate terminate_status='[{"x":0.1,"y":0.1}]'/>
+		<input current_input='[]'/>
+		<current current_status='[]'/>
+		<terminate terminate_status='[{"x":0.1,"y":0.1,"z":1}]'/>
 	</automata>
 </model>
