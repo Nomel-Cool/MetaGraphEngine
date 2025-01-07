@@ -14,7 +14,7 @@
 class CompressedFrame
 {
 public:
-	const std::pair<float, float> GetPinPos() const;
+	void SetPinPos();
 	std::vector<OnePixel> GetFrames();
 	void UpdateFrames(const std::vector<OnePixel> pixels);
 private:

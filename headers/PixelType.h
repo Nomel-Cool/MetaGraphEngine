@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <map>
+#include <tuple>
 
 /// <summary>
 /// 像素基类，负责表示最基本的坐标信息，以及与舞台相关的操作
@@ -21,7 +22,7 @@ public:
 	// 多个子类需要多个重载版本的拷贝构造
 	bool render_flag = false;
 	std::size_t x = 0, y = 0, z = 0;
-	float r = 255.0f, g = 255.0f, b = 255.0f, a = 1.0f, block_size = 1.0f;
+	float r = 1.0f, g = 0.5f, b = 0.31f, a = 1.0f, block_size = 1.0f;
 	uint64_t cur_frame_id = 0;
 	std::map<std::size_t, bool> graph_ids; // <graph_id, activate_flag>
 	// May be more attributes in a pixel
@@ -31,7 +32,9 @@ class CubePixel : public OnePixel
 {
 public:
     CubePixel(const OnePixel& basePixel);
-	glm::mat4 GetTransformMat();
+	const std::vector<float> GetVertices();
+	const std::vector<unsigned int> GetIndices();
+	const glm::mat4 GetTransformMat();
 protected:
 	void InitializeVertices();
 	void InitializeTransformation();

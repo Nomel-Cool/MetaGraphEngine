@@ -2,6 +2,10 @@
 #ifndef GL_SCREEN_H
 #define GL_SCREEN_H
 
+#include <map>
+#include <vector>
+#include <thread>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -14,12 +18,26 @@
 #include "GLCamera.h"
 #include "GLTexture.h"
 
+#include "PixelType.h"
+
 class GLScreen
 {
 public:
+	GLScreen() = default;
+	~GLScreen();
+	void InitScreen(int screen_width, int screen_height);
+	void InitCamara(glm::vec3 camera_pos);
+	void SetVerticesData(const std::vector<CubePixel>& cubes);
+	void Rendering();
+
+protected:
 
 private:
-
+	int width = 0, height = 0;
+	std::shared_ptr<GLContext> gl_context = std::make_shared<GLContext>();
+	std::shared_ptr <GLCamera> gl_camera = std::make_shared<GLCamera>();
+	std::thread render_thread;
+	std::map<uint64_t, std::vector<CubePixel>> pixel_map;
 };
 
 #endif // !GL_SCREEN_H
