@@ -54,8 +54,7 @@ void GLScreen::Rendering()
         GLShader experence_shader("./shaders_codes/vertex/vetex_with_color.vs",
             "./shaders_codes/fragment/ExperienceColor.fs");
 
-        // 初始化灯光
-        glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+        // 初始化灯光位置跟随相机
         // 物体接受环境光强度                           // 光源发射环境光的强度
         glm::vec3 ambientObject(1.0f, 0.5f, 0.31f), ambientLight(0.2f, 0.2f, 0.2f);
         // 物体接受漫反射光强度                       // 光源发射漫反射光的强度     
@@ -108,7 +107,7 @@ void GLScreen::Rendering()
                     experence_shader.SetVec3("material.diffuse", diffObject);
                     experence_shader.SetVec3("material.specular", specObject);
                     experence_shader.SetFloat("material.shininess", shininess);
-                    experence_shader.SetVec3("light.position", lightPos);
+                    experence_shader.SetVec3("light.position", gl_camera->GetCameraPos()); // 相机即光源
                     experence_shader.SetVec3("light.ambient", ambientLight);
                     experence_shader.SetVec3("light.diffuse", diffLight);
                     experence_shader.SetVec3("light.specular", specLight);
