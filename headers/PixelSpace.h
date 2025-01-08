@@ -88,7 +88,7 @@ class GraphStudio : public QObject
 	Q_OBJECT
 public:
 	explicit GraphStudio(QObject* parent = nullptr);
-	Q_INVOKABLE void InitWindow(int width, int height);
+	Q_INVOKABLE void InitWindow(int width, int height, float cameraX, float cameraY, float cameraZ, bool perspective_type, bool view_lock);
 	Q_INVOKABLE void SetFilmName(const QString& film_name);
 	Q_INVOKABLE void RoleEmplacement(const QStringList& model_names);
 	Q_INVOKABLE void Launch();

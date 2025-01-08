@@ -27,6 +27,8 @@ public:
 	~GLScreen();
 	void InitScreen(int screen_width, int screen_height);
 	void InitCamara(glm::vec3 camera_pos);
+	void InitPerspectiveType(bool view_type);
+	void SetViewLock(bool is_view_lock);
 	void SetVerticesData(const std::vector<CubePixel>& cubes);
 	void Rendering();
 
@@ -34,6 +36,7 @@ protected:
 
 private:
 	int width = 0, height = 0;
+	bool is_lock = false, perspective_type = false;
 	std::shared_ptr<GLContext> gl_context = std::make_shared<GLContext>();
 	std::shared_ptr <GLCamera> gl_camera = std::make_shared<GLCamera>();
 	std::thread render_thread;

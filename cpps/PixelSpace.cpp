@@ -158,9 +158,12 @@ GraphStudio::GraphStudio(QObject* parent) : QObject(parent)
     sp_gl_screen = std::make_shared<GLScreen>();
 }
 
-void GraphStudio::InitWindow(int width, int height)
+void GraphStudio::InitWindow(int width, int height, float cameraX, float cameraY, float cameraZ, bool perspective_type, bool view_lock)
 {
     sp_gl_screen->InitScreen(width, height);
+    sp_gl_screen->InitCamara(glm::vec3(cameraX, cameraY, cameraZ));
+    sp_gl_screen->InitPerspectiveType(perspective_type);
+    sp_gl_screen->SetViewLock(view_lock);
 }
 
 void GraphStudio::SetFilmName(const QString& film_name)

@@ -58,6 +58,37 @@ glm::mat4 GLCamera::GetLookUp()
 	return view;
 }
 
+void GLCamera::SetFOV(float fov)
+{
+	fov = std::clamp(fov, 1.0f, 90.0f); // Clamp FOV to reasonable limits
+}
+
+float GLCamera::GetFOV() const
+{
+	return currentFOV;
+}
+
+void GLCamera::SetTargetFOV(float newFOV)
+{
+	targetFOV = std::clamp(newFOV, minFOV, maxFOV); // 限制 FOV 的范围
+}
+
+// 更新 FOV（在渲染循环中调用）
+void GLCamera::UpdateFOV()
+{
+	if (currentFOV != targetFOV) 
+	{
+		// 使用线性插值平滑过渡
+		float speed = 5.0f; // 调整速度
+		currentFOV = glm::mix(currentFOV, targetFOV, speed * deltaTime);
+
+		// 如果接近目标值，直接设置为目标值
+		if (std::abs(currentFOV - targetFOV) < 0.01f) {
+			currentFOV = targetFOV;
+		}
+	}
+}
+
 void GLCamera::CameraMove(CAMERA_MOVE_TYPE move_type, float step_move)
 {
 	glm::vec3 forward = glm::normalize(cameraTarget - cameraPos);

@@ -3,6 +3,7 @@
 #define GL_CAMERA_H
 #define GLM_ENABLE_EXPERIMENTAL //启用实验性功能支持
 #include <iostream>
+#include <algorithm>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -36,6 +37,10 @@ public:
     void ResetCameraPos();
     void SetLookUp(glm::vec3 camera_pos, glm::vec3 camera_target, glm::vec3 vec_up);
     glm::mat4 GetLookUp();
+    void SetFOV(float fov);
+    float GetFOV() const;
+    void SetTargetFOV(float newFOV);
+    void UpdateFOV();
     void CameraMove(CAMERA_MOVE_TYPE move_type, float step_move);
     void CameraSpin(CAMERA_SPIN_TYPE spin_type, float spin_angle); // [0,360°] for keyboard
     void CameraSpin(float xoffset, float yoffset); // for mouse
@@ -51,6 +56,10 @@ private:
     float lastX; // 上一次鼠标位置X
     float lastY; // 上一次鼠标位置Y
     float sensitivity; // 鼠标灵敏度
+    float currentFOV = 45.0f; // 当前 FOV
+    float targetFOV = 45.0f;  // 目标 FOV
+    float minFOV = 1.0f;      // FOV 最小值
+    float maxFOV = 90.0f;     // FOV 最大值
 };
 
 #endif // !GL_CAMERA_H
