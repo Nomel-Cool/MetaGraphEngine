@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.15
 Rectangle {
     id: root
 
-    signal setting(int w, int h);
+    signal setting(int w, int h, var cameraX, var cameraY, var cameraZ, var viewType, var islock);
 
     border.width: 1
     width: 300
@@ -27,9 +27,28 @@ Rectangle {
             TextField {
                 id: widthField
                 Layout.fillWidth: true
-                placeholderText: qsTr("请输入宽度")
+                placeholderText: "800"
                 inputMethodHints: Qt.ImhDigitsOnly
                 validator: IntValidator { bottom: 0 }
+                Component.onCompleted: {
+                    if (text === "")
+                        text = placeholderText
+                }
+            }
+            Label {
+                text: qsTr("高:")
+                Layout.alignment: Qt.AlignLeft
+            }
+            TextField {
+                id: heightField
+                Layout.fillWidth: true
+                placeholderText: "600"
+                inputMethodHints: Qt.ImhDigitsOnly
+                validator: IntValidator { bottom: 0 }
+                Component.onCompleted: {
+                    if (text === "")
+                        text = placeholderText
+                }
             }
         }
 
@@ -38,15 +57,77 @@ Rectangle {
             spacing: 10
 
             Label {
-                text: qsTr("高:")
+                text: qsTr("相机位置:")
                 Layout.alignment: Qt.AlignLeft
             }
             TextField {
-                id: heightField
+                id: xCord
                 Layout.fillWidth: true
-                placeholderText: qsTr("请输入高度")
+                placeholderText: "0.0"
                 inputMethodHints: Qt.ImhDigitsOnly
                 validator: IntValidator { bottom: 0 }
+                Component.onCompleted: {
+                    if (text === "")
+                        text = placeholderText
+                }
+            }
+            TextField {
+                id: yCord
+                Layout.fillWidth: true
+                placeholderText: "0.0"
+                inputMethodHints: Qt.ImhDigitsOnly
+                validator: IntValidator { bottom: 0 }
+                Component.onCompleted: {
+                    if (text === "")
+                        text = placeholderText
+                }
+            }
+            TextField {
+                id: zCord
+                Layout.fillWidth: true
+                placeholderText: "100.0"
+                inputMethodHints: Qt.ImhDigitsOnly
+                validator: IntValidator { bottom: 0 }
+                Component.onCompleted: {
+                    if (text === "")
+                        text = placeholderText
+                }
+            }
+        }
+        
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+            ButtonGroup {
+                id: perspectiveWay
+            }
+            RadioButton {
+                id: twoD
+                text: qsTr("2D")
+                ButtonGroup.group: perspectiveWay
+            }
+            RadioButton {
+                id: threeD
+                text: qsTr("3D")
+                ButtonGroup.group: perspectiveWay
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+            ButtonGroup {
+                id: lockType
+            }
+            RadioButton {
+                id: lockView
+                text: qsTr("lock")
+                ButtonGroup.group: lockType
+            }
+            RadioButton {
+                id: unlockView
+                text: qsTr("unlock")
+                ButtonGroup.group: lockType
             }
         }
     }
@@ -63,6 +144,12 @@ Rectangle {
         onClicked: {
             let widthValue = parseInt(widthField.text);
             let heightValue = parseInt(heightField.text);
+            let cameraX = parseFloat(xCord.text);
+            let cameraY = parseFloat(yCord.text);
+            let cameraZ = parseFloat(zCord.text);
+            let perspectiveType = twoD.checked ? true : false;
+            let isLock = lockView.checked ? true : false
+
 
             if (isNaN(widthValue) || isNaN(heightValue)) {
                 console.error("输入无效，请填写非负整数！");
@@ -70,8 +157,31 @@ Rectangle {
             }
 
             // 发送 setting 信号
-            root.setting(widthValue, heightValue);
+            root.setting(widthValue, heightValue, cameraX, cameraY, cameraZ, perspectiveType, isLock);
             console.log("设置宽:", widthValue, "高:", heightValue);
+
+            // 确认后禁止修改，直到 ceize 信号发出
+            widthField.readOnly = true;
+            heightField.readOnly = true;
+            xCord.readOnly = true;
+            yCord.readOnly = true;
+            zCord.readOnly = true;
+            twoD.enabled = false;
+            threeD.enabled = false;
+            lockView.enabled = false;
+            unlockView.enabled = false;
         }
+    }
+
+    function reset() {
+        widthField.readOnly = false;
+        heightField.readOnly = false;
+        xCord.readOnly = false;
+        yCord.readOnly = false;
+        zCord.readOnly = false;
+        twoD.enabled = true;
+        threeD.enabled = true;
+        lockView.enabled = true;
+        unlockView.enabled = true;
     }
 }

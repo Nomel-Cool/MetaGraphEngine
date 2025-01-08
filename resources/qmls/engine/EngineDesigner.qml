@@ -8,7 +8,7 @@ Rectangle {
     width: 800
     height: 600
     signal filmNameRecorded(string filmName);
-    signal windowSeted(int w, int h);
+    signal windowSeted(int w, int h, var cameraX, var cameraY, var cameraZ, bool viewType, bool lockType);
     signal deliveredListCompiled()
     signal deliveredListLaunched()
     signal deliveredListPlayInGL(var nameList)
@@ -74,13 +74,17 @@ Rectangle {
         width: parent.width - buttonToolList.width
         anchors.top: filmSelector.bottom
         anchors.left: buttonToolList.right
-        onSetting: (w,h) => {
-            windowSeted(w,h);
+        onSetting: (w,h,cx,cy,cz,viewType,isLock) => {
+            windowSeted(w,h,cx,cy,cz,viewType,isLock);
         }
     }
 
     function resetBtnStatus() {
         buttonToolList.reset();
+    }
+
+    function resetWinStatus() {
+        windowSettings.reset();
     }
 
     function addModelToGraphList(modelName) {

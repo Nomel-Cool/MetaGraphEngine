@@ -130,13 +130,14 @@ ApplicationWindow {
         onDeliveredListCleared: {
             graphStudio.RoleDismiss();
         }
-        onWindowSeted: (w,h) => {
-            graphStudio.InitWindow(w,h);
+        onWindowSeted: (w,h,cx,cy,cz,viewType,isLock) => {
+            graphStudio.InitWindow(w,h,cx,cy,cz,viewType,isLock);
         }
         Connections {
             target: graphStudio
             onFilmTerminated: (filmName) => {
                 engineDesigner.resetBtnStatus();
+                engineDesigner.resetWinStatus();
                 engineDesigner.addFilmToSelector(filmName);
             }
         }
