@@ -19,7 +19,8 @@ out vec3 FragPos; // 告诉片段着色器，像素的世界坐标
 
 void main()
 {
-    gl_Position = projection * view * model * vec4(aPos, 1.0); // (x,y,z,w), w 是相机到荧幕的距离用于透视除法，这里乘上了 MVP 矩阵使得它进入了裁剪空间（后续变NDC）
+    gl_Position = projection * view * vec4(aPos, 1.0); // (x,y,z,w), w 是相机到荧幕的距离用于透视除法，这里乘上了 MVP 矩阵使得它进入了裁剪空间（后续变NDC）
+    //gl_Position = projection * view * model * vec4(aPos, 1.0); // (x,y,z,w), w 是相机到荧幕的距离用于透视除法，这里乘上了 MVP 矩阵使得它进入了裁剪空间（后续变NDC）
    //gl_Position = vec4(aPos.x + x_displacement, -aPos.y, aPos.z, 1.0); // 这样让三角形上下颠倒了，记住它是围绕原点的，只需要置y相反数即可
    vertexColor = vec3(aColor);
    TexCoord = aTexCoord;

@@ -52,14 +52,17 @@ const std::vector<unsigned int> CubePixel::GetIndices()
     return indices;
 }
 
-const glm::mat4 CubePixel::GetTransformMat()
+const glm::mat4 CubePixel::GetTransformMat() const
 {
     return T * R * S;
 }
 
 void CubePixel::InitializeVertices()
 {
-    // 生成立方体的顶点数据
+    // 获取模型矩阵
+    glm::mat4 modelMatrix = GetTransformMat();
+
+    // 生成立方体的携带模型矩阵信息的顶点数据
     vertices = {
       // -=======pos======-  -==color==- -=====norm======-  -=sample=-
         // 前面 (法向量指向 -Z)
@@ -98,6 +101,21 @@ void CubePixel::InitializeVertices()
           0.5f,  0.5f,  0.5f, r, g, b, a, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, // 22 右上
          -0.5f,  0.5f,  0.5f, r, g, b, a, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f  // 23 左上
     };
+
+    // 对每个顶点的位置进行变换
+    for (size_t i = 0; i < vertices.size(); i += 12)
+    {
+        // 提取位置向量
+        glm::vec4 position(vertices[i], vertices[i + 1], vertices[i + 2], 1.0f);
+
+        // 应用模型矩阵变换
+        position = modelMatrix * position;
+
+        // 更新顶点数据中的位置
+        vertices[i] = position.x;
+        vertices[i + 1] = position.y;
+        vertices[i + 2] = position.z;
+    }
 
     // 生成立方体的索引数据
     indices = {

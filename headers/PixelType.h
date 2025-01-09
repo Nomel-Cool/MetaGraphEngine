@@ -34,7 +34,7 @@ public:
     CubePixel(const OnePixel& basePixel);
 	const std::vector<float> GetVertices();
 	const std::vector<unsigned int> GetIndices();
-	const glm::mat4 GetTransformMat();
+	const glm::mat4 GetTransformMat() const;
 protected:
 	void InitializeVertices();
 	void InitializeTransformation();

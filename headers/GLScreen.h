@@ -30,6 +30,7 @@ public:
 	void InitPerspectiveType(bool view_type);
 	void SetViewLock(bool is_view_lock);
 	void SetVerticesData(const std::vector<CubePixel>& cubes);
+	std::vector<std::shared_ptr<GLBuffer>> GetFrameBuffers();
 	void Rendering();
 
 protected:
