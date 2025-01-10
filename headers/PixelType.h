@@ -35,10 +35,12 @@ public:
 	const std::vector<float> GetVertices();
 	const std::vector<unsigned int> GetIndices();
 	const glm::mat4 GetTransformMat() const;
+	const size_t GetVerticesLength() const;
 protected:
 	void InitializeVertices();
 	void InitializeTransformation();
 private:
+	std::size_t vertex_data_size = 12;
 	glm::mat4 R = glm::mat4(1.0f), T = glm::mat4(1.0f), S = glm::mat4(1.0f);
     std::vector<float> vertices;
     std::vector<unsigned int> indices;

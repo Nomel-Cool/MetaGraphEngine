@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <thread>
+#include <ranges>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -20,6 +21,11 @@
 
 #include "PixelType.h"
 
+enum PixelShape
+{
+	CUBE = 12,
+};
+
 class GLScreen
 {
 public:
@@ -30,7 +36,7 @@ public:
 	void InitPerspectiveType(bool view_type);
 	void SetViewLock(bool is_view_lock);
 	void SetVerticesData(const std::vector<CubePixel>& cubes);
-	std::vector<std::shared_ptr<GLBuffer>> GetFrameBuffers();
+	std::vector<std::shared_ptr<GLBuffer>> GetFrameBuffers(PixelShape shape_type);
 	void Rendering();
 
 protected:
@@ -38,6 +44,7 @@ protected:
 private:
 	int width = 0, height = 0;
 	bool is_lock = false, perspective_type = false;
+	float FPS = 120;
 	std::shared_ptr<GLContext> gl_context = std::make_shared<GLContext>();
 	std::shared_ptr <GLCamera> gl_camera = std::make_shared<GLCamera>();
 	std::thread render_thread;

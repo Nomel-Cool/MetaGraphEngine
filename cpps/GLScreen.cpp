@@ -45,43 +45,51 @@ void GLScreen::SetVerticesData(const std::vector<CubePixel>& cubes)
     }
 }
 
-std::vector<std::shared_ptr<GLBuffer>> GLScreen::GetFrameBuffers()
+std::vector<std::shared_ptr<GLBuffer>> GLScreen::GetFrameBuffers(PixelShape shape_type)
 {
     std::vector<std::shared_ptr<GLBuffer>> frame_buffers;
 
-    for (int i = 1; i < pixel_map.size(); ++i)
+    // 使用 ranges::iota 替代外层的 for 循环
+    for (int i : std::views::iota(1, static_cast<int>(pixel_map.size())))
     {
-        std::shared_ptr<GLBuffer> sptr_box_buffer = std::make_shared<GLBuffer>();
+        std::shared_ptr<GLBuffer> sptr_shape_buffer = std::make_shared<GLBuffer>();
         std::vector<float> frame_vertices;
         std::vector<unsigned int> frame_indices;
 
         // 顶点和索引的偏移量
         size_t vertex_offset = 0;
 
-        // 遍历当前帧中的所有立方体
-        for (auto& cube_pixel : pixel_map[i])
-        {
+        // 使用 ranges::for_each 替代内层的 for 循环
+        std::ranges::for_each(pixel_map[i], [&](auto& pixel_shape) {
             // 获取当前立方体的顶点数据
-            auto vertices = cube_pixel.GetVertices();
+            auto vertices = pixel_shape.GetVertices();
             frame_vertices.insert(frame_vertices.end(), vertices.begin(), vertices.end());
 
-            // 获取当前立方体的索引数据，并调整索引值
-            auto indices = cube_pixel.GetIndices();
-            for (auto index : indices)
-                frame_indices.push_back(index + vertex_offset);
+            // 使用 ranges::transform 来调整索引值
+            auto indices = pixel_shape.GetIndices();
+            std::ranges::transform(indices, std::back_inserter(frame_indices),
+                [&vertex_offset](unsigned int index) { return index + vertex_offset; });
 
             // 更新顶点偏移量
-            vertex_offset += vertices.size() / 12; // 每个顶点有 12 个分量
+            vertex_offset += vertices.size() / pixel_shape.GetVerticesLength(); // 每个顶点有 12 个分量
+        });
+
+        switch (shape_type)
+        {
+        case CUBE:
+            sptr_shape_buffer->SetVBOData(frame_vertices);
+            sptr_shape_buffer->AllocateVBOMemo(0, 3, 12 * sizeof(float), 0);                // 位置
+            sptr_shape_buffer->AllocateVBOMemo(1, 4, 12 * sizeof(float), 3 * sizeof(float)); // 颜色
+            sptr_shape_buffer->AllocateVBOMemo(2, 3, 12 * sizeof(float), 7 * sizeof(float)); // 法线
+            sptr_shape_buffer->AllocateVBOMemo(3, 2, 12 * sizeof(float), 10 * sizeof(float)); // 纹理坐标
+            sptr_shape_buffer->SetEBOData(frame_indices);
+            sptr_shape_buffer->SetEBODataSize(frame_indices.size());
+            sptr_shape_buffer->FinishInitialization();
+            frame_buffers.emplace_back(sptr_shape_buffer);
+            break;
+        default:
+            break;
         }
-        sptr_box_buffer->SetVBOData(frame_vertices);
-        sptr_box_buffer->AllocateVBOMemo(0, 3, 12 * sizeof(float), 0);                // 位置
-        sptr_box_buffer->AllocateVBOMemo(1, 4, 12 * sizeof(float), 3 * sizeof(float)); // 颜色
-        sptr_box_buffer->AllocateVBOMemo(2, 3, 12 * sizeof(float), 7 * sizeof(float)); // 法线
-        sptr_box_buffer->AllocateVBOMemo(3, 2, 12 * sizeof(float), 10 * sizeof(float)); // 纹理坐标
-        sptr_box_buffer->SetEBOData(frame_indices);
-        sptr_box_buffer->SetEBODataSize(frame_indices.size());
-        sptr_box_buffer->FinishInitialization();
-        frame_buffers.emplace_back(sptr_box_buffer);
     }
 
     return frame_buffers;
@@ -121,10 +129,10 @@ void GLScreen::Rendering()
         // 材质反光度
         float shininess = 64.0f;
 
-        auto frame_buffers = GetFrameBuffers();
+        auto frame_buffers = GetFrameBuffers(PixelShape::CUBE);
 
         // 帧率控制
-        const double frame_duration = 1.0 / 24.0; // 24 FPS
+        const double frame_duration = (float)1.0f / FPS; // 120 FPS
         double last_frame_time = glfwGetTime();   // 上一帧的时间
         size_t current_frame = 0;                // 当前帧索引
 

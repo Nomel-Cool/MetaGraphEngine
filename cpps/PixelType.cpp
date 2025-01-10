@@ -57,6 +57,11 @@ const glm::mat4 CubePixel::GetTransformMat() const
     return T * R * S;
 }
 
+const size_t CubePixel::GetVerticesLength() const
+{
+    return vertex_data_size;
+}
+
 void CubePixel::InitializeVertices()
 {
     // 获取模型矩阵
@@ -103,7 +108,7 @@ void CubePixel::InitializeVertices()
     };
 
     // 对每个顶点的位置进行变换
-    for (size_t i = 0; i < vertices.size(); i += 12)
+    for (size_t i = 0; i < vertices.size(); i += vertex_data_size)
     {
         // 提取位置向量
         glm::vec4 position(vertices[i], vertices[i + 1], vertices[i + 2], 1.0f);
