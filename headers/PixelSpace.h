@@ -77,7 +77,7 @@ private:
 	std::map<std::size_t, std::queue<std::shared_ptr<OnePixel>>> checkin_sequence; // <graph_id, {pixel1,...,pixeln}>
 	std::mutex stage_lock;
 	uint64_t frame_id = 1;
-	uint64_t FPS = 120;
+	uint64_t FPS = 120; // 这个帧数与实时渲染设计有关，不是帧动画的直接帧数
 };
 
 class Law;
