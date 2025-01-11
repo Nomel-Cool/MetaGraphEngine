@@ -201,6 +201,7 @@ void GLScreen::Rendering()
             gl_context->PollEvents();
         }
     });
+    render_thread.join();
 }
 
 void changeCameraStatusByKeyBoardInput(GLContext& context_manager, GLShader& shader_manager, GLCamera& camera_manager)
