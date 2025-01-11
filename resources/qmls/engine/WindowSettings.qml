@@ -109,6 +109,7 @@ Rectangle {
             RadioButton {
                 id: threeD
                 text: qsTr("3D")
+                checked: true
                 ButtonGroup.group: perspectiveWay
             }
         }
@@ -127,6 +128,7 @@ Rectangle {
             RadioButton {
                 id: unlockView
                 text: qsTr("unlock")
+                checked: true
                 ButtonGroup.group: lockType
             }
         }
