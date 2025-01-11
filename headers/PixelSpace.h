@@ -153,6 +153,7 @@ public:
 				{
 					last_pixel.second->last_flag = true;  // 设置 last_flag 为 true
 					ATTRIBUTE::Apply(last_pixel.second);
+					last_pixel.second->last_flag = false;  // 重置 last_flag 为 false
 					rendered_pixels.emplace_back(last_pixel.first);
 				}
 			}
