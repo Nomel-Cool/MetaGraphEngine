@@ -135,10 +135,13 @@ void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::si
 std::map<std::size_t, std::vector<OnePixel>> Hall::CollectStage()
 {
     std::map<std::size_t, std::vector<OnePixel>> collected_pixels;
-    for (auto& pixel : checkin_sequence)
+    for (auto& sequencial_pixels : checkin_sequence)
     {
-        collected_pixels[pixel.first].emplace_back(*(pixel.second.front()));
-        pixel.second.pop();
+        while (!sequencial_pixels.second.empty())
+        {
+            collected_pixels[sequencial_pixels.first].emplace_back(*(sequencial_pixels.second.front()));
+            sequencial_pixels.second.pop();
+        }
     }
     checkin_sequence.clear();
     return collected_pixels;
