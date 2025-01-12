@@ -331,7 +331,7 @@ void GraphStudio::UpdateGraphList()
                     { "g",activate_pixel.g },
                     { "b",activate_pixel.b },
                     { "a",activate_pixel.a },
-                    { "size",activate_pixel.block_size }
+                    { "blockSize",activate_pixel.block_size }
                 });
                 sp_hall->Disable({ activate_pixel.x, activate_pixel.y }, pixels.first); // ÖÃactivate_flagÎªfalse
             }
