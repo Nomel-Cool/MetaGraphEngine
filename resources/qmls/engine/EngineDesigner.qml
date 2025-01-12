@@ -25,6 +25,13 @@ Rectangle {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
+        onListEmpty: {
+            buttonToolList.listCountForbid()
+        }
+
+        onListNotEmpty: {
+            buttonToolList.listCountEngage()
+        }
     }
     
     ButtonToolList {
@@ -76,11 +83,13 @@ Rectangle {
         anchors.left: buttonToolList.right
         onSetting: (w,h,cx,cy,cz,viewType,isLock) => {
             windowSeted(w,h,cx,cy,cz,viewType,isLock);
+            buttonToolList.winSetEngage();
         }
     }
 
     function resetBtnStatus() {
         buttonToolList.reset();
+        buttonToolList.winSetForbid();
     }
 
     function resetWinStatus() {

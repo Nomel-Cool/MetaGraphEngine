@@ -8,6 +8,9 @@ Rectangle {
     border.width: 1
 
     property var modelList: []
+    
+    signal listEmpty()
+    signal listNotEmpty()
 
     ListView {
         id: listView
@@ -28,15 +31,26 @@ Rectangle {
                 verticalAlignment: Text.AlignVCenter
             }
         }
+        Component.onCompleted: {
+            listEmpty();
+        }
+        onCountChanged: {
+            if(listView.count == 0)
+                listEmpty();
+            else
+                listNotEmpty()
+        }
     }
 
     function addModel(modelName) {
         root.modelList.push(modelName);
         listView.model = root.modelList; // 更新 ListView 的 model
+        listNotEmpty();
     }
 
     function cleanModel() {
         root.modelList = [];
         listView.model = []; // 更新 ListView 的 model
+        listEmpty();
     }
 }

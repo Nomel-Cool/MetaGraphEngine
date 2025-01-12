@@ -144,6 +144,7 @@ Rectangle {
         anchors.margins: 10
 
         onClicked: {
+            confirmSettingBtn.enabled = false;
             let widthValue = parseInt(widthField.text);
             let heightValue = parseInt(heightField.text);
             let cameraX = parseFloat(xCord.text);
@@ -176,6 +177,7 @@ Rectangle {
     }
 
     function reset() {
+        confirmSettingBtn.enabled = true;
         widthField.readOnly = false;
         heightField.readOnly = false;
         xCord.readOnly = false;

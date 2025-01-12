@@ -11,6 +11,19 @@ Rectangle {
     signal listPlayInGL()
     signal listStopped()
 
+
+    QtObject {
+        id: __private
+        property var winSetStatus: false
+        property var listCountStatus: false
+        onWinSetStatusChanged: {
+            confirmButton.enabled = winSetStatus && listCountStatus;
+        }
+        onListCountStatusChanged: {
+            confirmButton.enabled = winSetStatus && listCountStatus;
+        }
+    }
+
     id: root
     border.width: 1
 
@@ -40,6 +53,7 @@ Rectangle {
                 width: 40
                 height: 40
                 text: qsTr("确认")
+                enabled: __private.winSetStatus && __private.listCountStatus
                 onClicked: {
                     confirmButton.enabled = false;
                     compileButton.enabled = true;
@@ -76,23 +90,8 @@ Rectangle {
             onClicked: {
                 listLaunched()
                 launchButton.enabled = false;
-                glPlayBtn.enabled = true;
-                console.log("GraphList Launched")
-            }
-        }
-
-        Button {
-            id: glPlayBtn
-            width: 100
-            height: 50
-            enabled: false
-            text: "GLPlay"
-            Layout.alignment: Qt.AlignHCenter
-            onClicked: {
-                listPlayInGL()
-                glPlayBtn.enabled = false;
                 ceizeButton.enabled = true;
-                console.log("OpenGL: GraphList Played")
+                console.log("GraphList Launched")
             }
         }
          
@@ -106,10 +105,25 @@ Rectangle {
             onClicked: {
                 listStopped()
                 ceizeButton.enabled = false;
-                clearButton.enabled = true;
+                glPlayBtn.enabled = true;
                 inputField.readOnly = false;
                 confirmButton.enabled = true;
                 console.log("GraphList stopped")
+            }
+        }
+
+        Button {
+            id: glPlayBtn
+            width: 100
+            height: 50
+            enabled: false
+            text: "GLPlay"
+            Layout.alignment: Qt.AlignHCenter
+            onClicked: {
+                listPlayInGL()
+                glPlayBtn.enabled = false;
+                clearButton.enabled = true;
+                console.log("OpenGL: GraphList Played")
             }
         }
 
@@ -126,10 +140,25 @@ Rectangle {
         }
     }
 
+    function winSetEngage() {
+        __private.winSetStatus = true;
+    }
+
+    function winSetForbid() {
+        __private.winSetStatus = false;
+    }
+
+    function listCountEngage() {
+        __private.listCountStatus = true;
+    }
+
+    function listCountForbid() {
+        __private.listCountStatus = false;
+    }
+
     function reset() {
         ceizeButton.enabled = false;
-        clearButton.enabled = true;
         inputField.readOnly = false;
-        confirmButton.enabled = true;
+        glPlayBtn.enabled = true;
     }
 }
