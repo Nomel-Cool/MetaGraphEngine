@@ -190,7 +190,7 @@ void GraphStudio::Display(const QStringList& film_name_list)
     {
         std::vector<CubePixel> vec_cubes;
         auto compressed_pics = photo_grapher.Fetch(film_name.toStdString());
-        compressed_pics.SetPinPos();
+        //compressed_pics.SetPinPos(); // 暂时由点自身坐标决定世界坐标，不作偏移
         auto vec_pics = compressed_pics.GetFrames();
         for (const OnePixel& pic : vec_pics)
             vec_cubes.emplace_back(pic);
@@ -218,21 +218,21 @@ void GraphStudio::Launch()
             return;
         }
         auto render_loop = [this]()
-            {
-                static bool running = true;
-                if (!running)
-                    return;
-                running = false;
+        {
+            static bool running = true;
+            if (!running)
+                return;
+            running = false;
 
-                /**************** 暂定流程四件套 ***************/
-                StandBy(); // 出牌定格
-                Interact(); // 变更手牌
-                UpdateGraphList(); // 收牌再来
-                SnapShot(); // 储为快照
-                TidyUp(); // 清理非渲染像素
+            /**************** 暂定流程四件套 ***************/
+            StandBy(); // 出牌定格
+            Interact(); // 变更手牌
+            UpdateGraphList(); // 收牌再来
+            SnapShot(); // 储为快照
+            TidyUp(); // 清理非渲染像素
 
-                running = true;
-            };
+            running = true;
+        };
         connect(sp_timer.get(), &QTimer::timeout, render_loop);
         sp_timer->start(1000.0f / sp_hall->GetCurrentFPS()); // FPS ≈ 120
     }
@@ -240,6 +240,28 @@ void GraphStudio::Launch()
     {
         Stop();
     }
+}
+
+void GraphStudio::RealTimeRender()
+{
+
+    std::thread tmp1 = std::thread([this]() {sp_gl_screen->RealTimeRendering(photo_grapher); });
+    std::thread tmp2 = std::thread(
+        [this]()
+        {
+            while (true)
+            {
+                ///**************** 暂定流程四件套 ***************/
+                StandBy(); // 出牌定格
+                RealTimeInteract(); // 根据操作实时变更手牌
+                UpdateGraphList(); // 收牌再来
+                RealTimeSnapShot(); // 储为实时快照
+                TidyUp(); // 清理非渲染像素
+            }
+        }
+    );
+    tmp1.join();
+    tmp2.join();
 }
 
 void GraphStudio::Ceize()
@@ -310,6 +332,13 @@ void GraphStudio::Interact()
     sp_law->AffectOn<Gravity>(this);
 }
 
+void GraphStudio::RealTimeInteract()
+{
+    auto realtime_op_info = sp_gl_screen->TryGettingOpInfo();
+    std::cout << "Got the op: " << realtime_op_info.op_name << std::endl;
+    sp_law->AffectOn<Gravity>(this, realtime_op_info);
+}
+
 void GraphStudio::UpdateGraphList()
 {
     try
@@ -360,6 +389,22 @@ void GraphStudio::SnapShot()
         if (specific_pixel->cur_frame_id == cur_id && specific_pixel->render_flag)
             photo_grapher.Filming(*specific_pixel);
     }
+    sp_hall->NextFrame();
+}
+
+void GraphStudio::RealTimeSnapShot()
+{
+    auto cur_id = sp_hall->GetCurrentFrameID();
+    std::vector<OnePixel> realtime_frames;
+    for (auto& pixel : sp_hall->GetStage())
+    {
+        std::shared_ptr<OnePixel> specific_pixel = pixel.second;
+        if (specific_pixel->cur_frame_id == cur_id && specific_pixel->render_flag)
+            realtime_frames.emplace_back(*specific_pixel);
+    }
+    CompressedFrame compressed_frame;
+    compressed_frame.UpdateFrames(realtime_frames);
+    photo_grapher.RealTimeFilming(compressed_frame);
     sp_hall->NextFrame();
 }
 

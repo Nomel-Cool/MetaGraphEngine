@@ -45,6 +45,13 @@ void PhotoGrapher::Filming(const OnePixel one_pixel)
     film_cache.emplace_back(one_pixel);
 }
 
+void PhotoGrapher::RealTimeFilming(CompressedFrame realtime_frame)
+{
+    //std::string msg = "放入了" + std::to_string(realtime_frame.GetFrames().size()) + "个像素\n";
+    //printf(msg.c_str());
+    concurrency_compressedframe_queue.AddQuestToQueue(std::make_unique<CompressedFrame>(std::move(realtime_frame)));
+}
+
 void PhotoGrapher::RecordFilmName(const std::string& film_name)
 {
     current_film_name = film_name;
@@ -53,4 +60,13 @@ void PhotoGrapher::RecordFilmName(const std::string& film_name)
 std::string PhotoGrapher::GetCurrentFilmName()
 {
     return current_film_name;
+}
+
+CompressedFrame PhotoGrapher::TryGettingFrame()
+{
+    CompressedFrame nothing;
+    if (concurrency_compressedframe_queue.Empty())
+        return nothing;
+    auto frame = concurrency_compressedframe_queue.GetQuestFromQueue();
+    return *frame;
 }

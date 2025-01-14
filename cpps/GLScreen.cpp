@@ -95,6 +95,59 @@ std::vector<std::shared_ptr<GLBuffer>> GLScreen::GetFrameBuffers(PixelShape shap
     return frame_buffers;
 }
 
+std::vector<std::shared_ptr<GLBuffer>> GLScreen::GetFrameBuffers(PixelShape shape_type, CompressedFrame a_frame)
+{
+    std::vector<std::shared_ptr<GLBuffer>> frame_buffers;
+    std::vector<CubePixel> shapes;
+    // 临时构造一个CubePixel数组
+    for (const auto& pixel : a_frame.GetFrames())
+        shapes.emplace_back(pixel);
+    // 使用 ranges::iota 替代外层的 for 循环
+    for (int i : std::views::iota(0, static_cast<int>(shapes.size())))
+    {
+        std::shared_ptr<GLBuffer> sptr_shape_buffer = std::make_shared<GLBuffer>();
+        std::vector<float> frame_vertices;
+        std::vector<unsigned int> frame_indices;
+
+        // 顶点和索引的偏移量
+        size_t vertex_offset = 0;
+
+        // 使用 ranges::for_each 替代内层的 for 循环
+        std::ranges::for_each(shapes, [&](auto& pixel_shape) {
+            // 获取当前立方体的顶点数据
+            auto vertices = pixel_shape.GetVertices();
+            frame_vertices.insert(frame_vertices.end(), vertices.begin(), vertices.end());
+
+            // 使用 ranges::transform 来调整索引值
+            auto indices = pixel_shape.GetIndices();
+            std::ranges::transform(indices, std::back_inserter(frame_indices),
+                [&vertex_offset](unsigned int index) { return index + vertex_offset; });
+
+            // 更新顶点偏移量
+            vertex_offset += vertices.size() / pixel_shape.GetVerticesLength(); // 每个顶点有 12 个分量
+            });
+
+        switch (shape_type)
+        {
+        case CUBE:
+            sptr_shape_buffer->SetVBOData(frame_vertices);
+            sptr_shape_buffer->AllocateVBOMemo(0, 3, 12 * sizeof(float), 0);                // 位置
+            sptr_shape_buffer->AllocateVBOMemo(1, 4, 12 * sizeof(float), 3 * sizeof(float)); // 颜色
+            sptr_shape_buffer->AllocateVBOMemo(2, 3, 12 * sizeof(float), 7 * sizeof(float)); // 法线
+            sptr_shape_buffer->AllocateVBOMemo(3, 2, 12 * sizeof(float), 10 * sizeof(float)); // 纹理坐标
+            sptr_shape_buffer->SetEBOData(frame_indices);
+            sptr_shape_buffer->SetEBODataSize(frame_indices.size());
+            sptr_shape_buffer->FinishInitialization();
+            frame_buffers.emplace_back(sptr_shape_buffer);
+            break;
+        default:
+            break;
+        }
+    }
+
+    return frame_buffers;
+}
+
 void GLScreen::Rendering()
 {
     render_thread = std::thread([&]() {
@@ -202,6 +255,135 @@ void GLScreen::Rendering()
         }
     });
     render_thread.join();
+}
+
+void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
+{
+    glm::mat4 model = glm::mat4(1.0f), view = glm::mat4(1.0f), projection = glm::mat4(1.0f);
+
+    gl_context->SetWinSize(width, height);
+    gl_context->SetWinTitle("Graphs Stage");
+    gl_context->GenGLWindow();
+    gl_context->SetFlexibleView();
+    gl_context->ActivateWindow();
+    glfwSwapInterval(1); // 启用垂直同步 60FPS
+    glfwSetInputMode(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    if (!is_lock) // 锁视野则不允许鼠标控制
+    {
+        glfwSetCursorPosCallback(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), mouse_callback);
+        glfwSetScrollCallback(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), scroll_callback);        // 滚轮控制视野
+        glfwSetWindowUserPointer(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), &(*(gl_camera.get())));
+    }
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_DEPTH_TEST);
+
+    GLShader experence_shader("./shaders_codes/vertex/vetex_with_color.vs",
+        "./shaders_codes/fragment/ExperienceColor.fs");
+
+    // 初始化灯光位置跟随相机
+    // 物体接受环境光强度                           // 光源发射环境光的强度
+    glm::vec3 ambientObject(1.0f, 0.5f, 0.31f), ambientLight(0.2f, 0.2f, 0.2f);
+    // 物体接受漫反射光强度                       // 光源发射漫反射光的强度     
+    glm::vec3 diffObject(1.0f, 0.5f, 0.31f), diffLight(0.5f, 0.5f, 0.5f);
+    // 物体接受镜面反射光强度                     // 光源发射镜面反射光的强度
+    glm::vec3 specObject(0.5f, 0.5f, 0.5f), specLight(1.0f, 1.0f, 1.0f);
+    // 材质反光度
+    float shininess = 64.0f;
+
+    // 帧率控制
+    const double frame_duration = (float)1.0f / FPS; // 120 FPS
+    double last_frame_time = glfwGetTime();   // 上一帧的时间
+    size_t current_frame = 0;                // 当前帧索引
+
+    while (!gl_context->DoesWindowAboutToClose())
+    {
+        gl_context->EnableInputControlWindowClosure();
+
+        // 清除颜色和深度缓冲区
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // 模拟操作信息
+        OpInfo op_info;
+        op_info.op_name = op_info.op_name + std::to_string(last_frame_time);
+        //std::cout << "放入操作信息： " << op_info.op_name << std::endl;
+        concurrency_opinfo_queue.AddQuestToQueue(std::make_unique<OpInfo>(std::move(op_info)));
+
+        // 模拟从队列取出帧
+        auto _f = photo_grapher.TryGettingFrame();
+        if (_f.GetFrames().empty())
+            continue;
+        //std::cout << "获得帧数： " << _f.GetFrames().size() << std::endl;
+        auto frame_buffers = GetFrameBuffers(PixelShape::CUBE, _f);
+        if (frame_buffers.empty())
+            continue;
+
+        // 修正移动延迟
+        gl_camera->UpdateSpeedByDeltaTime();
+        gl_camera->UpdateFOV();
+        view = gl_camera->GetLookUp();
+        float orthoSize = std::min(width, height) / 2.0f; // 正交投影的半宽或半高
+        float aspectRatio = (float)width / height; // 窗口的宽高比
+        if (perspective_type)
+            projection = glm::ortho(-orthoSize * aspectRatio, orthoSize * aspectRatio, -orthoSize, orthoSize, -100.0f, 100.0f);
+        else
+            projection = glm::perspective(glm::radians(gl_camera->GetFOV()), aspectRatio, 0.1f, 100.0f);
+
+        // 获取当前时间
+        double current_time = glfwGetTime();
+        double delta_time = current_time - last_frame_time;
+
+        // 如果达到帧间隔时间，切换到下一帧
+        if (delta_time >= frame_duration)
+        {
+            last_frame_time = current_time;
+
+            // 渲染当前帧
+            auto& buffer = frame_buffers[current_frame];
+
+            // 更新法线矩阵
+            glm::mat3 normModelMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
+
+            // 设置着色器
+            experence_shader.Use();
+            experence_shader.SetMat3("normModelMatrix", normModelMatrix);
+            experence_shader.SetMat4("view", view);
+            experence_shader.SetMat4("projection", projection);
+            experence_shader.SetVec3("viewPos", gl_camera->GetCameraPos());
+            experence_shader.SetVec3("material.diffuse", diffObject);
+            experence_shader.SetVec3("material.specular", specObject);
+            experence_shader.SetFloat("material.shininess", shininess);
+            experence_shader.SetVec3("light.position", gl_camera->GetCameraPos()); // 相机即光源
+            experence_shader.SetVec3("light.ambient", ambientLight);
+            experence_shader.SetVec3("light.diffuse", diffLight);
+            experence_shader.SetVec3("light.specular", specLight);
+
+            // 绘制当前帧
+            buffer->EnableVAO();
+            glDrawElements(GL_TRIANGLES, buffer->GetEBODataSize(), GL_UNSIGNED_INT, 0);
+            buffer->DisableVAO();
+
+            // 切换到下一帧
+            current_frame = (current_frame + 1) % frame_buffers.size();
+        }
+
+        // 提供键盘控制视野
+        changeCameraStatusByKeyBoardInput(*gl_context, experence_shader, *gl_camera);
+
+        // 交换缓冲区并处理事件
+        gl_context->SwapBuffers();
+        gl_context->PollEvents();
+    }
+}
+
+OpInfo GLScreen::TryGettingOpInfo()
+{
+    OpInfo nothing;
+    nothing.op_name = "nothing...";
+    if (concurrency_opinfo_queue.Empty())
+        return nothing;
+    auto up_op_info = concurrency_opinfo_queue.GetQuestFromQueue();
+    return *up_op_info;
 }
 
 void changeCameraStatusByKeyBoardInput(GLContext& context_manager, GLShader& shader_manager, GLCamera& camera_manager)

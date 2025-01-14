@@ -92,6 +92,7 @@ public:
 	Q_INVOKABLE void SetFilmName(const QString& film_name);
 	Q_INVOKABLE void RoleEmplacement(const QStringList& model_names);
 	Q_INVOKABLE void Launch();
+	Q_INVOKABLE void RealTimeRender();
 	Q_INVOKABLE void Ceize();
 	Q_INVOKABLE void RoleDismiss();
 	Q_INVOKABLE void Display(const QStringList& film_name_list);
@@ -102,8 +103,10 @@ signals:
 protected:
 	void StandBy();
 	void Interact();
+	void RealTimeInteract();
 	void UpdateGraphList();
 	void SnapShot();
+	void RealTimeSnapShot();
 	void Stop();
 	void TidyUp();
 
@@ -153,6 +156,51 @@ public:
 				{
 					last_pixel.second->last_flag = true;  // 设置 last_flag 为 true
 					ATTRIBUTE::Apply(last_pixel.second);
+					last_pixel.second->last_flag = false;  // 重置 last_flag 为 false
+					rendered_pixels.emplace_back(last_pixel.first);
+				}
+			}
+
+			/****************************** 执行移交手续 *****************************************/
+			for (const auto& pos : rendered_pixels)
+			{
+				bool displace_result = p_studio->sp_hall->TransferPixelFrom(pos);
+				if (!displace_result)
+					std::cerr << "The displacement is out of range." << std::endl;
+			}
+		}
+		catch (const nlohmann::json::type_error& e)
+		{
+			std::cerr << "JSON type error while updating JSON fields: " << e.what() << std::endl;
+		}
+	}
+
+	template<typename ATTRIBUTE>
+	void AffectOn(GraphStudio* p_studio, OpInfo st_op_info)
+	{
+		try
+		{
+			const auto& pixels = p_studio->sp_hall->GetStage();
+			std::vector<std::pair<std::size_t, std::size_t>> rendered_pixels;
+
+			// 遍历所有像素，除了最后一个
+			for (auto iter_pixel = pixels.begin(); iter_pixel != std::prev(pixels.end()); ++iter_pixel)
+			{
+				if (iter_pixel->second->render_flag != true)
+					continue;
+
+				ATTRIBUTE::Apply(iter_pixel->second, st_op_info);
+				rendered_pixels.emplace_back(iter_pixel->first);
+			}
+
+			// 特化处理最后一个像素
+			if (!pixels.empty())
+			{
+				auto& last_pixel = *std::prev(pixels.end());
+				if (last_pixel.second->render_flag == true)
+				{
+					last_pixel.second->last_flag = true;  // 设置 last_flag 为 true
+					ATTRIBUTE::Apply(last_pixel.second, st_op_info);
 					last_pixel.second->last_flag = false;  // 重置 last_flag 为 false
 					rendered_pixels.emplace_back(last_pixel.first);
 				}
