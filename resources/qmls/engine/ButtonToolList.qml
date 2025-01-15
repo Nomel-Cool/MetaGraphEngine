@@ -8,6 +8,7 @@ Rectangle {
     signal listCleared()
     signal listCompiled()
     signal listLaunched()
+    signal listRealTimeRendered()
     signal listPlayInGL()
     signal listStopped()
 
@@ -76,25 +77,41 @@ Rectangle {
                 clearButton.enabled = false;
                 compileButton.enabled = false;
                 launchButton.enabled = true;
+                realTimeRenderButton.enabled = true;
                 console.log("GraphList compiled")
             }
         }
-
-        Button {
-            id: launchButton
-            width: 100
-            height: 50
-            enabled: false
-            text: "Launch"
-            Layout.alignment: Qt.AlignHCenter
-            onClicked: {
-                listLaunched()
-                launchButton.enabled = false;
-                ceizeButton.enabled = true;
-                console.log("GraphList Launched")
+        Row {
+            spacing: 0
+            Button {
+                id: launchButton
+                width: 50
+                height: 50
+                enabled: false
+                text: "Launch"
+                Layout.alignment: Qt.AlignLeft
+                onClicked: {
+                    listLaunched()
+                    launchButton.enabled = false;
+                    ceizeButton.enabled = true;
+                    console.log("GraphList Launched")
+                }
+            }
+            Button {
+                id: realTimeRenderButton
+                width: 50
+                height: 50
+                enabled: false
+                text: "RTR"
+                Layout.alignment: Qt.AlignRight
+                onClicked: {
+                    listRealTimeRendered()
+                    realTimeRenderButton.enabled = false;
+                    ceizeButton.enabled = true;
+                    console.log("Real Time Rendering")
+                }
             }
         }
-         
         Button {
             id: ceizeButton
             width: 100

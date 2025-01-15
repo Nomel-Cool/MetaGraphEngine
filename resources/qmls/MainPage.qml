@@ -119,6 +119,9 @@ ApplicationWindow {
             graphStudio.RoleEmplacement(engineDesigner.deliveredModelList);
         }
         onDeliveredListLaunched: {
+            graphStudio.Launch();
+        }
+        onDeliveredListRealTimeRendered: {
             graphStudio.RealTimeRender();
         }
         onDeliveredListPlayInGL: (nameList) => {

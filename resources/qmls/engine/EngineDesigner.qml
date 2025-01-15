@@ -7,10 +7,11 @@ Rectangle {
     visible: true
     width: 800
     height: 600
-    signal filmNameRecorded(string filmName);
-    signal windowSeted(int w, int h, var cameraX, var cameraY, var cameraZ, bool viewType, bool lockType);
+    signal filmNameRecorded(string filmName)
+    signal windowSeted(int w, int h, var cameraX, var cameraY, var cameraZ, bool viewType, bool lockType)
     signal deliveredListCompiled()
     signal deliveredListLaunched()
+    signal deliveredListRealTimeRendered()
     signal deliveredListPlayInGL(var nameList)
     signal deliveredListStopped()
     signal deliveredListCleared()
@@ -50,6 +51,9 @@ Rectangle {
         }
         onListLaunched: {
             deliveredListLaunched();
+        }
+        onListRealTimeRendered: {
+            deliveredListRealTimeRendered();
         }
         onListPlayInGL: {
             var filmNameList = filmSelector.getFilm();
