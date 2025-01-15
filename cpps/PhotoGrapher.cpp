@@ -9,7 +9,7 @@ void CompressedFrame::SetPinPos()
     }
 }
 
-std::vector<OnePixel> CompressedFrame::GetFrames()
+std::vector<OnePixel> CompressedFrame::GetFrames() const
 {
     return frames;
 }
