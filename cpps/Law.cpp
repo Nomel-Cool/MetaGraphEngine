@@ -10,5 +10,5 @@ void Gravity::Apply(std::shared_ptr<OnePixel> one_pixel)
 
 void Gravity::Apply(std::shared_ptr<OnePixel> p_one_pixel, OpInfo op_info)
 {
-    std::cout << "法则获取界面操作：: " << op_info.op_name << std::endl;
+    //std::cout << "法则获取界面操作：: " << op_info.op_name << std::endl;
 }

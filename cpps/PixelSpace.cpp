@@ -321,7 +321,6 @@ void GraphStudio::StandBy()
         }
         catch (std::logic_error)
         {
-            std::cerr << "The model is done, break out!!!" << std::endl;
             Stop();
         }
     }
@@ -335,7 +334,6 @@ void GraphStudio::Interact()
 void GraphStudio::RealTimeInteract()
 {
     auto realtime_op_info = sp_gl_screen->TryGettingOpInfo();
-    std::cout << "Got the op: " << realtime_op_info.op_name << std::endl;
     sp_law->AffectOn<Gravity>(this, realtime_op_info);
 }
 

@@ -39,8 +39,20 @@ ModelGenerator<SingleAutomata> RenderCU::CoJustAPoint(SingleAutomata& graph_mode
     {
         float init_x = init_status[0]["x"];
         float init_y = init_status[0]["y"];
+        float init_z = init_status[0]["z"];
+        float init_r = init_status[0]["r"];
+        float init_g = init_status[0]["g"];
+        float init_b = init_status[0]["b"];
+        float init_a = init_status[0]["a"];
+        float init_size = init_status[0]["blockSize"];
         current_status[0]["x"] = init_x;
         current_status[0]["y"] = init_y;
+        current_status[0]["z"] = init_z;
+        current_status[0]["r"] = init_r;
+        current_status[0]["g"] = init_g;
+        current_status[0]["b"] = init_b;
+        current_status[0]["a"] = init_a;
+        current_status[0]["blockSize"] = init_size;
         graph_model.current_status = current_status.dump();
     }
     while (true)
@@ -51,7 +63,7 @@ ModelGenerator<SingleAutomata> RenderCU::CoJustAPoint(SingleAutomata& graph_mode
             std::cerr << "Failed to parse JSON: " << graph_model.current_status << std::endl;
             co_return;
         }
-        if (current_status[0]["x"] <= 0)
+        if (current_status[0]["x"] < 0)
             break;
     }
 }
