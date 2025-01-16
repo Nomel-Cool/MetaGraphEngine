@@ -5,6 +5,9 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <functional>
+#include <cstddef>
+#include <cmath>
 
 #include "EventsQueue.h"
 #include "PixelType.h"
@@ -17,7 +20,8 @@ class CompressedFrame
 public:
 	void SetPinPos();
 	std::vector<OnePixel> GetFrames() const;
-	void UpdateFrames(const std::vector<OnePixel> pixels);
+	void UpdateFrames(const std::vector<OnePixel>& pixels);
+	std::size_t GetPixelsHash() const;
 private:
 	std::pair<float, float> pin_pos;
 	std::vector<OnePixel> frames;
