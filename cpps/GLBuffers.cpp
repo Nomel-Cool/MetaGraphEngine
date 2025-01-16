@@ -27,21 +27,21 @@ void GLBuffer::DisableVAO()
 	glBindVertexArray(0);
 }
 
-void GLBuffer::SetVBOData(std::vector<float> vertex_array)
+void GLBuffer::SetVBOData(const std::vector<float>& vertex_array)
 {
 	glBindVertexArray(VAO);
 	auto sptr = std::make_shared<unsigned int>();
 	glGenBuffers(1, &(*sptr));
 	glBindBuffer(GL_ARRAY_BUFFER, *sptr);
 	VBOs.emplace_back(sptr);
-	glBufferData(GL_ARRAY_BUFFER, vertex_array.size() * sizeof(float), &vertex_array[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertex_array.size() * sizeof(float), &vertex_array[0], GL_DYNAMIC_DRAW);
 }
 
-void GLBuffer::SetEBOData(std::vector<unsigned int> indice_array)
+void GLBuffer::SetEBOData(const std::vector<unsigned int>& indice_array)
 {
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indice_array.size() * sizeof(unsigned int), &indice_array[0], GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indice_array.size() * sizeof(unsigned int), &indice_array[0], GL_DYNAMIC_DRAW);
 }
 
 void GLBuffer::SetEBODataSize(std::size_t n)

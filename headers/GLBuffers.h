@@ -13,8 +13,8 @@ public:
 	~GLBuffer();
 	void EnableVAO();
 	void DisableVAO();
-	void SetVBOData(std::vector<float> vertex_array);
-	void SetEBOData(std::vector<unsigned int> indice_array);
+	void SetVBOData(const std::vector<float>& vertex_array);
+	void SetEBOData(const std::vector<unsigned int>& indice_array);
 	void SetEBODataSize(std::size_t n);
 	std::size_t GetEBODataSize();
 	void AllocateVBOMemo(int location, int tuple_size, unsigned long long buffer_size, unsigned long long offset);
