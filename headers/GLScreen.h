@@ -47,7 +47,7 @@ public:
 	void SetViewLock(bool is_view_lock);
 	void SetVerticesData(const std::vector<CubePixel>& cubes);
 	std::vector<std::shared_ptr<GLBuffer>> GetFrameBuffers(PixelShape shape_type);
-	std::vector<std::shared_ptr<GLBuffer>> GetFrameBuffers(PixelShape shape_type, CompressedFrame a_frame);
+	std::vector<std::shared_ptr<GLBuffer>> GetFrameBuffers(PixelShape shape_type, CompressedFrame&& a_frame);
 	void Rendering();
 	void RealTimeRendering(PhotoGrapher& photo_grapher);
 	OpInfo TryGettingOpInfo();

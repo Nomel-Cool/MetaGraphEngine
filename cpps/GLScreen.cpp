@@ -95,41 +95,51 @@ std::vector<std::shared_ptr<GLBuffer>> GLScreen::GetFrameBuffers(PixelShape shap
     return frame_buffers;
 }
 
-std::vector<std::shared_ptr<GLBuffer>> GLScreen::GetFrameBuffers(PixelShape shape_type, CompressedFrame a_frame)
+std::vector<std::shared_ptr<GLBuffer>> GLScreen::GetFrameBuffers(PixelShape shape_type, CompressedFrame&& a_frame)
 {
+    static std::size_t last_frame_hash;
+    std::size_t cur_frame_hash = a_frame.GetPixelsHash();
+
+    static std::vector<std::shared_ptr<GLBuffer>> last_frame_buffers;
     std::vector<std::shared_ptr<GLBuffer>> frame_buffers;
-    std::vector<CubePixel> shapes;
-    // 临时构造一个CubePixel数组
-    for (const auto& pixel : a_frame.GetFrames())
-        shapes.emplace_back(pixel);
-    // 使用 ranges::iota 替代外层的 for 循环
-    for (int i : std::views::iota(0, static_cast<int>(shapes.size())))
+    std::vector<CubePixel> cubes;
+    // std::vector<BallPixel> balls;
+    switch (shape_type)
     {
-        std::shared_ptr<GLBuffer> sptr_shape_buffer = std::make_shared<GLBuffer>();
-        std::vector<float> frame_vertices;
-        std::vector<unsigned int> frame_indices;
-
-        // 顶点和索引的偏移量
-        size_t vertex_offset = 0;
-
-        // 使用 ranges::for_each 替代内层的 for 循环
-        std::ranges::for_each(shapes, [&](auto& pixel_shape) {
-            // 获取当前立方体的顶点数据
-            auto vertices = pixel_shape.GetVertices();
-            frame_vertices.insert(frame_vertices.end(), vertices.begin(), vertices.end());
-
-            // 使用 ranges::transform 来调整索引值
-            auto indices = pixel_shape.GetIndices();
-            std::ranges::transform(indices, std::back_inserter(frame_indices),
-                [&vertex_offset](unsigned int index) { return index + vertex_offset; });
-
-            // 更新顶点偏移量
-            vertex_offset += vertices.size() / pixel_shape.GetVerticesLength(); // 每个顶点有 12 个分量
-            });
-
-        switch (shape_type)
+    case CUBE:
+        if (last_frame_hash == cur_frame_hash)
         {
-        case CUBE:
+            last_frame_hash = cur_frame_hash;
+            return last_frame_buffers;
+        }
+        last_frame_hash = cur_frame_hash;
+        for (const auto& pixel : a_frame.GetFrames())
+            cubes.emplace_back(pixel);
+        // 使用 ranges::iota 替代外层的 for 循环
+        for (int i : std::views::iota(0, static_cast<int>(cubes.size())))
+        {
+            std::shared_ptr<GLBuffer> sptr_shape_buffer = std::make_shared<GLBuffer>();
+            std::vector<float> frame_vertices;
+            std::vector<unsigned int> frame_indices;
+
+            // 顶点和索引的偏移量
+            size_t vertex_offset = 0;
+
+            // 使用 ranges::for_each 替代内层的 for 循环
+            std::ranges::for_each(cubes, [&](auto& pixel_shape) 
+            {
+                // 获取当前立方体的顶点数据
+                auto vertices = pixel_shape.GetVertices();
+                frame_vertices.insert(frame_vertices.end(), vertices.begin(), vertices.end());
+
+                // 使用 ranges::transform 来调整索引值
+                auto indices = pixel_shape.GetIndices();
+                std::ranges::transform(indices, std::back_inserter(frame_indices),
+                    [&vertex_offset](unsigned int index) { return index + vertex_offset; });
+
+                // 更新顶点偏移量
+                vertex_offset += vertices.size() / pixel_shape.GetVerticesLength(); // 每个顶点有 12 个分量
+            });
             sptr_shape_buffer->SetVBOData(frame_vertices);
             sptr_shape_buffer->AllocateVBOMemo(0, 3, 12 * sizeof(float), 0);                // 位置
             sptr_shape_buffer->AllocateVBOMemo(1, 4, 12 * sizeof(float), 3 * sizeof(float)); // 颜色
@@ -139,12 +149,12 @@ std::vector<std::shared_ptr<GLBuffer>> GLScreen::GetFrameBuffers(PixelShape shap
             sptr_shape_buffer->SetEBODataSize(frame_indices.size());
             sptr_shape_buffer->FinishInitialization();
             frame_buffers.emplace_back(sptr_shape_buffer);
-            break;
-        default:
-            break;
         }
+        break;
+    default:
+        break;
     }
-
+    last_frame_buffers = frame_buffers;
     return frame_buffers;
 }
 
@@ -295,6 +305,9 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
     double last_frame_time = glfwGetTime();   // 上一帧的时间
     size_t current_frame = 0;                // 当前帧索引
 
+    std::vector<std::shared_ptr<GLBuffer>> frame_buffers;
+    OpInfo op_info;
+
     while (!gl_context->DoesWindowAboutToClose())
     {
         gl_context->EnableInputControlWindowClosure();
@@ -304,17 +317,14 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // 模拟操作信息
-        OpInfo op_info;
-        op_info.op_name = op_info.op_name + std::to_string(last_frame_time);
-        //std::cout << "放入操作信息： " << op_info.op_name << std::endl;
-        concurrency_opinfo_queue.AddQuestToQueue(std::make_unique<OpInfo>(std::move(op_info)));
+        //op_info.op_name = op_info.op_name + std::to_string(last_frame_time);
+        //concurrency_opinfo_queue.AddQuestToQueue(std::make_unique<OpInfo>(std::move(op_info)));
 
         // 模拟从队列取出帧
         auto _f = photo_grapher.TryGettingFrame();
         if (_f.GetFrames().empty())
             continue;
-        //std::cout << "获得帧数： " << _f.GetFrames().size() << std::endl;
-        auto frame_buffers = GetFrameBuffers(PixelShape::CUBE, _f);
+        frame_buffers = GetFrameBuffers(PixelShape::CUBE, std::move(_f));
         if (frame_buffers.empty())
             continue;
 
