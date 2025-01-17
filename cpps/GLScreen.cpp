@@ -306,7 +306,7 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
 
     std::shared_ptr<GLBuffer> frame_buffer = nullptr;
 
-    InputHandler inputHandler(const_cast<GLFWwindow*>(gl_context->GetWinPtr()));
+    InputHandler input_handler(const_cast<GLFWwindow*>(gl_context->GetWinPtr()));
 
     while (!gl_context->DoesWindowAboutToClose())
     {
@@ -315,24 +315,6 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
         // 清除颜色和深度缓冲区
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // 模拟从队列取出帧
-        auto _f = photo_grapher.TryGettingFrame();
-        if (_f.GetFrames().empty())
-            continue;
-        frame_buffer = GetFrameBuffers(PixelShape::CUBE, std::move(_f));
-        if (frame_buffer == nullptr)
-            continue;
-        current_frame++;
-
-        // 模拟操作信息
-        OpInfo op_info;
-        inputHandler.Update(op_info);
-        if (op_info.activated)
-        {
-            op_info.op_frame_id = current_frame;
-            concurrency_opinfo_queue.AddQuestToQueue(std::make_unique<OpInfo>(std::move(op_info)));
-        }
 
         // 修正移动延迟
         gl_camera->UpdateSpeedByDeltaTime();
@@ -362,6 +344,24 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
         experence_shader.SetVec3("light.diffuse", diffLight);
         experence_shader.SetVec3("light.specular", specLight);
 
+        // 模拟从队列取出帧
+        auto _f = photo_grapher.TryGettingFrame();
+        if (_f.GetFrames().empty())
+            continue;
+        frame_buffer = GetFrameBuffers(PixelShape::CUBE, std::move(_f));
+        if (frame_buffer == nullptr)
+            continue;
+        current_frame++;
+
+        // 模拟操作信息
+        OpInfo op_info;
+        input_handler.Update(op_info);
+        if (op_info.activated)
+        {
+            op_info.op_frame_id = current_frame;
+            concurrency_opinfo_queue.AddQuestToQueue(std::make_unique<OpInfo>(std::move(op_info)));
+        }
+
         // 绘制当前帧
         frame_buffer->EnableVAO();
         glDrawElements(GL_TRIANGLES, frame_buffer->GetEBODataSize(), GL_UNSIGNED_INT, 0);
@@ -373,7 +373,11 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
         // 交换缓冲区并处理事件
         gl_context->SwapBuffers();
         gl_context->PollEvents();
+
+        std::cout << "Current Frame ID: " << current_frame << std::endl;
     }
+    // 退出时设置标志
+    is_running = false;
 }
 
 void GLScreen::TryGettingOpInfo(OpInfo& op_info)
