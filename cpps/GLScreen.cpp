@@ -95,15 +95,14 @@ std::vector<std::shared_ptr<GLBuffer>> GLScreen::GetFrameBuffers(PixelShape shap
     return frame_buffers;
 }
 
-std::vector<std::shared_ptr<GLBuffer>> GLScreen::GetFrameBuffers(PixelShape shape_type, CompressedFrame&& a_frame)
+std::shared_ptr<GLBuffer> GLScreen::GetFrameBuffers(PixelShape shape_type, CompressedFrame&& a_frame)
 {
     static std::size_t last_frame_hash;
     std::size_t cur_frame_hash = a_frame.GetPixelsHash();
 
-    static std::vector<std::shared_ptr<GLBuffer>> last_frame_buffers;
-    std::vector<std::shared_ptr<GLBuffer>> frame_buffers;
-
+    static std::shared_ptr<GLBuffer> last_frame_buffer;
     std::shared_ptr<GLBuffer> sptr_shape_buffer = std::make_shared<GLBuffer>();
+
     std::vector<float> frame_vertices;
     std::vector<unsigned int> frame_indices;
 
@@ -112,50 +111,51 @@ std::vector<std::shared_ptr<GLBuffer>> GLScreen::GetFrameBuffers(PixelShape shap
 
     std::vector<CubePixel> cubes;
     // std::vector<BallPixel> balls;
+    // More shape more vectors
+
     switch (shape_type)
     {
     case CUBE:
         if (last_frame_hash == cur_frame_hash)
         {
             last_frame_hash = cur_frame_hash;
-            return last_frame_buffers;
+            return last_frame_buffer;
         }
         last_frame_hash = cur_frame_hash;
+
         for (const auto& pixel : a_frame.GetFrames())
             cubes.emplace_back(pixel);
 
-            // 使用 ranges::for_each 替代内层的 for 循环
-            std::ranges::for_each(cubes, [&](auto& pixel_shape)
-                {
-                    // 获取当前立方体的顶点数据
-                    auto vertices = pixel_shape.GetVertices();
-                    frame_vertices.insert(frame_vertices.end(), vertices.begin(), vertices.end());
+        // 使用 ranges::for_each 替代内层的 for 循环
+        std::ranges::for_each(cubes, [&](auto& cube)
+        {
+            // 获取当前立方体的顶点数据
+            auto vertices = cube.GetVertices();
+            frame_vertices.insert(frame_vertices.end(), vertices.begin(), vertices.end());
 
-                    // 使用 ranges::transform 来调整索引值
-                    auto indices = pixel_shape.GetIndices();
-                    std::ranges::transform(indices, std::back_inserter(frame_indices),
-                        [&vertex_offset](unsigned int index) { return index + vertex_offset; });
+            // 使用 ranges::transform 来调整索引值
+            auto indices = cube.GetIndices();
+            std::ranges::transform(indices, std::back_inserter(frame_indices),
+                [&vertex_offset](unsigned int index) { return index + vertex_offset; });
 
-                    // 更新顶点偏移量
-                    vertex_offset += vertices.size() / pixel_shape.GetVerticesLength(); // 每个顶点有 12 个分量
-                });
-            sptr_shape_buffer->SetVBOData(frame_vertices);
-            sptr_shape_buffer->AllocateVBOMemo(0, 3, 12 * sizeof(float), 0);                // 位置
-            sptr_shape_buffer->AllocateVBOMemo(1, 4, 12 * sizeof(float), 3 * sizeof(float)); // 颜色
-            sptr_shape_buffer->AllocateVBOMemo(2, 3, 12 * sizeof(float), 7 * sizeof(float)); // 法线
-            sptr_shape_buffer->AllocateVBOMemo(3, 2, 12 * sizeof(float), 10 * sizeof(float)); // 纹理坐标
-            sptr_shape_buffer->SetEBOData(frame_indices);
-            sptr_shape_buffer->SetEBODataSize(frame_indices.size());
-            sptr_shape_buffer->FinishInitialization();
-            frame_buffers.emplace_back(sptr_shape_buffer);
+            // 更新顶点偏移量
+            vertex_offset += vertices.size() / cube.GetVerticesLength(); // 每个顶点有 12 个分量
+        });
+        sptr_shape_buffer->SetVBOData(frame_vertices);
+        sptr_shape_buffer->AllocateVBOMemo(0, 3, 12 * sizeof(float), 0);                // 位置
+        sptr_shape_buffer->AllocateVBOMemo(1, 4, 12 * sizeof(float), 3 * sizeof(float)); // 颜色
+        sptr_shape_buffer->AllocateVBOMemo(2, 3, 12 * sizeof(float), 7 * sizeof(float)); // 法线
+        sptr_shape_buffer->AllocateVBOMemo(3, 2, 12 * sizeof(float), 10 * sizeof(float)); // 纹理坐标
+        sptr_shape_buffer->SetEBOData(frame_indices);
+        sptr_shape_buffer->SetEBODataSize(frame_indices.size());
+        sptr_shape_buffer->FinishInitialization();
         break;
     default:
         break;
     }
-    last_frame_buffers = frame_buffers;
-    return frame_buffers;
+    last_frame_buffer = sptr_shape_buffer;
+    return sptr_shape_buffer;
 }
-
 
 void GLScreen::Rendering()
 {
@@ -302,10 +302,11 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
     // 帧率控制
     const double frame_duration = (float)1.0f / FPS; // 120 FPS
     double last_frame_time = glfwGetTime();   // 上一帧的时间
-    size_t current_frame = 0;                // 当前帧索引
+    uint64_t current_frame = 0;                // 当前帧索引
 
-    std::vector<std::shared_ptr<GLBuffer>> frame_buffers;
-    OpInfo op_info;
+    std::shared_ptr<GLBuffer> frame_buffer = nullptr;
+
+    InputHandler inputHandler(const_cast<GLFWwindow*>(gl_context->GetWinPtr()));
 
     while (!gl_context->DoesWindowAboutToClose())
     {
@@ -315,17 +316,23 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // 模拟操作信息
-        //op_info.op_name = op_info.op_name + std::to_string(last_frame_time);
-        //concurrency_opinfo_queue.AddQuestToQueue(std::make_unique<OpInfo>(std::move(op_info)));
-
         // 模拟从队列取出帧
         auto _f = photo_grapher.TryGettingFrame();
         if (_f.GetFrames().empty())
             continue;
-        frame_buffers = GetFrameBuffers(PixelShape::CUBE, std::move(_f));
-        if (frame_buffers.empty())
+        frame_buffer = GetFrameBuffers(PixelShape::CUBE, std::move(_f));
+        if (frame_buffer == nullptr)
             continue;
+        current_frame++;
+
+        // 模拟操作信息
+        OpInfo op_info;
+        inputHandler.Update(op_info);
+        if (op_info.activated)
+        {
+            op_info.op_frame_id = current_frame;
+            concurrency_opinfo_queue.AddQuestToQueue(std::make_unique<OpInfo>(std::move(op_info)));
+        }
 
         // 修正移动延迟
         gl_camera->UpdateSpeedByDeltaTime();
@@ -338,43 +345,27 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
         else
             projection = glm::perspective(glm::radians(gl_camera->GetFOV()), aspectRatio, 0.1f, 100.0f);
 
-        // 获取当前时间
-        double current_time = glfwGetTime();
-        double delta_time = current_time - last_frame_time;
+        // 更新法线矩阵
+        glm::mat3 normModelMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
 
-        // 如果达到帧间隔时间，切换到下一帧
-        if (delta_time >= frame_duration)
-        {
-            last_frame_time = current_time;
+        // 设置着色器
+        experence_shader.Use();
+        experence_shader.SetMat3("normModelMatrix", normModelMatrix);
+        experence_shader.SetMat4("view", view);
+        experence_shader.SetMat4("projection", projection);
+        experence_shader.SetVec3("viewPos", gl_camera->GetCameraPos());
+        experence_shader.SetVec3("material.diffuse", diffObject);
+        experence_shader.SetVec3("material.specular", specObject);
+        experence_shader.SetFloat("material.shininess", shininess);
+        experence_shader.SetVec3("light.position", gl_camera->GetCameraPos()); // 相机即光源
+        experence_shader.SetVec3("light.ambient", ambientLight);
+        experence_shader.SetVec3("light.diffuse", diffLight);
+        experence_shader.SetVec3("light.specular", specLight);
 
-            // 渲染当前帧
-            auto& buffer = frame_buffers[current_frame];
-
-            // 更新法线矩阵
-            glm::mat3 normModelMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
-
-            // 设置着色器
-            experence_shader.Use();
-            experence_shader.SetMat3("normModelMatrix", normModelMatrix);
-            experence_shader.SetMat4("view", view);
-            experence_shader.SetMat4("projection", projection);
-            experence_shader.SetVec3("viewPos", gl_camera->GetCameraPos());
-            experence_shader.SetVec3("material.diffuse", diffObject);
-            experence_shader.SetVec3("material.specular", specObject);
-            experence_shader.SetFloat("material.shininess", shininess);
-            experence_shader.SetVec3("light.position", gl_camera->GetCameraPos()); // 相机即光源
-            experence_shader.SetVec3("light.ambient", ambientLight);
-            experence_shader.SetVec3("light.diffuse", diffLight);
-            experence_shader.SetVec3("light.specular", specLight);
-
-            // 绘制当前帧
-            buffer->EnableVAO();
-            glDrawElements(GL_TRIANGLES, buffer->GetEBODataSize(), GL_UNSIGNED_INT, 0);
-            buffer->DisableVAO();
-
-            // 切换到下一帧
-            current_frame = (current_frame + 1) % frame_buffers.size();
-        }
+        // 绘制当前帧
+        frame_buffer->EnableVAO();
+        glDrawElements(GL_TRIANGLES, frame_buffer->GetEBODataSize(), GL_UNSIGNED_INT, 0);
+        frame_buffer->DisableVAO();
 
         // 提供键盘控制视野
         changeCameraStatusByKeyBoardInput(*gl_context, experence_shader, *gl_camera);
@@ -385,14 +376,11 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
     }
 }
 
-OpInfo GLScreen::TryGettingOpInfo()
+void GLScreen::TryGettingOpInfo(OpInfo& op_info)
 {
-    OpInfo nothing;
-    nothing.op_name = "nothing...";
     if (concurrency_opinfo_queue.Empty())
-        return nothing;
-    auto up_op_info = concurrency_opinfo_queue.GetQuestFromQueue();
-    return *up_op_info;
+        return;
+    op_info = *(concurrency_opinfo_queue.GetQuestFromQueue());
 }
 
 void changeCameraStatusByKeyBoardInput(GLContext& context_manager, GLShader& shader_manager, GLCamera& camera_manager)
@@ -547,4 +535,68 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
     // 调用 CameraSpin 更新相机旋转
     camera->CameraSpin(xoffset, yoffset);
+}
+
+InputHandler::InputHandler(GLFWwindow* main_window)
+{
+    window = main_window;
+    keyMap = {
+        {GLFW_KEY_W, "W"}, {GLFW_KEY_S, "S"}, {GLFW_KEY_A, "A"}, {GLFW_KEY_D, "D"},
+        {GLFW_KEY_SPACE, "Space"}, {GLFW_KEY_LEFT_SHIFT, "Shift"}
+    };
+}
+
+void InputHandler::Update(OpInfo& op_info)
+{
+    HandleKeyboardInput(op_info);
+    //HandleMouseInput(op_info);
+}
+
+void InputHandler::HandleKeyboardInput(OpInfo& op_info)
+{
+    std::string keyboardInfo;
+    for (const auto& key : keyMap)
+    {
+        if (glfwGetKey(window, key.first) == GLFW_PRESS)
+        {
+            keyboardInfo = key.second;
+        }
+    }
+
+    if (!keyboardInfo.empty())
+    {
+        op_info.activated = true;
+        op_info.keyboard_info = keyboardInfo;
+    }
+}
+
+void InputHandler::HandleMouseInput(OpInfo& op_info)
+{
+    static double lastX = 0, lastY = 0;
+    double xpos, ypos;
+    glfwGetCursorPos(window, &xpos, &ypos);
+
+    std::string MouseInfo;
+    if (xpos != lastX || ypos != lastY)
+    {
+        MouseInfo = std::to_string(xpos - lastX) + " " + std::to_string(ypos - lastY);
+        lastX = xpos;
+        lastY = ypos;
+    }
+
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+    {
+        MouseInfo = "Left mouse button pressed";
+    }
+
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+    {
+        MouseInfo = "Right mouse button pressed";
+    }
+
+    if (!MouseInfo.empty())
+    {
+        op_info.activated = true;
+        op_info.mouse_info = MouseInfo;
+    }
 }

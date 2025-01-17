@@ -32,8 +32,26 @@ enum PixelShape
 // 用于传递 GUI 中的用户操作信息
 struct OpInfo
 {
+    bool activated = false;
 	uint64_t op_frame_id = 0;
-	std::string op_name = "Test OP";
+	std::string keyboard_info = "";
+	std::string mouse_info = "";
+};
+
+class InputHandler
+{
+public:
+	InputHandler() = default;
+	InputHandler(GLFWwindow* main_window);
+    void Update(OpInfo& op_info);
+
+private:
+    void HandleKeyboardInput(OpInfo& op_info);
+	void HandleMouseInput(OpInfo& op_info);
+
+private:
+    std::unordered_map<int, std::string> keyMap;
+    GLFWwindow* window;
 };
 
 class GLScreen
@@ -47,10 +65,10 @@ public:
 	void SetViewLock(bool is_view_lock);
 	void SetVerticesData(const std::vector<CubePixel>& cubes);
 	std::vector<std::shared_ptr<GLBuffer>> GetFrameBuffers(PixelShape shape_type);
-	std::vector<std::shared_ptr<GLBuffer>> GetFrameBuffers(PixelShape shape_type, CompressedFrame&& a_frame);
+	std::shared_ptr<GLBuffer> GetFrameBuffers(PixelShape shape_type, CompressedFrame&& a_frame);
 	void Rendering();
 	void RealTimeRendering(PhotoGrapher& photo_grapher);
-	OpInfo TryGettingOpInfo();
+	void TryGettingOpInfo(OpInfo& op_info);
 
 protected:
 
