@@ -81,6 +81,9 @@ private:
 	std::thread render_thread, realtime_render_thread;
 	std::map<uint64_t, std::vector<CubePixel>> pixel_map;
 	TaskModelQueue<OpInfo> concurrency_opinfo_queue;
+
+public: // 用于实时渲染线程通信
+	std::atomic<bool> is_running{ true }; // 控制线程退出的标志
 };
 
 #endif // !GL_SCREEN_H
