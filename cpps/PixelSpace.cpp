@@ -46,9 +46,9 @@ const uint64_t& Hall::GetCurrentFrameID() const
     return frame_id;
 }
 
-const uint64_t& Hall::GetCurrentFPS() const
+const int Hall::GetCurrentFrameGenerationInterval() const
 {
-    return FPS;
+    return frame_generation_interval;
 }
 
 const std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>& Hall::GetStage() const
@@ -234,7 +234,7 @@ void GraphStudio::Launch()
             running = true;
         };
         connect(sp_timer.get(), &QTimer::timeout, render_loop);
-        sp_timer->start(1000.0f / sp_hall->GetCurrentFPS()); // FPS ≈ 120
+        sp_timer->start(sp_hall->GetCurrentFrameGenerationInterval()); // FPS ≈ 120
     }
     catch (const std::logic_error)
     {
@@ -244,19 +244,34 @@ void GraphStudio::Launch()
 
 void GraphStudio::RealTimeRender()
 {
+    std::thread tmp1 = std::thread(
+        [this]() {
+        sp_gl_screen->RealTimeRendering(photo_grapher);
+        sp_gl_screen->is_running = false; // tmp1 退出时，通知 tmp2 退出
+    });
 
-    std::thread tmp1 = std::thread([this]() {sp_gl_screen->RealTimeRendering(photo_grapher); });
     std::thread tmp2 = std::thread(
         [this]()
         {
-            while (true)
+            using Clock = std::chrono::high_resolution_clock;
+            using Duration = std::chrono::duration<double, std::milli>;
+            while (sp_gl_screen->is_running)
             {
+                auto loop_start_time = Clock::now();
+                if (!sp_gl_screen->is_running) break; // 如果 tmp1 退出，则退出循环
+
                 ///**************** 暂定流程四件套 ***************/
-                StandBy(); // 出牌定格
+                StandBy();          // 出牌定格
                 RealTimeInteract(); // 根据操作实时变更手牌
-                UpdateGraphList(); // 收牌再来
+                UpdateGraphList();  // 收牌再来
                 RealTimeSnapShot(); // 储为实时快照
-                TidyUp(); // 清理非渲染像素
+                TidyUp();           // 清理非渲染像素
+                auto loop_end_time = Clock::now();
+                Duration loop_duration = loop_end_time - loop_start_time;
+                auto sleep_duration = std::chrono::milliseconds(sp_hall->GetCurrentFrameGenerationInterval()) - loop_duration; // 限制为 58 FPS
+                if (sleep_duration.count() > 0)
+                    std::this_thread::sleep_for(sleep_duration);
+                std::cout << "Total Frame ID: " << sp_hall->GetCurrentFrameID() << std::endl;
             }
         }
     );
