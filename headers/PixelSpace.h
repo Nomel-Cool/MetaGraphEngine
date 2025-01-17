@@ -52,7 +52,7 @@ class Hall
 public:
 	Hall() = default;
 	const uint64_t& GetCurrentFrameID() const;
-	const uint64_t& GetCurrentFPS() const;
+	const int GetCurrentFrameGenerationInterval() const;
 	const std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>& GetStage() const;
 	std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>::iterator DeleteElementAt(const std::pair<std::size_t, std::size_t>& pos);
 	bool Disable(const std::pair<std::size_t, std::size_t>& coordinate, std::size_t graph_id);
@@ -77,7 +77,7 @@ private:
 	std::map<std::size_t, std::queue<std::shared_ptr<OnePixel>>> checkin_sequence; // <graph_id, {pixel1,...,pixeln}>
 	std::mutex stage_lock;
 	uint64_t frame_id = 1;
-	uint64_t FPS = 120; // 这个帧数与实时渲染设计有关，不是帧动画的直接帧数
+	int frame_generation_interval = 17;//ms 这个数与实时渲染控制帧生成的速度，不是帧动画渲染的直接帧数
 };
 
 class Law;
@@ -219,8 +219,6 @@ public:
 			std::cerr << "JSON type error while updating JSON fields: " << e.what() << std::endl;
 		}
 	}
-
-private:
 };
 
 #endif // !PIXEL_SPACE_H
