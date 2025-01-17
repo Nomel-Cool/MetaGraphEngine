@@ -176,7 +176,7 @@ public:
 	}
 
 	template<typename ATTRIBUTE>
-	void AffectOn(GraphStudio* p_studio, OpInfo st_op_info)
+	void AffectOn(GraphStudio* p_studio, const OpInfo& st_op_info)
 	{
 		try
 		{

@@ -333,8 +333,9 @@ void GraphStudio::Interact()
 
 void GraphStudio::RealTimeInteract()
 {
-    auto realtime_op_info = sp_gl_screen->TryGettingOpInfo();
-    sp_law->AffectOn<Gravity>(this, realtime_op_info);
+    OpInfo op_info;
+    sp_gl_screen->TryGettingOpInfo(op_info);
+    sp_law->AffectOn<Gravity>(this, op_info);
 }
 
 void GraphStudio::UpdateGraphList()
