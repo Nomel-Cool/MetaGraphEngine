@@ -16,7 +16,7 @@ class Gravity
 {
 public:
     static void Apply(std::shared_ptr<OnePixel> p_one_pixel);
-    static void Apply(std::shared_ptr<OnePixel> p_one_pixel, OpInfo op_info);
+    static void Apply(std::shared_ptr<OnePixel> p_one_pixel, const OpInfo& op_info);
 };
 
 #endif // !LAW_H
