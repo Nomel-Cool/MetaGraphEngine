@@ -1,25 +1,25 @@
 #include "PixelType.h"
 
-OnePixel& OnePixel::operator=(OnePixel& other)
+OnePixel::OnePixel(const OnePixel& other, std::size_t graph_id)
 {
-    if (this != &other)
-    {
-        x = other.x;
-        y = other.y;
-        r = other.r;
-        g = other.g;
-        b = other.b;
-        a = other.a;
-        block_size = other.block_size;
-        render_flag = other.render_flag;
-        cur_frame_id = other.cur_frame_id;
-        graph_ids = other.graph_ids; // 所有图元接受同样的法则，所以所有权完全移交没问题
+    x = other.x;
+    y = other.y;
+    r = other.r;
+    g = other.g;
+    b = other.b;
+    a = other.a;
+    block_size = other.block_size;
+    render_flag = other.render_flag;
+    cur_frame_id = other.cur_frame_id;
+    graph_ids[graph_id] = nullptr;
+}
 
-        // 移交后更新源像素
-        other.graph_ids.clear();
-        other.render_flag = false;
-    }
-    return *this;
+std::shared_ptr<OnePixel> OnePixel::Seperate(std::size_t graph_id)
+{
+    if (graph_ids.find(graph_id) == graph_ids.end())
+        return nullptr;
+    graph_ids[graph_id] = std::make_shared<OnePixel>(*this, graph_id);
+    return graph_ids[graph_id];
 }
 
 CubePixel::CubePixel(const OnePixel& basePixel)
