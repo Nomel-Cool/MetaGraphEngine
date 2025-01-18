@@ -13,6 +13,7 @@
 #include <type_traits>
 #include <tuple>
 #include <unordered_map>
+#include <ranges>
 
 #include "ThreadPool.h"
 #include "RenderKernel.h"
@@ -22,6 +23,8 @@
 #include "GLScreen.h"
 
 using AutomataElements = std::tuple<json, json, json, json>;
+using TwoDCoordinate = std::pair<std::size_t, std::size_t>;
+using ThreeDCoordinate = std::tuple<std::size_t, std::size_t, std::size_t>;
 /// <summary>
 /// 负责协调各个图元进入和退出舞台等候厅
 /// </summary>
@@ -53,9 +56,9 @@ public:
 	Hall() = default;
 	const uint64_t& GetCurrentFrameID() const;
 	const int GetCurrentFrameGenerationInterval() const;
-	const std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>& GetStage() const;
-	std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>::iterator DeleteElementAt(const std::pair<std::size_t, std::size_t>& pos);
-	bool Disable(const std::pair<std::size_t, std::size_t>& coordinate, std::size_t graph_id);
+	const std::map<ThreeDCoordinate, std::shared_ptr<OnePixel>>& GetStage() const;
+	std::map<ThreeDCoordinate, std::shared_ptr<OnePixel>>::iterator DeleteElementAt(const ThreeDCoordinate& pos);
+	bool Disable(const ThreeDCoordinate& coordinate, std::size_t graph_id);
 
 	/// <summary>
 	/// 通知移交像素所有权，像素类必须实现拷贝赋值符号
@@ -64,7 +67,7 @@ public:
 	/// <param name="coordinate_begin"></param>
 	/// <param name="coordinate_end"></param>
 	/// <returns></returns>
-	bool TransferPixelFrom(const std::pair<std::size_t, std::size_t>& coordinate_begin);
+	bool TransferPixelFrom(const ThreeDCoordinate& coordinate_begin);
 	
 	void PingStage(const std::vector<OnePixel>& pixel_list, const std::size_t& graph_pos_in_list);
 	std::map<std::size_t, std::vector<OnePixel>> CollectStage();
@@ -73,11 +76,11 @@ public:
 
 protected:
 private:
-	std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>> stage;
+	std::map<ThreeDCoordinate, std::shared_ptr<OnePixel>> stage;
 	std::map<std::size_t, std::queue<std::shared_ptr<OnePixel>>> checkin_sequence; // <graph_id, {pixel1,...,pixeln}>
 	std::mutex stage_lock;
 	uint64_t frame_id = 1;
-	int frame_generation_interval = 17;//ms 这个数与实时渲染控制帧生成的速度，不是帧动画渲染的直接帧数
+	int frame_generation_interval = 18;//ms 这个数与实时渲染控制帧生成的速度，不是帧动画渲染的直接帧数
 };
 
 class Law;
@@ -136,7 +139,7 @@ public:
 		try
 		{
 			const auto& pixels = p_studio->sp_hall->GetStage();
-			std::vector<std::pair<std::size_t, std::size_t>> rendered_pixels;
+			std::vector<ThreeDCoordinate> rendered_pixels;
 
 			// 遍历所有像素，除了最后一个
 			for (auto iter_pixel = pixels.begin(); iter_pixel != std::prev(pixels.end()); ++iter_pixel)
@@ -181,7 +184,7 @@ public:
 		try
 		{
 			const auto& pixels = p_studio->sp_hall->GetStage();
-			std::vector<std::pair<std::size_t, std::size_t>> rendered_pixels;
+			std::vector<ThreeDCoordinate> rendered_pixels;
 
 			// 遍历所有像素，除了最后一个
 			for (auto iter_pixel = pixels.begin(); iter_pixel != std::prev(pixels.end()); ++iter_pixel)

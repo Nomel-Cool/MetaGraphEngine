@@ -51,12 +51,12 @@ const int Hall::GetCurrentFrameGenerationInterval() const
     return frame_generation_interval;
 }
 
-const std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>& Hall::GetStage() const
+const std::map<ThreeDCoordinate, std::shared_ptr<OnePixel>>& Hall::GetStage() const
 {
     return stage;
 }
 
-std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>::iterator Hall::DeleteElementAt(const std::pair<std::size_t, std::size_t>& pos)
+std::map<ThreeDCoordinate, std::shared_ptr<OnePixel>>::iterator Hall::DeleteElementAt(const ThreeDCoordinate& pos)
 {
     auto it = stage.find(pos);
     if (it != stage.end())
@@ -64,33 +64,109 @@ std::map<std::pair<std::size_t, std::size_t>, std::shared_ptr<OnePixel>>::iterat
     return stage.end();
 }
 
-bool Hall::Disable(const std::pair<std::size_t, std::size_t>& coordinate, std::size_t graph_id)
+bool Hall::Disable(const ThreeDCoordinate& coordinate, std::size_t graph_id)
 {
     if (stage.find(coordinate) == stage.end())
         return false;
-    stage[coordinate]->graph_ids[graph_id] = false;
+    stage[coordinate]->graph_ids[graph_id] = nullptr;
     return true;
 }
 
-bool Hall::TransferPixelFrom(const std::pair<std::size_t, std::size_t>& coordinate_begin)
+bool Hall::TransferPixelFrom(const ThreeDCoordinate& coordinate_begin)
 {
     if (stage.find(coordinate_begin) == stage.end())
         return false;
-    OnePixel dest_pixel;
-    dest_pixel = *stage[coordinate_begin]; // 显式使用拷贝赋值符，用于移交所有权相关字段
-    dest_pixel.cur_frame_id = GetCurrentFrameID(); // 移交后由于render_flag仍是true，需要更新为当前帧，才能被快照
-    if (stage.find({dest_pixel.x, dest_pixel.y}) == stage.end())
-        stage.insert(std::make_pair(std::make_pair(dest_pixel.x, dest_pixel.y), std::make_shared<OnePixel>(dest_pixel)));
-    else
-        stage[{dest_pixel.x, dest_pixel.y}] = std::make_shared<OnePixel>(dest_pixel);
+
+    std::shared_ptr<OnePixel> target_pixel = stage[coordinate_begin];
+
+    target_pixel->cur_frame_id = GetCurrentFrameID();
+
+    auto non_nullptr_entries = target_pixel->graph_ids
+        | std::views::filter(
+            [](const auto& pair) 
+            {
+                return pair.second != nullptr;
+            }
+        );
+
+     //逻辑说明：
+     //        如果 seperate 出来的像素没有发生移动，则还原该分离，因为这只涉及到颜色的修改，由仍然有处理权的 target_pixel 来做即可
+     //        如果 seperate 出来的像素移动到“空闲”位置，则直接占有
+     //        否则 seperate 移动到了已经有人占有的位置，不应该对它有任何影响（颜色仍然由该位置原初占有者更新，受先后序影响，但原初占有者仍可以得到被共享的情况并做出变化，一帧的变化，肉眼无法察觉）
+    for (const auto& [key, seperated_pixel] : non_nullptr_entries)
+    {
+        auto [it, inserted] = stage.try_emplace({ seperated_pixel->x, seperated_pixel->y, seperated_pixel->z }, seperated_pixel);
+        if (!inserted)
+            if (seperated_pixel->x == target_pixel->x && seperated_pixel->y == target_pixel->y && seperated_pixel->z == target_pixel->z)
+                target_pixel->graph_ids[key] = nullptr;
+            else
+            {
+                it->second->graph_ids.merge(seperated_pixel->graph_ids);
+                target_pixel->graph_ids.erase(key);
+            }
+    }
+
+    if (stage[{target_pixel->x, target_pixel->y, target_pixel->z}] != target_pixel)
+    {
+        stage[{target_pixel->x, target_pixel->y, target_pixel->z}] = target_pixel;
+        stage[coordinate_begin].reset();
+    }
+
     return true;
 }
+
+//bool Hall::TransferPixelFrom(const ThreeDCoordinate& coordinate_begin)
+//{
+//    if (stage.find(coordinate_begin) == stage.end())
+//        return false;
+//    OnePixel dest_pixel;
+//    dest_pixel = *stage[coordinate_begin]; // 显式使用拷贝赋值符，用于移交所有权相关字段
+//    dest_pixel.cur_frame_id = GetCurrentFrameID(); // 移交后由于render_flag仍是true，需要更新为当前帧，才能被快照
+//    if (stage.find({ dest_pixel.x, dest_pixel.y, dest_pixel.z }) == stage.end())
+//        stage.insert(std::make_pair(std::make_tuple(dest_pixel.x, dest_pixel.y, dest_pixel.z), std::make_shared<OnePixel>(dest_pixel)));
+//    else
+//        stage[{dest_pixel.x, dest_pixel.y, dest_pixel.z}] = std::make_shared<OnePixel>(dest_pixel);
+//    return true;
+//}
+
+//bool Hall::TransferPixelFrom(const ThreeDCoordinate& coordinate_begin)
+//{
+//    if (stage.find(coordinate_begin) == stage.end())
+//        return false;
+//
+//    // 创建新像素对象
+//    OnePixel new_pixel = *stage[coordinate_begin];
+//    new_pixel.cur_frame_id = GetCurrentFrameID();
+//
+//    // 处理分离像素
+//    for (const auto& [key, seperated_pixel] : new_pixel.graph_ids)
+//    {
+//        if (!seperated_pixel) continue;
+//
+//        auto [it, inserted] = stage.try_emplace({ seperated_pixel->x, seperated_pixel->y, seperated_pixel->z }, seperated_pixel);
+//        if (!inserted)
+//        {
+//            if (seperated_pixel->x == new_pixel.x && seperated_pixel->y == new_pixel.y && seperated_pixel->z == new_pixel.z)
+//                new_pixel.graph_ids[key] = nullptr;
+//            else
+//            {
+//                it->second->graph_ids.merge(seperated_pixel->graph_ids);
+//                new_pixel.graph_ids.erase(key);
+//            }
+//        }
+//    }
+//
+//    // 更新 stage
+//    stage[{new_pixel.x, new_pixel.y, new_pixel.z}] = std::make_shared<OnePixel>(new_pixel);
+//
+//    return true;
+//}
 
 void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::size_t& graph_pos_in_list)
 {
     for (const auto& ping_pixel : ping_pixel_list)
     {
-        auto key = std::make_pair(ping_pixel.x, ping_pixel.y);
+        auto key = std::make_tuple(ping_pixel.x, ping_pixel.y, ping_pixel.z);
         if (stage.find(key) != stage.end())
         {
             auto& pixel_ptr = stage[key];
@@ -105,7 +181,7 @@ void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::si
             pixel_ptr->block_size = ping_pixel.block_size;
             pixel_ptr->cur_frame_id = frame_id;
             // 确保 graph_ids 中的元素唯一
-            pixel_ptr->graph_ids[graph_pos_in_list] = true;
+            pixel_ptr->graph_ids[graph_pos_in_list] = nullptr;
             checkin_sequence[graph_pos_in_list].push(pixel_ptr);
         }
         else
@@ -122,7 +198,7 @@ void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::si
             one_pixel.a = ping_pixel.a;
             one_pixel.block_size = ping_pixel.block_size;
             one_pixel.cur_frame_id = frame_id;
-            one_pixel.graph_ids[graph_pos_in_list] = true;
+            one_pixel.graph_ids[graph_pos_in_list] = nullptr;
 
             // 在堆上分配新内存存放 one_pixel，并由智能指针管理
             std::shared_ptr<OnePixel> sp_one_pixel = std::make_shared<OnePixel>(one_pixel);
@@ -264,14 +340,15 @@ void GraphStudio::RealTimeRender()
                 StandBy();          // 出牌定格
                 RealTimeInteract(); // 根据操作实时变更手牌
                 UpdateGraphList();  // 收牌再来
-                RealTimeSnapShot(); // 储为实时快照
                 TidyUp();           // 清理非渲染像素
+                RealTimeSnapShot(); // 储为实时快照
                 auto loop_end_time = Clock::now();
                 Duration loop_duration = loop_end_time - loop_start_time;
                 auto sleep_duration = std::chrono::milliseconds(sp_hall->GetCurrentFrameGenerationInterval()) - loop_duration; // 限制为 58 FPS
                 if (sleep_duration.count() > 0)
                     std::this_thread::sleep_for(sleep_duration);
-                std::cout << "Total Frame ID: " << sp_hall->GetCurrentFrameID() << std::endl;
+                //std::cout << "Generate: " << sleep_duration.count() << std::endl;
+                //std::cout << "Total Frame ID: " << sp_hall->GetCurrentFrameID() << std::endl;
             }
         }
     );
@@ -357,7 +434,7 @@ void GraphStudio::UpdateGraphList()
 {
     try
     {
-        const auto activating_pixels = sp_hall->CollectStage();
+        const auto& activating_pixels = sp_hall->CollectStage();
         for (const auto& pixels : activating_pixels)
         {
             AutomataElements automata_param = GetAutomataInfoAt(pixels.first);
@@ -379,7 +456,7 @@ void GraphStudio::UpdateGraphList()
                     { "a",activate_pixel.a },
                     { "blockSize",activate_pixel.block_size }
                 });
-                sp_hall->Disable({ activate_pixel.x, activate_pixel.y }, pixels.first); // 置activate_flag为false
+                //sp_hall->Disable({ activate_pixel.x, activate_pixel.y, activate_pixel.z }, pixels.first); // 置activate_flag为false
             }
             /*******************************************************************/
             automata_param = std::make_tuple(initial_status, current_status, current_input, terminate_status);
@@ -425,7 +502,7 @@ void GraphStudio::RealTimeSnapShot()
 void GraphStudio::TidyUp()
 {
     for (auto iter = sp_hall->GetStage().begin(); iter != sp_hall->GetStage().end();)
-        if (!iter->second->render_flag)
+        if (iter->second == nullptr)
             iter = sp_hall->DeleteElementAt(iter->first);
         else
             ++iter;
