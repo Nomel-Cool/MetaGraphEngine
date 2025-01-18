@@ -308,8 +308,12 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
 
     InputHandler input_handler(const_cast<GLFWwindow*>(gl_context->GetWinPtr()));
 
+    using Clock = std::chrono::high_resolution_clock;
+    using Duration = std::chrono::duration<double, std::milli>;
+
     while (!gl_context->DoesWindowAboutToClose())
     {
+        auto loop_start_time = Clock::now();
         gl_context->EnableInputControlWindowClosure();
 
         // 清除颜色和深度缓冲区
@@ -374,7 +378,10 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
         gl_context->SwapBuffers();
         gl_context->PollEvents();
 
-        std::cout << "Current Frame ID: " << current_frame << std::endl;
+        auto loop_end_time = Clock::now();
+        Duration loop_duration = loop_end_time - loop_start_time;
+        //std::cout << "Render: " << loop_duration.count() << std::endl;
+        //std::cout << "Current Frame ID: " << current_frame << std::endl;
     }
     // 退出时设置标志
     is_running = false;
