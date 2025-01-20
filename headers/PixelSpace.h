@@ -58,7 +58,6 @@ public:
 	const int GetCurrentFrameGenerationInterval() const;
 	const std::map<ThreeDCoordinate, std::shared_ptr<OnePixel>>& GetStage() const;
 	std::map<ThreeDCoordinate, std::shared_ptr<OnePixel>>::iterator DeleteElementAt(const ThreeDCoordinate& pos);
-	bool Disable(const ThreeDCoordinate& coordinate, std::size_t graph_id);
 
 	/// <summary>
 	/// 通知移交像素所有权，像素类必须实现拷贝赋值符号
@@ -116,6 +115,8 @@ protected:
 private:
 	AutomataElements GetAutomataInfoAt(std::size_t indice);
 	void SetAutomataInfoAt(std::size_t indice, const AutomataElements& automata_status);
+	void UpdatePixelsThroughAutomata(std::vector<OnePixel>& points, const json& status);
+	void UpdateAutomataThroughPixels(json& status, const std::vector<OnePixel>& points);
 private:
 	std::shared_ptr<GraphAgency> sp_graph_agency;
 	std::shared_ptr<Hall> sp_hall;   
@@ -169,7 +170,7 @@ public:
 			{
 				bool displace_result = p_studio->sp_hall->TransferPixelFrom(pos);
 				if (!displace_result)
-					std::cerr << "The displacement is out of range." << std::endl;
+					std::cerr << "The displacement is out of expectation." << std::endl;
 			}
 		}
 		catch (const nlohmann::json::type_error& e)
@@ -214,7 +215,7 @@ public:
 			{
 				bool displace_result = p_studio->sp_hall->TransferPixelFrom(pos);
 				if (!displace_result)
-					std::cerr << "The displacement is out of range." << std::endl;
+					std::cerr << "The displacement is out of expectation." << std::endl;
 			}
 		}
 		catch (const nlohmann::json::type_error& e)
