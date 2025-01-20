@@ -1,5 +1,13 @@
 #include "PixelType.h"
 
+std::vector<std::shared_ptr<OnePixel>> OnePixel::GetAllInnerPixels()
+{
+    std::vector<std::shared_ptr<OnePixel>> inner_pixels;
+    for (const auto& pixel : owners_info)
+        inner_pixels.emplace_back(pixel.second);
+    return inner_pixels;
+}
+
 std::shared_ptr<OnePixel> OnePixel::Seperate(std::size_t tag_info)
 {
     if (owners_info.find(tag_info) == owners_info.end() || owners_info.size() == 1) // Ω˚÷π◊ÛΩ≈≤»”“Ω≈…œÃÏ
