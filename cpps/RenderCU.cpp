@@ -44,6 +44,7 @@ ModelGenerator<SingleAutomata> RenderCU::CoJustAPoint(SingleAutomata& graph_mode
         float init_g = init_status[0]["g"];
         float init_b = init_status[0]["b"];
         float init_a = init_status[0]["a"];
+        std::size_t init_tag = init_status[0]["tag"];
         float init_size = init_status[0]["blockSize"];
         current_status[0]["x"] = init_x;
         current_status[0]["y"] = init_y;
@@ -52,6 +53,7 @@ ModelGenerator<SingleAutomata> RenderCU::CoJustAPoint(SingleAutomata& graph_mode
         current_status[0]["g"] = init_g;
         current_status[0]["b"] = init_b;
         current_status[0]["a"] = init_a;
+        current_status[0]["tag"] = init_tag;
         current_status[0]["blockSize"] = init_size;
         graph_model.current_status = current_status.dump();
     }
@@ -136,7 +138,7 @@ std::string RenderCU::BresenhamLine(const SingleAutomata& graph_model)
 
 ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_model)
 {
-    json init_status, current_status, terminate_status;
+    json init_status, current_status, current_input, terminate_status;
 
     // Convert graph_model status strings to JSON objects
     if (!file_manager.TransStr2JsonObject(graph_model.init_status, init_status))
@@ -147,6 +149,11 @@ ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_m
     if (!file_manager.TransStr2JsonObject(graph_model.current_status, current_status))
     {
         std::cerr << "Failed to parse JSON: " << graph_model.current_status << std::endl;
+        co_return;
+    }
+    if (!file_manager.TransStr2JsonObject(graph_model.current_input, current_input))
+    {
+        std::cerr << "Failed to parse JSON: " << graph_model.current_input << std::endl;
         co_return;
     }
     if (!file_manager.TransStr2JsonObject(graph_model.terminate_status, terminate_status))
@@ -165,6 +172,7 @@ ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_m
         float init_g = init_status[0]["g"];
         float init_b = init_status[0]["b"];
         float init_a = init_status[0]["a"];
+        std::size_t init_tag = current_input[0]["tagHead"];
         float init_size = init_status[0]["blockSize"];
         current_status[0]["x"] = init_x;
         current_status[0]["y"] = init_y;
@@ -173,10 +181,12 @@ ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_m
         current_status[0]["g"] = init_g;
         current_status[0]["b"] = init_b;
         current_status[0]["a"] = init_a;
+        current_status[0]["tag"] = init_tag + 1;
         current_status[0]["blockSize"] = init_size;
         graph_model.current_status = current_status.dump();
     }
 
+    std::size_t tag = current_status[0]["tag"];
     float x0 = init_status[0]["x"];
     float y0 = init_status[0]["y"];
     float xn = terminate_status[0]["x"];
@@ -204,6 +214,7 @@ ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_m
 
             current_status[0]["x"] = x;
             current_status[0]["y"] = y;
+            current_status[0]["tag"] = tag++;
             graph_model.current_status = current_status.dump();
         }
     }
@@ -223,6 +234,7 @@ ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_m
 
             current_status[0]["x"] = x;
             current_status[0]["y"] = y;
+            current_status[0]["tag"] = tag++;
             graph_model.current_status = current_status.dump();
         }
     }
