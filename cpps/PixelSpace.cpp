@@ -64,14 +64,6 @@ std::map<ThreeDCoordinate, std::shared_ptr<OnePixel>>::iterator Hall::DeleteElem
     return stage.end();
 }
 
-bool Hall::Disable(const ThreeDCoordinate& coordinate, std::size_t graph_id)
-{
-    if (stage.find(coordinate) == stage.end())
-        return false;
-    stage[coordinate]->graph_ids[graph_id] = nullptr;
-    return true;
-}
-
 bool Hall::TransferPixelFrom(const ThreeDCoordinate& coordinate_begin)
 {
     if (stage.find(coordinate_begin) == stage.end())
@@ -81,86 +73,57 @@ bool Hall::TransferPixelFrom(const ThreeDCoordinate& coordinate_begin)
 
     target_pixel->cur_frame_id = GetCurrentFrameID();
 
-    auto non_nullptr_entries = target_pixel->graph_ids
-        | std::views::filter(
-            [](const auto& pair) 
-            {
-                return pair.second != nullptr;
-            }
-        );
-
-     //逻辑说明：
-     //        如果 seperate 出来的像素没有发生移动，则还原该分离，因为这只涉及到颜色的修改，由仍然有处理权的 target_pixel 来做即可
-     //        如果 seperate 出来的像素移动到“空闲”位置，则直接占有
-     //        否则 seperate 移动到了已经有人占有的位置，不应该对它有任何影响（颜色仍然由该位置原初占有者更新，受先后序影响，但原初占有者仍可以得到被共享的情况并做出变化，一帧的变化，肉眼无法察觉）
-    for (const auto& [key, seperated_pixel] : non_nullptr_entries)
+    //逻辑说明：
+    //        如果 seperate 出来的像素没有发生移动，则还原该分离，因为这只涉及到颜色的修改，由仍然有处理权的 target_pixel 来做即可
+    //        如果 seperate 出来的像素移动到“空闲”位置，则直接占有
+    //        否则 seperate 移动到了已经有人占有的位置，不应该对它有任何影响（颜色仍然由该位置原初占有者更新，受先后序影响，但原初占有者仍可以得到被共享的情况并做出变化，一帧的变化，肉眼无法察觉）
+    for (auto iter_owners_kv = target_pixel->owners_info.begin(); iter_owners_kv != target_pixel->owners_info.end();)
     {
-        auto [it, inserted] = stage.try_emplace({ seperated_pixel->x, seperated_pixel->y, seperated_pixel->z }, seperated_pixel);
+        if (iter_owners_kv->second == nullptr)
+        {
+            ++iter_owners_kv;
+            continue;
+        }
+        auto [it, inserted] = stage.try_emplace({ iter_owners_kv->second->x, iter_owners_kv->second->y, iter_owners_kv->second->z }, iter_owners_kv->second);
         if (!inserted)
-            if (seperated_pixel->x == target_pixel->x && seperated_pixel->y == target_pixel->y && seperated_pixel->z == target_pixel->z)
-                target_pixel->graph_ids[key] = nullptr;
-            else
+            if (iter_owners_kv->second->x != target_pixel->x || iter_owners_kv->second->y != target_pixel->y || iter_owners_kv->second->z != target_pixel->z)
             {
-                it->second->graph_ids.merge(seperated_pixel->graph_ids);
-                target_pixel->graph_ids.erase(key);
+                it->second->Merge(iter_owners_kv->second);
+                target_pixel->owners_info.erase(iter_owners_kv++);
+                if (target_pixel->owners_info.size() == 1)
+                {
+                    target_pixel->r = target_pixel->owners_info.begin()->second->r;
+                    target_pixel->g = target_pixel->owners_info.begin()->second->g;
+                    target_pixel->b = target_pixel->owners_info.begin()->second->b;
+                    target_pixel->a = target_pixel->owners_info.begin()->second->a;
+                    target_pixel->block_size = target_pixel->owners_info.begin()->second->block_size;
+                }
             }
+            else
+                ++iter_owners_kv;
+        else
+        {
+            it->second->owners_info[it->second->tag] = std::make_shared<OnePixel>(*(iter_owners_kv->second));
+            target_pixel->owners_info.erase(iter_owners_kv++);
+        }
     }
 
+    //逻辑说明：
+    //        如果发生了偏移且目的地 available 则直接占用
+    //        如果发生了偏移且目的地 unavailable 则融合到已存在的像素内
+    //        最终都要清理移动前的像素内存
     if (stage[{target_pixel->x, target_pixel->y, target_pixel->z}] != target_pixel)
     {
-        stage[{target_pixel->x, target_pixel->y, target_pixel->z}] = target_pixel;
-        stage[coordinate_begin].reset();
+        auto sp_dest_pixel = stage[{target_pixel->x, target_pixel->y, target_pixel->z}];
+        if (sp_dest_pixel != nullptr)
+            sp_dest_pixel->Merge(target_pixel);
+        else
+            stage[{target_pixel->x, target_pixel->y, target_pixel->z}] = target_pixel;
+        stage[coordinate_begin].reset(); // 它将会被 TidyUp 函数识别并清理
     }
 
     return true;
 }
-
-//bool Hall::TransferPixelFrom(const ThreeDCoordinate& coordinate_begin)
-//{
-//    if (stage.find(coordinate_begin) == stage.end())
-//        return false;
-//    OnePixel dest_pixel;
-//    dest_pixel = *stage[coordinate_begin]; // 显式使用拷贝赋值符，用于移交所有权相关字段
-//    dest_pixel.cur_frame_id = GetCurrentFrameID(); // 移交后由于render_flag仍是true，需要更新为当前帧，才能被快照
-//    if (stage.find({ dest_pixel.x, dest_pixel.y, dest_pixel.z }) == stage.end())
-//        stage.insert(std::make_pair(std::make_tuple(dest_pixel.x, dest_pixel.y, dest_pixel.z), std::make_shared<OnePixel>(dest_pixel)));
-//    else
-//        stage[{dest_pixel.x, dest_pixel.y, dest_pixel.z}] = std::make_shared<OnePixel>(dest_pixel);
-//    return true;
-//}
-
-//bool Hall::TransferPixelFrom(const ThreeDCoordinate& coordinate_begin)
-//{
-//    if (stage.find(coordinate_begin) == stage.end())
-//        return false;
-//
-//    // 创建新像素对象
-//    OnePixel new_pixel = *stage[coordinate_begin];
-//    new_pixel.cur_frame_id = GetCurrentFrameID();
-//
-//    // 处理分离像素
-//    for (const auto& [key, seperated_pixel] : new_pixel.graph_ids)
-//    {
-//        if (!seperated_pixel) continue;
-//
-//        auto [it, inserted] = stage.try_emplace({ seperated_pixel->x, seperated_pixel->y, seperated_pixel->z }, seperated_pixel);
-//        if (!inserted)
-//        {
-//            if (seperated_pixel->x == new_pixel.x && seperated_pixel->y == new_pixel.y && seperated_pixel->z == new_pixel.z)
-//                new_pixel.graph_ids[key] = nullptr;
-//            else
-//            {
-//                it->second->graph_ids.merge(seperated_pixel->graph_ids);
-//                new_pixel.graph_ids.erase(key);
-//            }
-//        }
-//    }
-//
-//    // 更新 stage
-//    stage[{new_pixel.x, new_pixel.y, new_pixel.z}] = std::make_shared<OnePixel>(new_pixel);
-//
-//    return true;
-//}
 
 void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::size_t& graph_pos_in_list)
 {
@@ -169,20 +132,23 @@ void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::si
         auto key = std::make_tuple(ping_pixel.x, ping_pixel.y, ping_pixel.z);
         if (stage.find(key) != stage.end())
         {
-            auto& pixel_ptr = stage[key];
-            pixel_ptr->render_flag = true;
-            pixel_ptr->x = ping_pixel.x;
-            pixel_ptr->y = ping_pixel.y;
-            pixel_ptr->z = ping_pixel.z;
-            pixel_ptr->r = ping_pixel.r;
-            pixel_ptr->g = ping_pixel.g;
-            pixel_ptr->b = ping_pixel.b;
-            pixel_ptr->a = ping_pixel.a;
-            pixel_ptr->block_size = ping_pixel.block_size;
-            pixel_ptr->cur_frame_id = frame_id;
-            // 确保 graph_ids 中的元素唯一
-            pixel_ptr->graph_ids[graph_pos_in_list] = nullptr;
-            checkin_sequence[graph_pos_in_list].push(pixel_ptr);
+            auto& sp_existed_pixel = stage[key];
+            OnePixel one_pixel;
+            one_pixel.render_flag = true;
+            one_pixel.x = ping_pixel.x;
+            one_pixel.y = ping_pixel.y;
+            one_pixel.z = ping_pixel.z;
+            one_pixel.r = ping_pixel.r;
+            one_pixel.g = ping_pixel.g;
+            one_pixel.b = ping_pixel.b;
+            one_pixel.a = ping_pixel.a;
+            one_pixel.tag = ping_pixel.tag;
+            one_pixel.block_size = ping_pixel.block_size;
+            one_pixel.cur_frame_id = frame_id;
+            one_pixel.owners_info[one_pixel.tag] = std::make_shared<OnePixel>(one_pixel);
+            std::shared_ptr<OnePixel> merged_pixel = std::make_shared<OnePixel>(one_pixel);
+            sp_existed_pixel->Merge(merged_pixel);
+            checkin_sequence[graph_pos_in_list].push(merged_pixel);
         }
         else
         {
@@ -196,14 +162,13 @@ void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::si
             one_pixel.g = ping_pixel.g;
             one_pixel.b = ping_pixel.b;
             one_pixel.a = ping_pixel.a;
+            one_pixel.tag = ping_pixel.tag;
             one_pixel.block_size = ping_pixel.block_size;
             one_pixel.cur_frame_id = frame_id;
-            one_pixel.graph_ids[graph_pos_in_list] = nullptr;
-
-            // 在堆上分配新内存存放 one_pixel，并由智能指针管理
-            std::shared_ptr<OnePixel> sp_one_pixel = std::make_shared<OnePixel>(one_pixel);
-            stage.insert(std::make_pair(key, sp_one_pixel));
-            checkin_sequence[graph_pos_in_list].push(sp_one_pixel);
+            one_pixel.owners_info[one_pixel.tag] = std::make_shared<OnePixel>(one_pixel);
+            std::shared_ptr<OnePixel> sp_new_pixel = std::make_shared<OnePixel>(one_pixel);
+            stage.insert(std::make_pair(key, sp_new_pixel));
+            checkin_sequence[graph_pos_in_list].push(sp_new_pixel);
         }
     }
 }
@@ -396,19 +361,7 @@ void GraphStudio::StandBy()
             if (!current_status.is_array())
                 return;
             std::vector<OnePixel> point_list;
-            for (const auto& point : current_status)
-            {
-                OnePixel ping_pixel;
-                ping_pixel.x = point["x"];
-                ping_pixel.y = point["y"];
-                ping_pixel.z = point["z"];
-                ping_pixel.r = point["r"];
-                ping_pixel.g = point["g"];
-                ping_pixel.b = point["b"];
-                ping_pixel.a = point["a"];
-                ping_pixel.block_size = point["blockSize"];
-                point_list.emplace_back(ping_pixel);
-            }
+            UpdatePixelsThroughAutomata(point_list, current_status);
             sp_hall->PingStage(point_list, i);
         }
         catch (std::logic_error)
@@ -444,20 +397,7 @@ void GraphStudio::UpdateGraphList()
             std::tie(initial_status, current_status, current_input, terminate_status) = automata_param;
             // 因为不清楚这个自动机有哪些字段，应当做函数指针传入来处理，这里先手动更新位置
             current_status.clear();
-            for (const auto& activate_pixel : pixels.second)
-            {
-                current_status.push_back({
-                    { "x",activate_pixel.x },
-                    { "y",activate_pixel.y },
-                    { "z",activate_pixel.z },
-                    { "r",activate_pixel.r },
-                    { "g",activate_pixel.g },
-                    { "b",activate_pixel.b },
-                    { "a",activate_pixel.a },
-                    { "blockSize",activate_pixel.block_size }
-                });
-                //sp_hall->Disable({ activate_pixel.x, activate_pixel.y, activate_pixel.z }, pixels.first); // 置activate_flag为false
-            }
+            UpdateAutomataThroughPixels(current_status, pixels.second);
             /*******************************************************************/
             automata_param = std::make_tuple(initial_status, current_status, current_input, terminate_status);
             SetAutomataInfoAt(pixels.first, automata_param);
@@ -562,6 +502,42 @@ void GraphStudio::SetAutomataInfoAt(std::size_t indice, const AutomataElements& 
     {
         //std::cerr << "The model is done, break out!!!" << std::endl;
         return;
+    }
+}
+
+void GraphStudio::UpdatePixelsThroughAutomata(std::vector<OnePixel>& points, const json& status)
+{
+    for (const auto& point : status)
+    {
+        OnePixel ping_pixel;
+        ping_pixel.x = point["x"];
+        ping_pixel.y = point["y"];
+        ping_pixel.z = point["z"];
+        ping_pixel.r = point["r"];
+        ping_pixel.g = point["g"];
+        ping_pixel.b = point["b"];
+        ping_pixel.a = point["a"];
+        ping_pixel.tag = point["tag"];
+        ping_pixel.block_size = point["blockSize"];
+        points.emplace_back(ping_pixel);
+    }
+}
+
+void GraphStudio::UpdateAutomataThroughPixels(json& status, const std::vector<OnePixel>& points)
+{
+    for (const auto& activate_pixel : points)
+    {
+        status.push_back({
+            { "x",activate_pixel.x },
+            { "y",activate_pixel.y },
+            { "z",activate_pixel.z },
+            { "r",activate_pixel.r },
+            { "g",activate_pixel.g },
+            { "b",activate_pixel.b },
+            { "a",activate_pixel.a },
+            { "tag",activate_pixel.tag },
+            { "blockSize",activate_pixel.block_size }
+        });
     }
 }
 
