@@ -1,25 +1,20 @@
 #include "PixelType.h"
 
-OnePixel::OnePixel(const OnePixel& other, std::size_t graph_id)
+std::shared_ptr<OnePixel> OnePixel::Seperate(std::size_t tag_info)
 {
-    x = other.x;
-    y = other.y;
-    r = other.r;
-    g = other.g;
-    b = other.b;
-    a = other.a;
-    block_size = other.block_size;
-    render_flag = other.render_flag;
-    cur_frame_id = other.cur_frame_id;
-    graph_ids[graph_id] = nullptr;
+    if (owners_info.find(tag_info) == owners_info.end() || owners_info.size() == 1) // Ω˚÷π◊ÛΩ≈≤»”“Ω≈…œÃÏ
+        return nullptr;
+    return owners_info[tag_info];
 }
 
-std::shared_ptr<OnePixel> OnePixel::Seperate(std::size_t graph_id)
+void OnePixel::Merge(std::shared_ptr<OnePixel> sp_merged_pixel)
 {
-    if (graph_ids.find(graph_id) == graph_ids.end())
-        return nullptr;
-    graph_ids[graph_id] = std::make_shared<OnePixel>(*this, graph_id);
-    return graph_ids[graph_id];
+    if (sp_merged_pixel == nullptr)
+        return;
+    if (sp_merged_pixel->x != x || sp_merged_pixel->y != y || sp_merged_pixel->z != z)
+        return;
+    for (const auto& [key, value] : sp_merged_pixel->owners_info)
+        owners_info[key] = value;
 }
 
 CubePixel::CubePixel(const OnePixel& basePixel)
