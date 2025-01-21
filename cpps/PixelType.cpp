@@ -8,6 +8,17 @@ std::vector<std::shared_ptr<OnePixel>> OnePixel::GetAllInnerPixels()
     return inner_pixels;
 }
 
+void OnePixel::TryUpdatingSurfaceIfSinglePixel()
+{
+    if (owners_info.size() != 1)
+        return;
+    r = owners_info.begin()->second->r;
+    g = owners_info.begin()->second->g;
+    b = owners_info.begin()->second->b;
+    a = owners_info.begin()->second->a;
+    block_size = owners_info.begin()->second->block_size;
+}
+
 std::shared_ptr<OnePixel> OnePixel::Seperate(std::size_t tag_info)
 {
     if (owners_info.find(tag_info) == owners_info.end() || owners_info.size() == 1) // ½ûÖ¹×ó½Å²ÈÓÒ½ÅÉÏÌì

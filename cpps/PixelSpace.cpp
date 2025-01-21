@@ -90,14 +90,7 @@ bool Hall::TransferPixelFrom(const ThreeDCoordinate& coordinate_begin)
             {
                 it->second->Merge(iter_owners_kv->second);
                 target_pixel->owners_info.erase(iter_owners_kv++);
-                if (target_pixel->owners_info.size() == 1)
-                {
-                    target_pixel->r = target_pixel->owners_info.begin()->second->r;
-                    target_pixel->g = target_pixel->owners_info.begin()->second->g;
-                    target_pixel->b = target_pixel->owners_info.begin()->second->b;
-                    target_pixel->a = target_pixel->owners_info.begin()->second->a;
-                    target_pixel->block_size = target_pixel->owners_info.begin()->second->block_size;
-                }
+                target_pixel->TryUpdatingSurfaceIfSinglePixel();
             }
             else
                 ++iter_owners_kv;
