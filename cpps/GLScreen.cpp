@@ -202,6 +202,9 @@ void GLScreen::Rendering()
         {
             gl_context->EnableInputControlWindowClosure();
 
+            // 提供键盘控制视野
+            changeCameraStatusByKeyBoardInput(*gl_context, experence_shader, *gl_camera);
+
             // 清除颜色和深度缓冲区
             glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -210,12 +213,12 @@ void GLScreen::Rendering()
             gl_camera->UpdateSpeedByDeltaTime();
             gl_camera->UpdateFOV();
             view = gl_camera->GetLookUp();
-            float orthoSize = std::min(width, height) / 2.0f; // 正交投影的半宽或半高
-            float aspectRatio = (float)width / height; // 窗口的宽高比
+            auto camera_pos = gl_camera->GetCameraPos();
+            float camera_distance = glm::length(camera_pos);
             if (perspective_type)
-                projection = glm::ortho(-orthoSize * aspectRatio, orthoSize * aspectRatio, -orthoSize, orthoSize, -100.0f, 100.0f);
+                projection = glm::ortho(0.0f, (float)width / (camera_distance), 0.0f, (float)height / (camera_distance), 0.0f, camera_distance);
             else
-                projection = glm::perspective(glm::radians(gl_camera->GetFOV()), aspectRatio, 0.1f, 100.0f);
+                projection = glm::perspective(glm::radians(gl_camera->GetFOV()), (float)width / height, 0.1f, 100.0f);
 
             // 获取当前时间
             double current_time = glfwGetTime();
@@ -254,9 +257,6 @@ void GLScreen::Rendering()
                 // 切换到下一帧
                 current_frame = (current_frame + 1) % frame_buffers.size();
             }
-
-            // 提供键盘控制视野
-            changeCameraStatusByKeyBoardInput(*gl_context, experence_shader, *gl_camera);
 
             // 交换缓冲区并处理事件
             gl_context->SwapBuffers();
@@ -316,6 +316,9 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
         auto loop_start_time = Clock::now();
         gl_context->EnableInputControlWindowClosure();
 
+        // 提供键盘控制视野
+        changeCameraStatusByKeyBoardInput(*gl_context, experence_shader, *gl_camera);
+
         // 清除颜色和深度缓冲区
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -324,12 +327,12 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
         gl_camera->UpdateSpeedByDeltaTime();
         gl_camera->UpdateFOV();
         view = gl_camera->GetLookUp();
-        float orthoSize = std::min(width, height) / 2.0f; // 正交投影的半宽或半高
-        float aspectRatio = (float)width / height; // 窗口的宽高比
+        auto camera_pos = gl_camera->GetCameraPos();
+        float camera_distance = glm::length(camera_pos);
         if (perspective_type)
-            projection = glm::ortho(-orthoSize * aspectRatio, orthoSize * aspectRatio, -orthoSize, orthoSize, -100.0f, 100.0f);
+            projection = glm::ortho(0.0f, (float)width / (camera_distance), 0.0f, (float)height / (camera_distance), 0.0f, camera_distance);
         else
-            projection = glm::perspective(glm::radians(gl_camera->GetFOV()), aspectRatio, 0.1f, 100.0f);
+            projection = glm::perspective(glm::radians(gl_camera->GetFOV()), (float)width / height, 0.1f, 100.0f);
 
         // 更新法线矩阵
         glm::mat3 normModelMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
@@ -370,9 +373,6 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
         frame_buffer->EnableVAO();
         glDrawElements(GL_TRIANGLES, frame_buffer->GetEBODataSize(), GL_UNSIGNED_INT, 0);
         frame_buffer->DisableVAO();
-
-        // 提供键盘控制视野
-        changeCameraStatusByKeyBoardInput(*gl_context, experence_shader, *gl_camera);
 
         // 交换缓冲区并处理事件
         gl_context->SwapBuffers();
@@ -552,7 +552,7 @@ InputHandler::InputHandler(GLFWwindow* main_window)
 {
     window = main_window;
     keyMap = {
-        {GLFW_KEY_W, "W"}, {GLFW_KEY_S, "S"}, {GLFW_KEY_A, "A"}, {GLFW_KEY_D, "D"},
+        {GLFW_KEY_UP, "UP"}, {GLFW_KEY_DOWN, "DOWN"}, {GLFW_KEY_LEFT, "LEFT"}, {GLFW_KEY_RIGHT, "RIGHT"},
         {GLFW_KEY_SPACE, "Space"}, {GLFW_KEY_LEFT_SHIFT, "Shift"}
     };
 }
