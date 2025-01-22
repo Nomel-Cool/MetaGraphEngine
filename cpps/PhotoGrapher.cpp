@@ -97,3 +97,8 @@ CompressedFrame PhotoGrapher::TryGettingFrame()
     auto frame = concurrency_compressedframe_queue.GetQuestFromQueue();
     return *frame;
 }
+
+void PhotoGrapher::ClearRestFramesInQueue()
+{
+    concurrency_compressedframe_queue.ClearQueue();
+}

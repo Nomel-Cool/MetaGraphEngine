@@ -293,6 +293,7 @@ void GraphStudio::RealTimeRender()
         {
             using Clock = std::chrono::high_resolution_clock;
             using Duration = std::chrono::duration<double, std::milli>;
+            photo_grapher.is_real_time = true;
             while (sp_gl_screen->is_running)
             {
                 auto loop_start_time = Clock::now();
@@ -312,6 +313,7 @@ void GraphStudio::RealTimeRender()
                 //std::cout << "Generate: " << sleep_duration.count() << std::endl;
                 //std::cout << "Total Frame ID: " << sp_hall->GetCurrentFrameID() << std::endl;
             }
+            photo_grapher.ClearRestFramesInQueue();
         }
     );
     tmp1.join();
@@ -332,6 +334,8 @@ void GraphStudio::RoleDismiss()
 
 void GraphStudio::Stop()
 {
+    if (photo_grapher.is_real_time)
+        return;
     if (!sp_graph_agency->Inspect())
         return;
     sp_timer->stop();

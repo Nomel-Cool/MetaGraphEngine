@@ -37,6 +37,8 @@ public:
 	void RecordFilmName(const std::string& film_name);
 	std::string GetCurrentFilmName();
 	CompressedFrame TryGettingFrame();
+	void ClearRestFramesInQueue();
+	bool is_real_time = false;
 private:
 	std::string current_film_name = "";
 	std::map<std::string, CompressedFrame> film_storage;

@@ -57,6 +57,16 @@ public:
         return consumed_node;
     }
 
+    /// <summary>
+    /// 安全清空队列，确保在清空操作期间不会有其他线程对队列进行修改
+    /// </summary>
+    void ClearQueue()
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        while (!inner_queue.empty())
+            inner_queue.pop();
+    }
+
 private:
     std::queue<std::unique_ptr<T>> inner_queue;
     mutable std::mutex mutex_;

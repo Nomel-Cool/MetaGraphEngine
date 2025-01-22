@@ -385,6 +385,9 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
     }
     // 退出时设置标志
     is_running = false;
+
+    // 清空剩余未发送的操作信息
+    concurrency_opinfo_queue.ClearQueue();
 }
 
 void GLScreen::TryGettingOpInfo(OpInfo& op_info)
