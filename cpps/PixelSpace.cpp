@@ -223,6 +223,8 @@ void GraphStudio::RoleEmplacement(const QStringList& model_names)
 
 void GraphStudio::Display(const QStringList& film_name_list)
 {
+    if (film_name_list.empty())
+        return;
     // 遍历所有需要播放的帧数据名
     for (const auto& film_name : film_name_list)
     {
