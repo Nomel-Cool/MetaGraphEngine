@@ -8,12 +8,21 @@ Rectangle {
     border.width: 1
     color: "white"
 
+    // 定义一个信号，当右选框不为空时发出
+    signal readyForRendering(bool isReady)
+
     ListModel {
         id: leftListModel
     }
 
     ListModel {
         id: rightListModel
+
+        // 监听右选框模型的变化
+        onCountChanged: {
+            // 当右选框不为空时发出信号
+            root.readyForRendering(count > 0)
+        }
     }
 
     ColumnLayout {

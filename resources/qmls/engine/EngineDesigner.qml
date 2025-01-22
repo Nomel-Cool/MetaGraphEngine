@@ -76,6 +76,11 @@ Rectangle {
         width: parent.width - buttonToolList.width
         anchors.top: graphList.bottom
         anchors.left: buttonToolList.right
+        onReadyForRendering: {
+            if (isReady) {
+                buttonToolList.glPlayAvailable = true;
+            }
+        }
     }
     
     WindowSettings {

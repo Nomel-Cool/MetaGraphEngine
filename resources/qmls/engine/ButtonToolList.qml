@@ -12,6 +12,7 @@ Rectangle {
     signal listPlayInGL()
     signal listStopped()
 
+    property alias glPlayAvailable: glPlayBtn.enabled
 
     QtObject {
         id: __private
