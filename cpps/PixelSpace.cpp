@@ -1,10 +1,14 @@
 #include "PixelSpace.h"
 
+GraphAgency::GraphAgency()
+{
+    sp_graph_factory = std::make_shared<GraphFactory>();
+}
+
 void GraphAgency::LoadGraphs(const QString& model_name)
 {
     std::lock_guard<std::mutex> lock(mtx4co);
-    GraphFactory graph_factory;
-    auto graph_model_coroutine_handler = graph_factory.OfferDynamicModel(model_name);
+    auto graph_model_coroutine_handler = sp_graph_factory->OfferDynamicModel(model_name);
     // 存储协程句柄到舞台中
     // 由于ModelGenerator删除拷贝构造，而make_shared默认调用拷贝构造会报错，所以传参时传递std::move()，告知它使用移动构造。
     auto sp_co_graph_handler = std::make_shared<ModelGenerator<SingleAutomata>>(std::move(graph_model_coroutine_handler));

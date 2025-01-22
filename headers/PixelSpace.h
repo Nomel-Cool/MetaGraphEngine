@@ -31,6 +31,7 @@ using ThreeDCoordinate = std::tuple<std::size_t, std::size_t, std::size_t>;
 class GraphAgency
 {
 public:
+	GraphAgency();
 	/// <summary>
 	/// QML调用用于把图元生成过程载入像素空间
 	/// </summary>
@@ -43,6 +44,7 @@ public:
 	void CleanGraphCache();
 	bool Empty();
 private:
+	std::shared_ptr<GraphFactory> sp_graph_factory;
 	std::vector<std::shared_ptr<ModelGenerator<SingleAutomata>>> graph_series_cache;
 	std::mutex mtx4co;
 };
