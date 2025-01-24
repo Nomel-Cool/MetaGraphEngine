@@ -100,8 +100,9 @@ bool Hall::TransferPixelFrom(const ThreeDCoordinate& coordinate_begin)
                 ++iter_owners_kv;
         else
         {
-            it->second->owners_info[it->second->tag] = std::make_shared<OnePixel>(*(iter_owners_kv->second));
+            it->second->owners_info[it->second->tag] = iter_owners_kv->second;
             target_pixel->owners_info.erase(iter_owners_kv++);
+            target_pixel->TryUpdatingSurfaceIfSinglePixel();
         }
     }
 
@@ -126,7 +127,7 @@ void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::si
 {
     for (const auto& ping_pixel : ping_pixel_list)
     {
-        auto key = std::make_tuple(ping_pixel.x, ping_pixel.y, ping_pixel.z);
+        auto key = std::tie(ping_pixel.x, ping_pixel.y, ping_pixel.z);
         if (stage.find(key) != stage.end())
         {
             auto& sp_existed_pixel = stage[key];
@@ -142,10 +143,11 @@ void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::si
             one_pixel.tag = ping_pixel.tag;
             one_pixel.block_size = ping_pixel.block_size;
             one_pixel.cur_frame_id = frame_id;
-            one_pixel.owners_info[one_pixel.tag] = std::make_shared<OnePixel>(one_pixel);
+            auto sync_sp_pixel = std::make_shared<OnePixel>(one_pixel);
+            one_pixel.owners_info[one_pixel.tag] = sync_sp_pixel;
             std::shared_ptr<OnePixel> merged_pixel = std::make_shared<OnePixel>(one_pixel);
             sp_existed_pixel->Merge(merged_pixel);
-            checkin_sequence[graph_pos_in_list].push(merged_pixel);
+            checkin_sequence[graph_pos_in_list].push(sync_sp_pixel);
         }
         else
         {
@@ -162,10 +164,10 @@ void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::si
             one_pixel.tag = ping_pixel.tag;
             one_pixel.block_size = ping_pixel.block_size;
             one_pixel.cur_frame_id = frame_id;
-            one_pixel.owners_info[one_pixel.tag] = std::make_shared<OnePixel>(one_pixel);
-            std::shared_ptr<OnePixel> sp_new_pixel = std::make_shared<OnePixel>(one_pixel);
-            stage.insert(std::make_pair(key, sp_new_pixel));
-            checkin_sequence[graph_pos_in_list].push(sp_new_pixel);
+            auto sync_sp_pixel = std::make_shared<OnePixel>(one_pixel);
+            sync_sp_pixel->owners_info[one_pixel.tag] = sync_sp_pixel;
+            stage.insert(std::make_pair(key, sync_sp_pixel));
+            checkin_sequence[graph_pos_in_list].push(sync_sp_pixel);
         }
     }
 }
