@@ -9,8 +9,10 @@ QString GraphFactory::Request4Model(const QString& model_name)
          GraphModel graph_model;
          std::string automata_xml_path = database_manager.QueryFilePathByModelName(model_name.toStdString());
          /*std::string automata_xml_path = "./resources/xmls/graphAutomata/bezier_automata.xml";*/
-         auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
-         bool trans_result = file_manager.TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
+         auto bound_func = [this](const std::string& json_string, GraphModel& model) {
+             return sp_stream_to_modeldata->FillUp(json_string, model);
+         };
+         bool trans_result = sp_file_manager->TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
          if(trans_result)
          {
              std::string str_points_list = "[";
@@ -24,8 +26,10 @@ QString GraphFactory::Request4Model(const QString& model_name)
          {
              if (automata_xml_path.empty()) 
                  automata_xml_path = database_manager.RebuildXmlFileByModelName(model_name.toStdString());
-             auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
-             bool trans_result = file_manager.TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
+             auto bound_func = [this](const std::string& json_string, GraphModel& model) {
+                 return sp_stream_to_modeldata->FillUp(json_string, model);
+             };
+             bool trans_result = sp_file_manager->TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
              if (trans_result)
              {
                  std::string str_points_list = "[";
@@ -49,7 +53,7 @@ void GraphFactory::Registry4Model(const QString& model_name, const QString& str_
     GraphModel graph_model;
     graph_model.model_name = model_name.toStdString();
     json raw_model_data;
-    if (!file_manager.TransStr2JsonObject(str_model_data.toStdString(), raw_model_data))
+    if (!sp_file_manager->TransStr2JsonObject(str_model_data.toStdString(), raw_model_data))
     {
         std::cerr << "Registration Failed: The jsonization of " << str_model_data.toStdString() << " is invalid." << std::endl;
         return;
@@ -104,8 +108,10 @@ void GraphFactory::Registry4Model(const QString& model_name, const QString& str_
     }
     //2. 把装填好的类写入文件
     std::string default_model_path = "./resources/xmls/graphAutomata/" + model_name.toStdString() + ".xml";
-    auto bound_func = std::bind(&GraphFactory::Depart, this, std::placeholders::_1, std::placeholders::_2);
-    bool file_trans_result = file_manager.TransClass2Xml<GraphModel>(graph_model, default_model_path, bound_func);
+    auto bound_func = [this](std::shared_ptr<shabby::IXMLDocument> doc, GraphModel& model) {
+        return sp_modeldata_to_stream->Depart(doc, model);
+    };
+    bool file_trans_result = sp_file_manager->TransClass2Xml<GraphModel>(graph_model, default_model_path, bound_func);
     if (!file_trans_result)
     {
         std::cerr << "Failed to write class to XML file: " << default_model_path << std::endl;
@@ -153,8 +159,10 @@ ModelGenerator<SingleAutomata> GraphFactory::OfferDynamicModel(const QString& mo
     GraphModel graph_model;
     //std::string automata_xml_path = "./resources/xmls/graphAutomata/point_automata.xml";
     std::string automata_xml_path = database_manager.QueryFilePathByModelName(model_name.toStdString());
-    auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
-    bool trans_result = file_manager.TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
+    auto bound_func = [this](const std::string& json_string, GraphModel& model) {
+        return sp_stream_to_modeldata->FillUp(json_string, model);
+    };
+    bool trans_result = sp_file_manager->TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
     if (trans_result)
     {
         for (SingleAutomata& sa : graph_model.automatas)
@@ -170,8 +178,10 @@ ModelGenerator<SingleAutomata> GraphFactory::OfferDynamicModel(const QString& mo
     else
     {
         automata_xml_path = database_manager.RebuildXmlFileByModelName(model_name.toStdString());
-        auto bound_func = std::bind(&GraphFactory::FillUp, this, std::placeholders::_1, std::placeholders::_2);
-        bool trans_result = file_manager.TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
+        auto bound_func = [this](const std::string& json_string, GraphModel& model) {
+            return sp_stream_to_modeldata->FillUp(json_string, model);
+        };
+        bool trans_result = sp_file_manager->TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
         if (trans_result)
         {
             for (SingleAutomata& sa : graph_model.automatas)
@@ -185,168 +195,4 @@ ModelGenerator<SingleAutomata> GraphFactory::OfferDynamicModel(const QString& mo
         }
     }
     co_return;
-}
-
-bool GraphFactory::FillUp(const std::string& json_string, GraphModel& graph_model) {
-    json json_obj;
-    if (!file_manager.TransStr2JsonObject(json_string, json_obj)) {
-        std::cerr << "Failed to parse JSON: " << json_string << std::endl;
-        return false;
-    }
-
-    switch (current_state) {
-    case State::WaitingForModel:
-        if (json_obj.contains("model")) {
-            current_state = State::ReadingModelName;
-            return FillUp(json_string, graph_model); // Re-process this JSON string in the new state
-        }
-        break;
-    case State::ReadingModelName:
-        if (json_obj["model"].is_array())
-            for (int i = 0; i < json_obj["model"].size(); ++i)
-                if (json_obj["model"][i].contains("name"))
-                {
-                    graph_model.model_name = json_obj["model"][i]["name"];
-                    break;
-                }
-        current_state = State::WaitingForAutomata;
-        break;
-    case State::WaitingForAutomata:
-        if (json_obj.contains("automata")) {
-            current_state = State::ReadingAutomataId;
-            graph_model.automatas.emplace_back();
-            return FillUp(json_string, graph_model); // Re-process this JSON string in the new state
-        }
-        break;
-    case State::ReadingAutomataId:
-        if (json_obj["automata"].is_array())
-            for (int i = 0; i < json_obj["automata"].size(); ++i)
-                if (json_obj["automata"][i].contains("id"))
-                {
-                    graph_model.automatas.back().id = json_obj["automata"][i]["id"];
-                    break;
-                }
-        current_state = State::ReadingInitStatus;
-        break;
-    case State::ReadingInitStatus:
-        if (json_obj["init"].is_array())
-            for (int i = 0; i < json_obj["init"].size(); ++i)
-                if (json_obj["init"][i].contains("init_status"))
-                {
-                    graph_model.automatas.back().init_status = json_obj["init"][i]["init_status"];
-                    break;
-                }
-        current_state = State::ReadingTransferFunction;
-        break;
-    case State::ReadingTransferFunction:
-        if (json_obj["transfer"].is_array())
-            for (int i = 0; i < json_obj["transfer"].size(); ++i)
-                if (json_obj["transfer"][i].contains("func_name"))
-                {
-                    graph_model.automatas.back().func_name = json_obj["transfer"][i]["func_name"];
-                    break;
-                }
-        current_state = State::ReadingCurrentInput;
-        break;
-    case State::ReadingCurrentInput:
-        if (json_obj["input"].is_array())
-            for (int i = 0; i < json_obj["input"].size(); ++i)
-                if (json_obj["input"][i].contains("current_input"))
-                {
-                    graph_model.automatas.back().current_input = json_obj["input"][i]["current_input"];
-                    break;
-                }
-        current_state = State::ReadingCurrentStatus;
-        break;
-    case State::ReadingCurrentStatus:
-        if (json_obj["current"].is_array())
-            for (int i = 0; i < json_obj["current"].size(); ++i)
-                if (json_obj["current"][i].contains("current_status"))
-                {
-                    graph_model.automatas.back().current_status = json_obj["current"][i]["current_status"];
-                    break;
-                }
-        current_state = State::ReadingTerminateStatus;
-        break;
-    case State::ReadingTerminateStatus:
-        if (json_obj["terminate"].is_array())
-            for (int i = 0; i < json_obj["terminate"].size(); ++i)
-                if (json_obj["terminate"][i].contains("terminate_status"))
-                {
-                    graph_model.automatas.back().terminate_status = json_obj["terminate"][i]["terminate_status"];
-                    break;
-                }
-        current_state = State::WaitingForAutomata;
-        break;
-    default:
-        throw std::logic_error("Invalid state");
-    }
-    return true;
-}
-
-bool GraphFactory::Depart(tinyxml2::XMLDocument& doc, GraphModel& graph_model)
-{
-    try
-    {
-        // 创建根元素
-        tinyxml2::XMLElement* root = doc.NewElement("model");
-        root->SetAttribute("name", graph_model.model_name.c_str());
-
-        // 遍历 automatas 并构造子元素
-        for (const auto& automata_source : graph_model.automatas)
-        {
-            tinyxml2::XMLElement* automata = doc.NewElement("automata");
-            automata->SetAttribute("id", automata_source.id.c_str());
-
-            // 自定义属性值转义函数
-            auto escapeAttribute = [](const std::string& input) -> std::string {
-                std::string escaped;
-                for (char c : input)
-                {
-                    switch (c)
-                    {
-                    case '\"': escaped += "\\\""; break; // 转义双引号
-                    case '\'': escaped += "\\\'"; break; // 转义单引号
-                    case '&': escaped += "&amp;"; break; // 转义 & 为 &amp;
-                    case '<': escaped += "&lt;"; break;  // 转义 < 为 &lt;
-                    case '>': escaped += "&gt;"; break;  // 转义 > 为 &gt;
-                    default: escaped += c; break;        // 其他字符不变
-                    }
-                }
-                return escaped;
-                };
-
-            // 设置子元素及其属性
-            tinyxml2::XMLElement* initStatus = doc.NewElement("init");
-            initStatus->SetAttribute("init_status", escapeAttribute(automata_source.init_status).c_str());
-
-            tinyxml2::XMLElement* transferFunction = doc.NewElement("transfer");
-            transferFunction->SetAttribute("func_name", automata_source.func_name.c_str());
-
-            tinyxml2::XMLElement* currentInput = doc.NewElement("input");
-            currentInput->SetAttribute("current_input", escapeAttribute(automata_source.current_input).c_str());
-
-            tinyxml2::XMLElement* currentStatus = doc.NewElement("current");
-            currentStatus->SetAttribute("current_status", escapeAttribute(automata_source.current_status).c_str());
-
-            tinyxml2::XMLElement* terminateStatus = doc.NewElement("terminate");
-            terminateStatus->SetAttribute("terminate_status", escapeAttribute(automata_source.terminate_status).c_str());
-
-            automata->InsertFirstChild(initStatus);
-            automata->InsertAfterChild(initStatus, transferFunction);
-            automata->InsertAfterChild(transferFunction, currentInput);
-            automata->InsertAfterChild(currentInput, currentStatus);
-            automata->InsertAfterChild(currentStatus, terminateStatus);
-            root->InsertEndChild(automata);
-        }
-
-        // 设置根元素
-        doc.InsertFirstChild(root);
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << "Exception in Depart: " << e.what() << std::endl;
-        return false;
-    }
-    return true;
 }

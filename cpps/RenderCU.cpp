@@ -8,12 +8,16 @@ RenderCU::RenderCU()
 
     render_co_functions["CoBresenhamLine"] = std::bind(&RenderCU::CoBresenhamLine, this, std::placeholders::_1);
     render_co_functions["CoJustAPoint"] = std::bind(&RenderCU::CoJustAPoint, this, std::placeholders::_1);
+
+    // 如果使用其它第三方XML解析库修改工程指针即可
+    std::unique_ptr<shabby::IXMLDocumentFactory> tinyxml_factory = std::make_unique<TinyXMLDocumentFactory>();
+    sp_file_manager = std::make_shared<FileManager>(std::move(tinyxml_factory));
 }
 
 std::string RenderCU::JustAPoint(const SingleAutomata& graph_model)
 {
     json init_status;
-    if (!file_manager.TransStr2JsonObject(graph_model.init_status, init_status))
+    if (!sp_file_manager->TransStr2JsonObject(graph_model.init_status, init_status))
     {
         std::cerr << "Failed to parse JSON: " << graph_model.init_status << std::endl;
         return "{}";
@@ -24,12 +28,12 @@ std::string RenderCU::JustAPoint(const SingleAutomata& graph_model)
 ModelGenerator<SingleAutomata> RenderCU::CoJustAPoint(SingleAutomata& graph_model)
 {
     json init_status, current_status;
-    if (!file_manager.TransStr2JsonObject(graph_model.init_status, init_status))
+    if (!sp_file_manager->TransStr2JsonObject(graph_model.init_status, init_status))
     {
         std::cerr << "Failed to parse JSON: " << graph_model.init_status << std::endl;
         co_return;
     }
-    if (!file_manager.TransStr2JsonObject(graph_model.current_status, current_status))
+    if (!sp_file_manager->TransStr2JsonObject(graph_model.current_status, current_status))
     {
         std::cerr << "Failed to parse JSON: " << graph_model.current_status << std::endl;
         co_return;
@@ -60,7 +64,7 @@ ModelGenerator<SingleAutomata> RenderCU::CoJustAPoint(SingleAutomata& graph_mode
     while (true)
     {
         co_yield graph_model;
-        if (!file_manager.TransStr2JsonObject(graph_model.current_status, current_status))
+        if (!sp_file_manager->TransStr2JsonObject(graph_model.current_status, current_status))
         {
             std::cerr << "Failed to parse JSON: " << graph_model.current_status << std::endl;
             co_return;
@@ -73,12 +77,12 @@ ModelGenerator<SingleAutomata> RenderCU::CoJustAPoint(SingleAutomata& graph_mode
 std::string RenderCU::BresenhamLine(const SingleAutomata& graph_model)
 {
     json init_status, terminate_status;
-    if (!file_manager.TransStr2JsonObject(graph_model.init_status, init_status))
+    if (!sp_file_manager->TransStr2JsonObject(graph_model.init_status, init_status))
     {
         std::cerr << "Failed to parse JSON: " << graph_model.init_status << std::endl;
         return "{}";
     }
-    if (!file_manager.TransStr2JsonObject(graph_model.terminate_status, terminate_status))
+    if (!sp_file_manager->TransStr2JsonObject(graph_model.terminate_status, terminate_status))
     {
         std::cerr << "Failed to parse JSON: " << graph_model.terminate_status << std::endl;
         return "{}";
@@ -141,22 +145,22 @@ ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_m
     json init_status, current_status, current_input, terminate_status;
 
     // Convert graph_model status strings to JSON objects
-    if (!file_manager.TransStr2JsonObject(graph_model.init_status, init_status))
+    if (!sp_file_manager->TransStr2JsonObject(graph_model.init_status, init_status))
     {
         std::cerr << "Failed to parse JSON: " << graph_model.init_status << std::endl;
         co_return;
     }
-    if (!file_manager.TransStr2JsonObject(graph_model.current_status, current_status))
+    if (!sp_file_manager->TransStr2JsonObject(graph_model.current_status, current_status))
     {
         std::cerr << "Failed to parse JSON: " << graph_model.current_status << std::endl;
         co_return;
     }
-    if (!file_manager.TransStr2JsonObject(graph_model.current_input, current_input))
+    if (!sp_file_manager->TransStr2JsonObject(graph_model.current_input, current_input))
     {
         std::cerr << "Failed to parse JSON: " << graph_model.current_input << std::endl;
         co_return;
     }
-    if (!file_manager.TransStr2JsonObject(graph_model.terminate_status, terminate_status))
+    if (!sp_file_manager->TransStr2JsonObject(graph_model.terminate_status, terminate_status))
     {
         std::cerr << "Failed to parse JSON: " << graph_model.terminate_status << std::endl;
         co_return;
@@ -244,12 +248,12 @@ ModelGenerator<SingleAutomata> RenderCU::CoBresenhamLine(SingleAutomata& graph_m
 std::string RenderCU::BresenhamEllipse(const SingleAutomata& graph_model)
 {
     json init_status, terminate_status;
-    if (!file_manager.TransStr2JsonObject(graph_model.init_status, init_status))
+    if (!sp_file_manager->TransStr2JsonObject(graph_model.init_status, init_status))
     {
         std::cerr << "Failed to parse JSON: " << graph_model.init_status << std::endl;
         return "{}";
     }
-    if (!file_manager.TransStr2JsonObject(graph_model.terminate_status, terminate_status))
+    if (!sp_file_manager->TransStr2JsonObject(graph_model.terminate_status, terminate_status))
     {
         std::cerr << "Failed to parse JSON: " << graph_model.terminate_status << std::endl;
         return "{}";
@@ -308,7 +312,7 @@ std::string RenderCU::BresenhamEllipse(const SingleAutomata& graph_model)
 std::string RenderCU::PartitionBezierCurve(const SingleAutomata& graph_model)
 {
     json init_status;
-    if (!file_manager.TransStr2JsonObject(graph_model.init_status, init_status))
+    if (!sp_file_manager->TransStr2JsonObject(graph_model.init_status, init_status))
     {
         std::cerr << "Failed to parse JSON: " << graph_model.init_status << std::endl;
         return "{}";

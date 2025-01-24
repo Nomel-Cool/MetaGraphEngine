@@ -197,6 +197,10 @@ GraphStudio::GraphStudio(QObject* parent) : QObject(parent)
     sp_law = std::make_shared<Law>();
     sp_timer = std::make_shared<QTimer>(this);
     sp_gl_screen = std::make_shared<GLScreen>();
+
+    // 如果使用其它第三方XML解析库修改工程指针即可
+    std::unique_ptr<shabby::IXMLDocumentFactory> tinyxml_factory = std::make_unique<TinyXMLDocumentFactory>();
+    sp_file_manager = std::make_shared<FileManager>(std::move(tinyxml_factory));
 }
 
 void GraphStudio::InitWindow(int width, int height, float cameraX, float cameraY, float cameraZ, bool perspective_type, bool view_lock)
@@ -355,7 +359,7 @@ void GraphStudio::StandBy()
         {
             json current_status;
             auto str_cur_pos = graph_list[i]->GetValue().current_status;
-            if (!file_manager.TransStr2JsonObject(str_cur_pos, current_status))
+            if (!sp_file_manager->TransStr2JsonObject(str_cur_pos, current_status))
             {
                 std::cerr << "failed to parse json: " << str_cur_pos << std::endl;
                 return;
@@ -460,22 +464,22 @@ AutomataElements GraphStudio::GetAutomataInfoAt(std::size_t indice)
         auto& graph_list = sp_graph_agency->GetGraphs();
         auto& graph_model = graph_list[indice]->GetValue();
 
-        if (!file_manager.TransStr2JsonObject(graph_model.init_status, init_status))
+        if (!sp_file_manager->TransStr2JsonObject(graph_model.init_status, init_status))
         {
             std::cerr << "Failed to parse JSON: " << graph_model.init_status << std::endl;
             throw std::logic_error("Failed to parse init_status JSON");
         }
-        if (!file_manager.TransStr2JsonObject(graph_model.current_status, current_status))
+        if (!sp_file_manager->TransStr2JsonObject(graph_model.current_status, current_status))
         {
             std::cerr << "Failed to parse JSON: " << graph_model.current_status << std::endl;
             throw std::logic_error("Failed to parse current_status JSON");
         }
-        if (!file_manager.TransStr2JsonObject(graph_model.current_input, current_input))
+        if (!sp_file_manager->TransStr2JsonObject(graph_model.current_input, current_input))
         {
             std::cerr << "Failed to parse JSON: " << graph_model.current_input << std::endl;
             throw std::logic_error("Failed to parse current_input JSON");
         }
-        if (!file_manager.TransStr2JsonObject(graph_model.terminate_status, terminate_status))
+        if (!sp_file_manager->TransStr2JsonObject(graph_model.terminate_status, terminate_status))
         {
             std::cerr << "Failed to parse JSON: " << graph_model.terminate_status << std::endl;
             throw std::logic_error("Failed to parse terminate_status JSON");

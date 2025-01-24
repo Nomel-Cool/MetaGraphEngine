@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QString>
 
+#include "ModelDataConvertHelper.h"
 #include "RenderCU.h"
 #include "FileManager.h"
 #include "RedisClient.h"
@@ -18,7 +19,14 @@ class GraphFactory : public QObject
     Q_OBJECT
     friend class Law;
 public:
-    explicit GraphFactory(QObject* parent = nullptr) : QObject(parent){}
+    explicit GraphFactory(QObject* parent = nullptr) : QObject(parent) 
+    {    
+        // 如果使用其它第三方XML解析库修改工程指针即可
+        std::unique_ptr<shabby::IXMLDocumentFactory> tinyxml_factory = std::make_unique<TinyXMLDocumentFactory>();
+        sp_file_manager = std::make_shared<FileManager>(std::move(tinyxml_factory));
+        sp_stream_to_modeldata = std::make_shared<XMLStreamConvertToModelDataStrategy>();
+        sp_modeldata_to_stream = std::make_shared<ModelDataConvertToXMLStreamStrategy>();
+    }
     Q_INVOKABLE QString Request4Model(const QString& model_name);
     Q_INVOKABLE void Registry4Model(const QString& model_name, const QString& str_model_data);
     Q_INVOKABLE QStringList Request4ModelNameList();
@@ -32,25 +40,12 @@ public:
 signals:
     QStringList update4NameList();
 
-protected:
-    bool FillUp(const std::string& json_string, GraphModel& graph_model);
-    bool Depart(tinyxml2::XMLDocument& doc, GraphModel& graph_model);
 private:
-    enum class State {
-        WaitingForModel,
-        ReadingModelName,
-        WaitingForAutomata,
-        ReadingAutomataId,
-        ReadingInitStatus,
-        ReadingTransferFunction,
-        ReadingCurrentInput,
-        ReadingCurrentStatus,
-        ReadingTerminateStatus
-    };
-    State current_state = State::WaitingForModel;
 
+    std::shared_ptr<IStreamConvertToModelDataStrategy> sp_stream_to_modeldata;
+    std::shared_ptr<IModelDataConvertToStreamStrategy> sp_modeldata_to_stream;
     RenderCU render_cu;
-    FileManager file_manager;
+    std::shared_ptr<FileManager> sp_file_manager;
     RedisClient redis_client;
     DatabaseManager database_manager;
 };

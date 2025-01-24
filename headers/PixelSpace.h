@@ -122,7 +122,7 @@ private:
 private:
 	std::shared_ptr<GraphAgency> sp_graph_agency;
 	std::shared_ptr<Hall> sp_hall;   
-	FileManager file_manager;
+	std::shared_ptr<FileManager> sp_file_manager;
 	ShabbyThreadPool& pool = ShabbyThreadPool::GetInstance();
 	std::shared_ptr<Law> sp_law; // 由于Law和GraphStudio循环调用了，这里前置声明了Law，使用指针延迟初始化，度过编译期的检查（必须用指针！！！）
 	PhotoGrapher photo_grapher;

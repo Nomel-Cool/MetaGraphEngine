@@ -14,13 +14,17 @@
 class  FileManager
 {
 public:
-    FileManager() {}
+    FileManager() = default;
+    FileManager(std::unique_ptr<shabby::IXMLDocumentFactory> factory) 
+    { 
+        xml_parser = std::make_unique<XmlParser>(std::move(factory));
+    }
     bool TransStr2JsonObject(const std::string& json_string, json& json_obj);
 
     template<typename StructuringClass>
     bool TransXml2Class(const std::string& xml_path, StructuringClass& target_obj, std::function<bool(const std::string&, StructuringClass&)> FillUp)
     {
-        auto deserialized_data = xml_parser.DeSerialize(xml_path);
+        auto deserialized_data = xml_parser->DoDeserialization(xml_path);
         if (!deserialized_data.empty())
         {
             try {
@@ -41,11 +45,11 @@ public:
     }
 
     template<typename StructuringClass>
-    bool TransClass2Xml(StructuringClass& target_obj, const std::string& xml_path, const std::function<bool(tinyxml2::XMLDocument&, StructuringClass&)>& Depart)
+    bool TransClass2Xml(StructuringClass& target_obj, const std::string& xml_path, const std::function<bool(std::shared_ptr<shabby::IXMLDocument>, StructuringClass&)>& Depart)
     {
         try {
             // 创建一个空的 XML 文档
-            tinyxml2::XMLDocument doc;
+            std::shared_ptr<shabby::IXMLDocument> doc = std::make_shared<TinyXMLDocumentAdapter>();
 
             // 通过 Depart 回调函数填充 XML 文档
             if (!Depart(doc, target_obj)) {
@@ -54,7 +58,7 @@ public:
             }
 
             // 调用 Serialize 保存到指定路径
-            if (!xml_parser.Serialize(xml_path, doc)) {
+            if (!xml_parser->DoSerialization(xml_path, *doc)) {
                 std::cerr << "Failed to serialize XML document to path: " << xml_path << std::endl;
                 return false;
             }
@@ -68,7 +72,7 @@ public:
     }
 
 private:
-    XmlParser xml_parser;
+    std::unique_ptr<XmlParser> xml_parser;
     JsonParser json_parser;
 };
 

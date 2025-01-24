@@ -56,7 +56,7 @@ protected:
 private:
     std::map<std::string, std::function<std::string(const SingleAutomata&)>> render_functions;
     std::map<std::string, std::function<ModelGenerator<SingleAutomata>(SingleAutomata&)>> render_co_functions;
-    FileManager file_manager;
+    std::shared_ptr<FileManager> sp_file_manager;
 };
 
 #endif // !RENDER_CU_H
