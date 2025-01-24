@@ -10,13 +10,15 @@ std::vector<std::shared_ptr<OnePixel>> OnePixel::GetAllInnerPixels()
 
 void OnePixel::TryUpdatingSurfaceIfSinglePixel()
 {
-    if (owners_info.size() != 1)
-        return;
-    r = owners_info.begin()->second->r;
-    g = owners_info.begin()->second->g;
-    b = owners_info.begin()->second->b;
-    a = owners_info.begin()->second->a;
-    block_size = owners_info.begin()->second->block_size;
+    if (owners_info.size() == 1)
+    {
+        r = owners_info.begin()->second->r;
+        g = owners_info.begin()->second->g;
+        b = owners_info.begin()->second->b;
+        a = owners_info.begin()->second->a;
+        tag = owners_info.begin()->second->tag;
+        block_size = owners_info.begin()->second->block_size;
+    }
 }
 
 std::shared_ptr<OnePixel> OnePixel::Seperate(std::size_t tag_info)
