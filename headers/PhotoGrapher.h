@@ -9,41 +9,43 @@
 #include <cstddef>
 #include <cmath>
 
-#include "EventsQueue.h"
 #include "PixelType.h"
+#include "FrameStructure.h"
+#include "FilmStorage.h"
+#include "IPhotoGrapher.h"
 
-/// <summary>
-/// 压缩一帧的所有渲染信息
-/// </summary>
-class CompressedFrame
+class FrameHashCalculator
 {
 public:
-	void SetPinPos();
-	std::vector<OnePixel> GetFrames() const;
-	void UpdateFrames(const std::vector<OnePixel>& pixels);
-	std::size_t GetPixelsHash() const;
-private:
-	std::pair<float, float> pin_pos;
-	std::vector<OnePixel> frames;
+	std::size_t GetPixelsHash(const std::vector<OnePixel>& pixels_in_frame) const;
 };
 
-class PhotoGrapher
+class StaticPhotoGrapher : public IPhotoGrapher
 {
 public:
-	void Store();
-	const CompressedFrame Fetch(const std::string& film_name);
-	void Filming(const OnePixel one_pixel);
-	void RealTimeFilming(const CompressedFrame realtime_frame);
-	void RecordFilmName(const std::string& film_name);
-	std::string GetCurrentFilmName();
-	CompressedFrame TryGettingFrame();
-	void ClearRestFramesInQueue();
-	bool is_real_time = false;
+	StaticPhotoGrapher() = default;
+	StaticPhotoGrapher(std::shared_ptr<IFilmStorage> selected_storage_form);
+	void Filming(const OnePixel& one_pixel) override;
+	void FilmDone(const std::string& film_name = "") override;
+	void SetUsageStatus(bool used) override;
+	bool GetUsageStatus() override;
 private:
-	std::string current_film_name = "";
-	std::map<std::string, CompressedFrame> film_storage;
-	std::vector<OnePixel> film_cache;
-	TaskModelQueue<CompressedFrame> concurrency_compressedframe_queue;
+	std::shared_ptr<IFilmStorage> sp_film_storage;
+	bool is_using = false;
 };
 
-#endif // !PHOTO_GRAPHER_H
+class RealTimePhotoGrapher : public IPhotoGrapher
+{
+public:
+	RealTimePhotoGrapher() = default;
+	RealTimePhotoGrapher(std::shared_ptr<IFilmStorage> selected_storage_form);
+	void Filming(const OnePixel& one_pixel) override;
+	void FilmDone(const std::string& film_name = "") override;
+	void SetUsageStatus(bool used) override;
+	bool GetUsageStatus() override;
+private:
+	std::shared_ptr<IFilmStorage> sp_film_storage;
+	bool is_using = false;
+};
+
+#endif // !PHOTO_GRAPHER_H  

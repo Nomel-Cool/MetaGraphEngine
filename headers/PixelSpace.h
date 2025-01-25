@@ -18,6 +18,7 @@
 #include "ThreadPool.h"
 #include "RenderKernel.h"
 #include "Law.h"
+#include "FilmNaming.h"
 #include "PhotoGrapher.h"
 #include "PixelType.h"
 #include "GLScreen.h"
@@ -123,9 +124,12 @@ private:
 	std::shared_ptr<GraphAgency> sp_graph_agency;
 	std::shared_ptr<Hall> sp_hall;   
 	std::shared_ptr<FileManager> sp_file_manager;
+	std::shared_ptr<FilmNameManager> sp_filmname_manager;
+	std::shared_ptr<IFilmStorage> sp_film_static_storage;
+	std::shared_ptr<IFilmStorage> sp_film_realtime_storage;
 	ShabbyThreadPool& pool = ShabbyThreadPool::GetInstance();
 	std::shared_ptr<Law> sp_law; // 由于Law和GraphStudio循环调用了，这里前置声明了Law，使用指针延迟初始化，度过编译期的检查（必须用指针！！！）
-	PhotoGrapher photo_grapher;
+	std::shared_ptr<IPhotoGrapher> sp_realtime_photographer, sp_static_photographer;
 	std::shared_ptr<QTimer> sp_timer;
 	std::shared_ptr<GLScreen> sp_gl_screen;
 };

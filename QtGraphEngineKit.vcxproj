@@ -44,12 +44,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpps\DataBaseManager.cpp" />
+    <ClCompile Include="cpps\FrameStructure.cpp" />
     <ClCompile Include="cpps\GLBuffers.cpp" />
     <ClCompile Include="cpps\GLCamera.cpp" />
     <ClCompile Include="cpps\GLContext.cpp" />
     <ClCompile Include="cpps\GLManager.cpp" />
     <ClCompile Include="cpps\GLShaders.cpp" />
     <ClCompile Include="cpps\GLTexture.cpp" />
+    <ClCompile Include="cpps\ModelDataConvertHelper.cpp" />
     <ClCompile Include="cpps\PhotoGrapher.cpp" />
     <ClCompile Include="cpps\glad.c" />
     <ClCompile Include="cpps\main.cpp" />
@@ -62,6 +64,8 @@
     <ClCompile Include="cpps\Law.cpp" />
     <ClCompile Include="cpps\GLShader.cpp" />
     <ClCompile Include="cpps\GLScreen.cpp" />
+    <ClCompile Include="cpps\FilmStorage.cpp" />
+    <ClCompile Include="cpps\FilmNaming.cpp" />
     <ClCompile Include="headers\openssl\applink.c" />
   </ItemGroup>
   <ItemGroup>
@@ -86,12 +90,16 @@
   <ItemGroup>
     <ClInclude Include="headers\alloc.h" />
     <ClInclude Include="headers\CoModelGenerator.h" />
+    <ClInclude Include="headers\concurrentqueue.h" />
     <ClInclude Include="headers\DataBase.h" />
     <ClInclude Include="headers\DataBaseManager.h" />
     <ClInclude Include="headers\errmsg.h" />
     <ClInclude Include="headers\EventsQueue.h" />
     <ClInclude Include="headers\field_types.h" />
     <ClInclude Include="headers\FileManager.h" />
+    <ClInclude Include="headers\FilmNaming.h" />
+    <ClInclude Include="headers\FilmStorage.h" />
+    <ClInclude Include="headers\FrameStructure.h" />
     <ClInclude Include="headers\GLBuffers.h" />
     <ClInclude Include="headers\GLCamera.h" />
     <ClInclude Include="headers\GLContext.h" />
@@ -99,7 +107,13 @@
     <ClInclude Include="headers\GLScreen.h" />
     <ClInclude Include="headers\GLShaders.h" />
     <ClInclude Include="headers\GLTexture.h" />
+    <ClInclude Include="headers\IFilmStorage.h" />
     <ClInclude Include="headers\ImageLoader.h" />
+    <ClInclude Include="headers\IModelDataConverter.h" />
+    <ClInclude Include="headers\IPhotoGrapher.h" />
+    <ClInclude Include="headers\IXMLStructure.h" />
+    <ClInclude Include="headers\json_fwd.hpp" />
+    <ClInclude Include="headers\ModelDataConvertHelper.h" />
     <ClInclude Include="headers\PhotoGrapher.h" />
     <ClInclude Include="headers\GLShader.h" />
     <ClInclude Include="headers\hiredis.h" />
@@ -131,6 +145,7 @@
     <ClInclude Include="headers\ThreadPool.h" />
     <ClInclude Include="headers\tinyxml2.h" />
     <QtMoc Include="headers\XmlDataModel.h" />
+    <ClInclude Include="headers\TinyXMLImpl.h" />
     <ClInclude Include="headers\XMLParser.h" />
     <QtMoc Include="headers\RenderKernel.h" />
   </ItemGroup>

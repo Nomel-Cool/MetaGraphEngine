@@ -67,7 +67,7 @@ public:
 	std::vector<std::shared_ptr<GLBuffer>> GetFrameBuffers(PixelShape shape_type);
 	std::shared_ptr<GLBuffer> GetFrameBuffers(PixelShape shape_type, CompressedFrame&& a_frame);
 	void Rendering();
-	void RealTimeRendering(PhotoGrapher& photo_grapher);
+	void RealTimeRendering(std::shared_ptr<IFilmStorage> sp_storage);
 	void TryGettingOpInfo(OpInfo& op_info);
 
 protected:

@@ -1,30 +1,10 @@
 #include "PhotoGrapher.h"
 
-void CompressedFrame::SetPinPos()
-{
-    for (OnePixel& pic : frames)
-    {
-        pic.x += pin_pos.first;
-        pic.y += pin_pos.second;
-    }
-}
-
-std::vector<OnePixel> CompressedFrame::GetFrames() const
-{
-    return frames;
-}
-
-void CompressedFrame::UpdateFrames(const std::vector<OnePixel>& pixels)
-{
-    frames.clear();
-    frames = pixels;
-}
-
-std::size_t CompressedFrame::GetPixelsHash() const 
+std::size_t FrameHashCalculator::GetPixelsHash(const std::vector<OnePixel>& pixels_in_frame) const
 {
     std::size_t total_hash = 5381; // 初始化为非零值
 
-    for (const auto& pixel : frames) {
+    for (const auto& pixel : pixels_in_frame) {
         std::size_t hash = std::hash<std::size_t>()(pixel.x) ^
             (std::hash<std::size_t>()(pixel.y) << 1) ^
             (std::hash<std::size_t>()(pixel.z) >> 1);
@@ -46,59 +26,52 @@ std::size_t CompressedFrame::GetPixelsHash() const
     return total_hash;
 }
 
-
-void PhotoGrapher::Store()
+StaticPhotoGrapher::StaticPhotoGrapher(std::shared_ptr<IFilmStorage> selected_storage_form)
 {
-    if (current_film_name.empty())
-        return;
-    CompressedFrame compressed_frame;
-    compressed_frame.UpdateFrames(film_cache);
-    if (film_storage.find(current_film_name) == film_storage.end())
-        film_storage.insert(std::make_pair(current_film_name, std::move(compressed_frame)));
-    film_storage[current_film_name].UpdateFrames(film_cache);
-    film_cache.clear();
-    current_film_name = "";
+    sp_film_storage = selected_storage_form;
 }
 
-const CompressedFrame PhotoGrapher::Fetch(const std::string& film_name)
+void StaticPhotoGrapher::Filming(const OnePixel& one_pixel)
 {
-    if (film_name.empty() || film_storage.find(film_name) == film_storage.end())
-        return {};
-    return film_storage[film_name];
+    sp_film_storage->CollectPixelStream(one_pixel);
 }
 
-void PhotoGrapher::Filming(const OnePixel one_pixel)
+void StaticPhotoGrapher::FilmDone(const std::string& film_name)
 {
-    film_cache.emplace_back(one_pixel);
+    sp_film_storage->Store(film_name);
 }
 
-void PhotoGrapher::RealTimeFilming(CompressedFrame realtime_frame)
+void StaticPhotoGrapher::SetUsageStatus(bool used)
 {
-    //std::string msg = "放入了" + std::to_string(realtime_frame.GetFrames().size()) + "个像素\n";
-    //printf(msg.c_str());
-    concurrency_compressedframe_queue.AddQuestToQueue(std::make_unique<CompressedFrame>(std::move(realtime_frame)));
+    is_using = used;
 }
 
-void PhotoGrapher::RecordFilmName(const std::string& film_name)
+bool StaticPhotoGrapher::GetUsageStatus()
 {
-    current_film_name = film_name;
+    return is_using;
 }
 
-std::string PhotoGrapher::GetCurrentFilmName()
+RealTimePhotoGrapher::RealTimePhotoGrapher(std::shared_ptr<IFilmStorage> selected_storage_form)
 {
-    return current_film_name;
+    sp_film_storage = selected_storage_form;
 }
 
-CompressedFrame PhotoGrapher::TryGettingFrame()
+void RealTimePhotoGrapher::Filming(const OnePixel& one_pixel)
 {
-    CompressedFrame nothing;
-    if (concurrency_compressedframe_queue.Empty())
-        return nothing;
-    auto frame = concurrency_compressedframe_queue.GetQuestFromQueue();
-    return *frame;
+    sp_film_storage->CollectPixelStream(one_pixel);
 }
 
-void PhotoGrapher::ClearRestFramesInQueue()
+void RealTimePhotoGrapher::FilmDone(const std::string& film_name)
 {
-    concurrency_compressedframe_queue.ClearQueue();
+    sp_film_storage->Store();
+}
+
+void RealTimePhotoGrapher::SetUsageStatus(bool used)
+{
+    is_using = used;
+}
+
+bool RealTimePhotoGrapher::GetUsageStatus()
+{
+    return is_using;
 }

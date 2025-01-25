@@ -81,45 +81,53 @@ bool Hall::TransferPixelFrom(const ThreeDCoordinate& coordinate_begin)
     //        如果 seperate 出来的像素没有发生移动，则还原该分离，因为这只涉及到颜色的修改，由仍然有处理权的 target_pixel 来做即可
     //        如果 seperate 出来的像素移动到“空闲”位置，则直接占有
     //        否则 seperate 移动到了已经有人占有的位置，不应该对它有任何影响（颜色仍然由该位置原初占有者更新，受先后序影响，但原初占有者仍可以得到被共享的情况并做出变化，一帧的变化，肉眼无法察觉）
-    for (auto iter_owners_kv = target_pixel->owners_info.begin(); iter_owners_kv != target_pixel->owners_info.end();)
-    {
-        if (iter_owners_kv->second == nullptr)
+    if (target_pixel->owners_info.size() > 1)
+        for (auto iter_owners_kv = target_pixel->owners_info.begin(); iter_owners_kv != target_pixel->owners_info.end();)
         {
-            ++iter_owners_kv;
-            continue;
-        }
-        auto [it, inserted] = stage.try_emplace({ iter_owners_kv->second->x, iter_owners_kv->second->y, iter_owners_kv->second->z }, iter_owners_kv->second);
-        if (!inserted)
-            if (iter_owners_kv->second->x != target_pixel->x || iter_owners_kv->second->y != target_pixel->y || iter_owners_kv->second->z != target_pixel->z)
+            if (iter_owners_kv->second == nullptr)
             {
-                it->second->Merge(iter_owners_kv->second);
-                target_pixel->owners_info.erase(iter_owners_kv++);
-                target_pixel->TryUpdatingSurfaceIfSinglePixel();
+                ++iter_owners_kv;
+                continue;
+            }
+            auto [it, inserted] = stage.try_emplace({ iter_owners_kv->second->x, iter_owners_kv->second->y, iter_owners_kv->second->z }, iter_owners_kv->second);
+            if (!inserted)
+            {
+                if (iter_owners_kv->second->x != target_pixel->x || iter_owners_kv->second->y != target_pixel->y || iter_owners_kv->second->z != target_pixel->z)
+                {
+                    it->second->Merge(iter_owners_kv->second);
+                    target_pixel->owners_info.erase(iter_owners_kv++);
+                    target_pixel->UpdateSurfaceByMainTag();
+                }
+                else
+                    ++iter_owners_kv;
+                target_pixel->UpdateSurfaceByMainTag();
             }
             else
-                ++iter_owners_kv;
-        else
-        {
-            it->second->owners_info[it->second->tag] = iter_owners_kv->second;
-            target_pixel->owners_info.erase(iter_owners_kv++);
-            target_pixel->TryUpdatingSurfaceIfSinglePixel();
+            {
+                it->second->owners_info[it->second->tag] = iter_owners_kv->second;
+                target_pixel->owners_info.erase(iter_owners_kv++);
+                target_pixel->UpdateSurfaceByMainTag();
+            }
         }
-    }
 
     //逻辑说明：
     //        如果发生了偏移且目的地 available 则直接占用
     //        如果发生了偏移且目的地 unavailable 则融合到已存在的像素内
     //        最终都要清理移动前的像素内存
-    if (stage[{target_pixel->x, target_pixel->y, target_pixel->z}] != target_pixel)
+    if (target_pixel->owners_info.size() == 1)
     {
+        target_pixel->TryUpdatingInnerIfSinglePixel();
+        target_pixel->UpdateSurfaceByMainTag();
         auto sp_dest_pixel = stage[{target_pixel->x, target_pixel->y, target_pixel->z}];
-        if (sp_dest_pixel != nullptr)
-            sp_dest_pixel->Merge(target_pixel);
-        else
-            stage[{target_pixel->x, target_pixel->y, target_pixel->z}] = target_pixel;
-        stage[coordinate_begin].reset(); // 它将会被 TidyUp 函数识别并清理
+        if (sp_dest_pixel != target_pixel)
+        {
+            if (sp_dest_pixel != nullptr)
+                sp_dest_pixel->Merge(target_pixel);
+            else
+                stage[{target_pixel->x, target_pixel->y, target_pixel->z}] = target_pixel->owners_info.begin()->second;
+            stage[coordinate_begin] = nullptr; // 它将会被 TidyUp 函数识别并清理
+        }
     }
-
     return true;
 }
 
@@ -165,9 +173,9 @@ void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::si
             one_pixel.block_size = ping_pixel.block_size;
             one_pixel.cur_frame_id = frame_id;
             auto sync_sp_pixel = std::make_shared<OnePixel>(one_pixel);
-            sync_sp_pixel->owners_info[one_pixel.tag] = sync_sp_pixel;
             stage.insert(std::make_pair(key, sync_sp_pixel));
-            checkin_sequence[graph_pos_in_list].push(sync_sp_pixel);
+            stage[key]->owners_info[one_pixel.tag] = std::make_shared<OnePixel>(*sync_sp_pixel);
+            checkin_sequence[graph_pos_in_list].push(stage[key]->owners_info[one_pixel.tag]);
         }
     }
 }
@@ -199,6 +207,11 @@ GraphStudio::GraphStudio(QObject* parent) : QObject(parent)
     sp_law = std::make_shared<Law>();
     sp_timer = std::make_shared<QTimer>(this);
     sp_gl_screen = std::make_shared<GLScreen>();
+    sp_filmname_manager = std::make_shared<FilmNameManager>();
+    sp_film_static_storage = std::make_shared<FilmNameMap>();
+    sp_film_realtime_storage = std::make_shared<TaskModelFrameQueue>();
+    sp_realtime_photographer = std::make_shared<RealTimePhotoGrapher>(sp_film_realtime_storage);
+    sp_static_photographer = std::make_shared<StaticPhotoGrapher>(sp_film_static_storage);
 
     // 如果使用其它第三方XML解析库修改工程指针即可
     std::unique_ptr<shabby::IXMLDocumentFactory> tinyxml_factory = std::make_unique<TinyXMLDocumentFactory>();
@@ -215,7 +228,7 @@ void GraphStudio::InitWindow(int width, int height, float cameraX, float cameraY
 
 void GraphStudio::SetFilmName(const QString& film_name)
 {
-    photo_grapher.RecordFilmName(film_name.toStdString());
+    sp_filmname_manager->SetCurrentFilmName(film_name.toStdString());
 }
 
 void GraphStudio::RoleEmplacement(const QStringList& model_names)
@@ -235,8 +248,7 @@ void GraphStudio::Display(const QStringList& film_name_list)
     for (const auto& film_name : film_name_list)
     {
         std::vector<CubePixel> vec_cubes;
-        auto compressed_pics = photo_grapher.Fetch(film_name.toStdString());
-        //compressed_pics.SetPinPos(); // 暂时由点自身坐标决定世界坐标，不作偏移
+        auto compressed_pics = sp_film_static_storage->Fetch(film_name.toStdString());
         auto vec_pics = compressed_pics.GetFrames();
         for (const OnePixel& pic : vec_pics)
             vec_cubes.emplace_back(pic);
@@ -292,7 +304,7 @@ void GraphStudio::RealTimeRender()
 {
     std::thread tmp1 = std::thread(
         [this]() {
-        sp_gl_screen->RealTimeRendering(photo_grapher);
+        sp_gl_screen->RealTimeRendering(sp_film_realtime_storage);
         sp_gl_screen->is_running = false; // tmp1 退出时，通知 tmp2 退出
     });
 
@@ -301,7 +313,7 @@ void GraphStudio::RealTimeRender()
         {
             using Clock = std::chrono::high_resolution_clock;
             using Duration = std::chrono::duration<double, std::milli>;
-            photo_grapher.is_real_time = true;
+            sp_realtime_photographer->SetUsageStatus(true);
             while (sp_gl_screen->is_running)
             {
                 auto loop_start_time = Clock::now();
@@ -321,7 +333,7 @@ void GraphStudio::RealTimeRender()
                 //std::cout << "Generate: " << sleep_duration.count() << std::endl;
                 //std::cout << "Total Frame ID: " << sp_hall->GetCurrentFrameID() << std::endl;
             }
-            photo_grapher.ClearRestFramesInQueue();
+            sp_film_realtime_storage->ClearMemo();
         }
     );
     tmp1.join();
@@ -332,7 +344,8 @@ void GraphStudio::Ceize()
 {
     sp_timer->stop();
     disconnect(sp_timer.get(), &QTimer::timeout, nullptr, nullptr);
-    photo_grapher.Store();
+    sp_static_photographer->FilmDone(sp_filmname_manager->GetCurrentFilmName());
+    sp_filmname_manager->ResetCurrentFilmName();
 }
 
 void GraphStudio::RoleDismiss()
@@ -342,14 +355,15 @@ void GraphStudio::RoleDismiss()
 
 void GraphStudio::Stop()
 {
-    if (photo_grapher.is_real_time)
+    sp_static_photographer->FilmDone(sp_filmname_manager->GetCurrentFilmName());
+    if (sp_realtime_photographer->GetUsageStatus())
         return;
     if (!sp_graph_agency->Inspect())
         return;
     sp_timer->stop();
     disconnect(sp_timer.get(), &QTimer::timeout, nullptr, nullptr);
-    emit filmTerminated(QString::fromStdString(photo_grapher.GetCurrentFilmName()));
-    photo_grapher.Store();
+    emit filmTerminated(QString::fromStdString(sp_filmname_manager->GetCurrentFilmName()));
+    sp_filmname_manager->ResetCurrentFilmName();
 }
 
 void GraphStudio::StandBy()
@@ -427,7 +441,7 @@ void GraphStudio::SnapShot()
     {
         std::shared_ptr<OnePixel> specific_pixel = pixel.second;
         if (specific_pixel->cur_frame_id == cur_id && specific_pixel->render_flag)
-            photo_grapher.Filming(*specific_pixel);
+            sp_static_photographer->Filming(*specific_pixel);
     }
     sp_hall->NextFrame();
 }
@@ -435,16 +449,13 @@ void GraphStudio::SnapShot()
 void GraphStudio::RealTimeSnapShot()
 {
     auto cur_id = sp_hall->GetCurrentFrameID();
-    std::vector<OnePixel> realtime_frames;
     for (auto& pixel : sp_hall->GetStage())
     {
         std::shared_ptr<OnePixel> specific_pixel = pixel.second;
         if (specific_pixel->cur_frame_id == cur_id && specific_pixel->render_flag)
-            realtime_frames.emplace_back(*specific_pixel);
+            sp_realtime_photographer->Filming(*specific_pixel);
     }
-    CompressedFrame compressed_frame;
-    compressed_frame.UpdateFrames(realtime_frames);
-    photo_grapher.RealTimeFilming(compressed_frame);
+    sp_realtime_photographer->FilmDone();
     sp_hall->NextFrame();
 }
 

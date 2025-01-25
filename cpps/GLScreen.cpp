@@ -97,8 +97,8 @@ std::vector<std::shared_ptr<GLBuffer>> GLScreen::GetFrameBuffers(PixelShape shap
 
 std::shared_ptr<GLBuffer> GLScreen::GetFrameBuffers(PixelShape shape_type, CompressedFrame&& a_frame)
 {
-    static std::size_t last_frame_hash;
-    std::size_t cur_frame_hash = a_frame.GetPixelsHash();
+    //static std::size_t last_frame_hash;
+    //std::size_t cur_frame_hash = a_frame.GetPixelsHash();
 
     static std::shared_ptr<GLBuffer> last_frame_buffer;
     std::shared_ptr<GLBuffer> sptr_shape_buffer = std::make_shared<GLBuffer>();
@@ -116,12 +116,12 @@ std::shared_ptr<GLBuffer> GLScreen::GetFrameBuffers(PixelShape shape_type, Compr
     switch (shape_type)
     {
     case CUBE:
-        if (last_frame_hash == cur_frame_hash)
-        {
-            last_frame_hash = cur_frame_hash;
-            return last_frame_buffer;
-        }
-        last_frame_hash = cur_frame_hash;
+        //if (last_frame_hash == cur_frame_hash)
+        //{
+        //    last_frame_hash = cur_frame_hash;
+        //    return last_frame_buffer;
+        //}
+        //last_frame_hash = cur_frame_hash;
 
         for (const auto& pixel : a_frame.GetFrames())
             cubes.emplace_back(pixel);
@@ -266,7 +266,7 @@ void GLScreen::Rendering()
     render_thread.join();
 }
 
-void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
+void GLScreen::RealTimeRendering(std::shared_ptr<IFilmStorage> sp_storage)
 {
     glm::mat4 model = glm::mat4(1.0f), view = glm::mat4(1.0f), projection = glm::mat4(1.0f);
 
@@ -352,7 +352,7 @@ void GLScreen::RealTimeRendering(PhotoGrapher& photo_grapher)
         experence_shader.SetVec3("light.specular", specLight);
 
         // 模拟从队列取出帧
-        auto _f = photo_grapher.TryGettingFrame();
+        auto _f = sp_storage->Fetch();
         if (_f.GetFrames().empty())
             continue;
         frame_buffer = GetFrameBuffers(PixelShape::CUBE, std::move(_f));

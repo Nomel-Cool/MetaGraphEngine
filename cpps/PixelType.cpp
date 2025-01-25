@@ -21,6 +21,32 @@ void OnePixel::TryUpdatingSurfaceIfSinglePixel()
     }
 }
 
+void OnePixel::TryUpdatingInnerIfSinglePixel()
+{
+    if (owners_info.size() == 1)
+    {
+        owners_info.begin()->second->x = x;
+        owners_info.begin()->second->y = y;
+        owners_info.begin()->second->z = z;
+        owners_info.begin()->second->r = r;
+        owners_info.begin()->second->g = g;
+        owners_info.begin()->second->b = b;
+        owners_info.begin()->second->a = a;
+        owners_info.begin()->second->tag = tag;
+        owners_info.begin()->second->block_size = block_size;
+    }
+}
+
+void OnePixel::UpdateSurfaceByMainTag()
+{
+    if (owners_info.find(tag) == owners_info.end())
+        return;
+    r = owners_info[tag]->r;
+    g = owners_info[tag]->g;
+    b = owners_info[tag]->b;
+    a = owners_info[tag]->a;
+}
+
 std::shared_ptr<OnePixel> OnePixel::Seperate(std::size_t tag_info)
 {
     if (owners_info.find(tag_info) == owners_info.end() || owners_info.size() == 1) // ½ûÖ¹×ó½Å²ÈÓÒ½ÅÉÏÌì
