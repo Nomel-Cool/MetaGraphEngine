@@ -22,33 +22,11 @@
 #include "PhotoGrapher.h"
 #include "PixelType.h"
 #include "GLScreen.h"
+#include "GraphAgency.h"
 
 using AutomataElements = std::tuple<json, json, json, json>;
 using TwoDCoordinate = std::pair<std::size_t, std::size_t>;
 using ThreeDCoordinate = std::tuple<std::size_t, std::size_t, std::size_t>;
-/// <summary>
-/// 负责协调各个图元进入和退出舞台等候厅
-/// </summary>
-class GraphAgency
-{
-public:
-	GraphAgency();
-	/// <summary>
-	/// QML调用用于把图元生成过程载入像素空间
-	/// </summary>
-	/// <param name="model_name">载入的模型名</param>
-	/// <returns>载入成功为true，否则false</returns>
-	void LoadGraphs(const QString& model_name);
-	void UpdateGraphs();
-	const std::vector<std::shared_ptr<ModelGenerator<SingleAutomata>>>& GetGraphs();
-	bool Inspect();
-	void CleanGraphCache();
-	bool Empty();
-private:
-	std::shared_ptr<GraphFactory> sp_graph_factory;
-	std::vector<std::shared_ptr<ModelGenerator<SingleAutomata>>> graph_series_cache;
-	std::mutex mtx4co;
-};
 
 /// <summary>
 /// 负责舞台呈现：图元交互，舞台摄影，舞台播放
@@ -86,7 +64,6 @@ private:
 };
 
 class Law;
-
 class GraphStudio : public QObject
 {
 	friend class Law;

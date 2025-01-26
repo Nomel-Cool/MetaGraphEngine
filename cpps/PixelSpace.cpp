@@ -1,50 +1,5 @@
 #include "PixelSpace.h"
 
-GraphAgency::GraphAgency()
-{
-    sp_graph_factory = std::make_shared<GraphFactory>();
-}
-
-void GraphAgency::LoadGraphs(const QString& model_name)
-{
-    std::lock_guard<std::mutex> lock(mtx4co);
-    auto graph_model_coroutine_handler = sp_graph_factory->OfferDynamicModel(model_name);
-    // 存储协程句柄到舞台中
-    // 由于ModelGenerator删除拷贝构造，而make_shared默认调用拷贝构造会报错，所以传参时传递std::move()，告知它使用移动构造。
-    auto sp_co_graph_handler = std::make_shared<ModelGenerator<SingleAutomata>>(std::move(graph_model_coroutine_handler));
-    graph_series_cache.emplace_back(sp_co_graph_handler);
-}
-
-void GraphAgency::UpdateGraphs()
-{
-    for (auto& graph : graph_series_cache)
-        graph->Resume();
-}
-
-const std::vector<std::shared_ptr<ModelGenerator<SingleAutomata>>>& GraphAgency::GetGraphs()
-{
-    return graph_series_cache;
-}
-
-bool GraphAgency::Inspect()
-{
-    bool check_result = true;
-    for (const auto& actor : graph_series_cache)
-        check_result &= actor->Done();
-    return check_result;
-}
-
-void GraphAgency::CleanGraphCache()
-{
-    if(!graph_series_cache.empty())
-        graph_series_cache.clear();
-}
-
-bool GraphAgency::Empty()
-{
-    return graph_series_cache.empty();
-}
-
 const uint64_t& Hall::GetCurrentFrameID() const
 {
     return frame_id;
@@ -200,7 +155,12 @@ void Hall::NextFrame()
 
 GraphStudio::GraphStudio(QObject* parent) : QObject(parent)
 {
-    sp_graph_agency = std::make_shared<GraphAgency>();
+    auto factory = std::make_shared<GraphFactory>();
+    auto cohandler_cache = std::make_shared<ThreadSafeGraphCache>();
+    auto model_loader = std::make_unique<GraphModelLoader>(factory);
+    auto corotine_manager = std::make_unique<CoroutineExecutor>(cohandler_cache);
+    sp_graph_agency = std::make_shared<GraphAgency>(std::move(model_loader),cohandler_cache,std::move(corotine_manager));
+
     sp_hall = std::make_shared<Hall>();
     sp_law = std::make_shared<Law>();
     sp_timer = std::make_shared<QTimer>(this);

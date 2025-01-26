@@ -51,6 +51,7 @@
     <ClCompile Include="cpps\GLManager.cpp" />
     <ClCompile Include="cpps\GLShaders.cpp" />
     <ClCompile Include="cpps\GLTexture.cpp" />
+    <ClCompile Include="cpps\GraphAgency.cpp" />
     <ClCompile Include="cpps\ModelDataConvertHelper.cpp" />
     <ClCompile Include="cpps\PhotoGrapher.cpp" />
     <ClCompile Include="cpps\glad.c" />
@@ -67,8 +68,11 @@
     <ClCompile Include="cpps\FilmStorage.cpp" />
     <ClCompile Include="cpps\FilmNaming.cpp" />
     <ClCompile Include="cpps\GraphGenerateAlgorithmLib.cpp" />
+    <ClCompile Include="cpps\GraphModelLoader.cpp" />
+    <ClCompile Include="cpps\CoroutineExecutor.cpp" />
     <ClCompile Include="headers\openssl\applink.c" />
     <ClCompile Include="cpps\RenderAlgorithmFactory.cpp" />
+    <ClCompile Include="cpps\ThreadSafeGraphCoHandlerCache.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="resources\img.qrc" />
@@ -90,6 +94,8 @@
     <Xml Include="resources\xmls\graphAutomata\triangle_automata.xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="headers\CoroutineExecutor.h" />
+    <ClInclude Include="headers\GraphAgency.h" />
     <ClInclude Include="headers\GraphGenerateAlgorithmLib.h" />
     <ClInclude Include="headers\alloc.h" />
     <ClInclude Include="headers\CoModelGenerator.h" />
@@ -110,9 +116,13 @@
     <ClInclude Include="headers\GLScreen.h" />
     <ClInclude Include="headers\GLShaders.h" />
     <ClInclude Include="headers\GLTexture.h" />
+    <ClInclude Include="headers\GraphModelLoader.h" />
+    <ClInclude Include="headers\ICoroutineManager.h" />
     <ClInclude Include="headers\IFilmStorage.h" />
+    <ClInclude Include="headers\IGraphCoHandlerCache.h" />
     <ClInclude Include="headers\ImageLoader.h" />
     <ClInclude Include="headers\IModelDataConverter.h" />
+    <ClInclude Include="headers\IModelLoader.h" />
     <ClInclude Include="headers\IPhotoGrapher.h" />
     <ClInclude Include="headers\IRenderAlgorithm.h" />
     <ClInclude Include="headers\IXMLStructure.h" />
@@ -148,6 +158,7 @@
     <ClInclude Include="headers\sds.h" />
     <ClInclude Include="headers\stb_image.h" />
     <ClInclude Include="headers\ThreadPool.h" />
+    <ClInclude Include="headers\ThreadSafeGraphCoHandlerCache.h" />
     <ClInclude Include="headers\tinyxml2.h" />
     <QtMoc Include="headers\XmlDataModel.h" />
     <ClInclude Include="headers\TinyXMLImpl.h" />
