@@ -12,9 +12,12 @@ void Gravity::Apply(std::shared_ptr<OnePixel> p_one_pixel, const OpInfo& op_info
 {
     if (op_info.op_frame_id != 0 && op_info.keyboard_info == "Space")
     {
-        auto ptr = p_one_pixel->Seperate(0x11);
-        if(ptr != nullptr)   
-            ptr->y += 1;
+        //auto ptr = p_one_pixel->Seperate(0x11);
+        //if(ptr != nullptr)   
+        //    ptr->y += 1;
+        p_one_pixel->tag = 16;
     }
+    else
+        p_one_pixel->tag = 17;
     p_one_pixel->y -= p_one_pixel->y > 1 ? 1 : 0;
 }

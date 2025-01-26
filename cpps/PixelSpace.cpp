@@ -82,6 +82,7 @@ bool Hall::TransferPixelFrom(const ThreeDCoordinate& coordinate_begin)
     //        如果 seperate 出来的像素移动到“空闲”位置，则直接占有
     //        否则 seperate 移动到了已经有人占有的位置，不应该对它有任何影响（颜色仍然由该位置原初占有者更新，受先后序影响，但原初占有者仍可以得到被共享的情况并做出变化，一帧的变化，肉眼无法察觉）
     if (target_pixel->owners_info.size() > 1)
+    {
         for (auto iter_owners_kv = target_pixel->owners_info.begin(); iter_owners_kv != target_pixel->owners_info.end();)
         {
             if (iter_owners_kv->second == nullptr)
@@ -95,20 +96,19 @@ bool Hall::TransferPixelFrom(const ThreeDCoordinate& coordinate_begin)
                 if (iter_owners_kv->second->x != target_pixel->x || iter_owners_kv->second->y != target_pixel->y || iter_owners_kv->second->z != target_pixel->z)
                 {
                     it->second->Merge(iter_owners_kv->second);
-                    target_pixel->owners_info.erase(iter_owners_kv++);
-                    target_pixel->UpdateSurfaceByMainTag();
+                    target_pixel->owners_info.erase(iter_owners_kv++); // 如果所有人全空，则会被TidyUp识别并清理
                 }
                 else
                     ++iter_owners_kv;
-                target_pixel->UpdateSurfaceByMainTag();
             }
             else
             {
                 it->second->owners_info[it->second->tag] = iter_owners_kv->second;
                 target_pixel->owners_info.erase(iter_owners_kv++);
-                target_pixel->UpdateSurfaceByMainTag();
             }
         }
+        target_pixel->UpdateSurfaceByMainTag();
+    }
 
     //逻辑说明：
     //        如果发生了偏移且目的地 available 则直接占用
@@ -117,14 +117,13 @@ bool Hall::TransferPixelFrom(const ThreeDCoordinate& coordinate_begin)
     if (target_pixel->owners_info.size() == 1)
     {
         target_pixel->TryUpdatingInnerIfSinglePixel();
-        target_pixel->UpdateSurfaceByMainTag();
-        auto sp_dest_pixel = stage[{target_pixel->x, target_pixel->y, target_pixel->z}];
+        auto& sp_dest_pixel = stage[{target_pixel->x, target_pixel->y, target_pixel->z}];
         if (sp_dest_pixel != target_pixel)
         {
             if (sp_dest_pixel != nullptr)
                 sp_dest_pixel->Merge(target_pixel);
             else
-                stage[{target_pixel->x, target_pixel->y, target_pixel->z}] = target_pixel->owners_info.begin()->second;
+                stage[{target_pixel->x, target_pixel->y, target_pixel->z}] = std::make_shared<OnePixel>(*target_pixel);
             stage[coordinate_begin] = nullptr; // 它将会被 TidyUp 函数识别并清理
         }
     }
@@ -136,9 +135,9 @@ void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::si
     for (const auto& ping_pixel : ping_pixel_list)
     {
         auto key = std::tie(ping_pixel.x, ping_pixel.y, ping_pixel.z);
-        if (stage.find(key) != stage.end())
+        auto& sp_specific_pixel = stage[key];
+        if (sp_specific_pixel)
         {
-            auto& sp_existed_pixel = stage[key];
             OnePixel one_pixel;
             one_pixel.render_flag = true;
             one_pixel.x = ping_pixel.x;
@@ -152,10 +151,9 @@ void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::si
             one_pixel.block_size = ping_pixel.block_size;
             one_pixel.cur_frame_id = frame_id;
             auto sync_sp_pixel = std::make_shared<OnePixel>(one_pixel);
-            one_pixel.owners_info[one_pixel.tag] = sync_sp_pixel;
-            std::shared_ptr<OnePixel> merged_pixel = std::make_shared<OnePixel>(one_pixel);
-            sp_existed_pixel->Merge(merged_pixel);
-            checkin_sequence[graph_pos_in_list].push(sync_sp_pixel);
+            auto wrap_sync_sp_pixel = sync_sp_pixel->owners_info[sync_sp_pixel->tag] = std::make_shared<OnePixel>(*sync_sp_pixel);
+            sp_specific_pixel->Merge(sync_sp_pixel);
+            checkin_sequence[graph_pos_in_list].push(wrap_sync_sp_pixel);
         }
         else
         {
@@ -173,9 +171,9 @@ void Hall::PingStage(const std::vector<OnePixel>& ping_pixel_list, const std::si
             one_pixel.block_size = ping_pixel.block_size;
             one_pixel.cur_frame_id = frame_id;
             auto sync_sp_pixel = std::make_shared<OnePixel>(one_pixel);
-            stage.insert(std::make_pair(key, sync_sp_pixel));
-            stage[key]->owners_info[one_pixel.tag] = std::make_shared<OnePixel>(*sync_sp_pixel);
-            checkin_sequence[graph_pos_in_list].push(stage[key]->owners_info[one_pixel.tag]);
+            auto wrap_sync_sp_pixel = sync_sp_pixel->owners_info[sync_sp_pixel->tag] = std::make_shared<OnePixel>(*sync_sp_pixel);
+            sp_specific_pixel = sync_sp_pixel;
+            checkin_sequence[graph_pos_in_list].push(wrap_sync_sp_pixel);
         }
     }
 }
@@ -462,7 +460,7 @@ void GraphStudio::RealTimeSnapShot()
 void GraphStudio::TidyUp()
 {
     for (auto iter = sp_hall->GetStage().begin(); iter != sp_hall->GetStage().end();)
-        if (iter->second == nullptr)
+        if (iter->second == nullptr || iter->second->owners_info.empty())
             iter = sp_hall->DeleteElementAt(iter->first);
         else
             ++iter;

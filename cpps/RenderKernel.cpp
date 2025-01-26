@@ -1,4 +1,22 @@
 #include "RenderKernel.h"
+#include <GraphGenerateAlgorithmLib.h>
+
+GraphFactory::GraphFactory(QObject* parent) : QObject(parent)
+{
+    // 如果使用其它第三方XML解析库修改工程指针即可
+    std::unique_ptr<shabby::IXMLDocumentFactory> tinyxml_factory = std::make_unique<TinyXMLDocumentFactory>();
+    sp_file_manager = std::make_shared<FileManager>(std::move(tinyxml_factory));
+    sp_stream_to_modeldata = std::make_shared<XMLStreamConvertToModelDataStrategy>();
+    sp_modeldata_to_stream = std::make_shared<ModelDataConvertToXMLStreamStrategy>();
+    std::unique_ptr<RenderAlgorithmFactory> algo_factory = std::make_unique<RenderAlgorithmFactory>();
+    algo_factory->RegisterAlgorithm("BresenhamLine", std::make_unique<BresenhamLineRenderer>(sp_file_manager));
+    algo_factory->RegisterAlgorithm("JustAPoint", std::make_unique<JustAPointRenderer>(sp_file_manager));
+    algo_factory->RegisterAlgorithm("BresenhamEllipse", std::make_unique<BresenhamEllipseRenderer>(sp_file_manager));
+    algo_factory->RegisterAlgorithm("PartitionBezierCurve", std::make_unique<PartitionBezierCurveRenderer>(sp_file_manager));
+    algo_factory->RegisterCoAlgorithm("CoBresenhamLine", std::make_unique<BresenhamLineRenderer>(sp_file_manager));
+    algo_factory->RegisterCoAlgorithm("CoJustAPoint", std::make_unique<JustAPointRenderer>(sp_file_manager));
+    sp_render_cu = std::make_shared<RenderCU>(sp_file_manager, std::move(algo_factory));
+}
 
 QString GraphFactory::Request4Model(const QString& model_name)
 {
@@ -16,8 +34,8 @@ QString GraphFactory::Request4Model(const QString& model_name)
          if(trans_result)
          {
              std::string str_points_list = "[";
-             for(const SingleAutomata& sa : graph_model.automatas)
-                 str_points_list += render_cu.GetFunctor(sa.func_name)(sa) + ",";
+             for (const SingleAutomata& sa : graph_model.automatas)
+                 str_points_list += sp_render_cu->Render(sa.func_name, sa) + ",";
              str_points_list.replace(str_points_list.end() - 1, str_points_list.end(),"]");
              redis_client.Set(model_name.toStdString(), str_points_list);
              return QString(str_points_list.c_str());
@@ -34,7 +52,7 @@ QString GraphFactory::Request4Model(const QString& model_name)
              {
                  std::string str_points_list = "[";
                  for (const SingleAutomata& sa : graph_model.automatas)
-                     str_points_list += render_cu.GetFunctor(sa.func_name)(sa) + ",";
+                     str_points_list += sp_render_cu->Render(sa.func_name, sa) + ",";
                  str_points_list.replace(str_points_list.end() - 1, str_points_list.end(), "]");
                  redis_client.Set(model_name.toStdString(), str_points_list);
                  return QString(str_points_list.c_str());
@@ -167,7 +185,7 @@ ModelGenerator<SingleAutomata> GraphFactory::OfferDynamicModel(const QString& mo
     {
         for (SingleAutomata& sa : graph_model.automatas)
         {
-            auto gen = render_cu.GetCoFunctor("Co" + sa.func_name)(sa);
+            auto gen = sp_render_cu->CoRender("Co" + sa.func_name, sa);
             do
             {
                 co_yield gen.GetValue();  // 将值传递给外层生成器
@@ -186,7 +204,7 @@ ModelGenerator<SingleAutomata> GraphFactory::OfferDynamicModel(const QString& mo
         {
             for (SingleAutomata& sa : graph_model.automatas)
             {
-                auto gen = render_cu.GetCoFunctor("Co" + sa.func_name)(sa);
+                auto gen = sp_render_cu->CoRender("Co" + sa.func_name, sa);
                 do
                 {
                     co_yield gen.GetValue();  // 将值传递给外层生成器

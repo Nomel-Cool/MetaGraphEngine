@@ -66,7 +66,9 @@
     <ClCompile Include="cpps\GLScreen.cpp" />
     <ClCompile Include="cpps\FilmStorage.cpp" />
     <ClCompile Include="cpps\FilmNaming.cpp" />
+    <ClCompile Include="cpps\GraphGenerateAlgorithmLib.cpp" />
     <ClCompile Include="headers\openssl\applink.c" />
+    <ClCompile Include="cpps\RenderAlgorithmFactory.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="resources\img.qrc" />
@@ -88,6 +90,7 @@
     <Xml Include="resources\xmls\graphAutomata\triangle_automata.xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="headers\GraphGenerateAlgorithmLib.h" />
     <ClInclude Include="headers\alloc.h" />
     <ClInclude Include="headers\CoModelGenerator.h" />
     <ClInclude Include="headers\concurrentqueue.h" />
@@ -111,6 +114,7 @@
     <ClInclude Include="headers\ImageLoader.h" />
     <ClInclude Include="headers\IModelDataConverter.h" />
     <ClInclude Include="headers\IPhotoGrapher.h" />
+    <ClInclude Include="headers\IRenderAlgorithm.h" />
     <ClInclude Include="headers\IXMLStructure.h" />
     <ClInclude Include="headers\json_fwd.hpp" />
     <ClInclude Include="headers\ModelDataConvertHelper.h" />
@@ -139,6 +143,7 @@
     <ClInclude Include="headers\PixelType.h" />
     <ClInclude Include="headers\read.h" />
     <ClInclude Include="headers\RedisClient.h" />
+    <ClInclude Include="headers\RenderAlgorithmFactory.h" />
     <ClInclude Include="headers\RenderCU.h" />
     <ClInclude Include="headers\sds.h" />
     <ClInclude Include="headers\stb_image.h" />

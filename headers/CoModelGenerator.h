@@ -4,6 +4,7 @@
 
 #include <coroutine>
 #include <optional>
+#include <stdexcept>
 
 template<typename T>
 class ModelGenerator

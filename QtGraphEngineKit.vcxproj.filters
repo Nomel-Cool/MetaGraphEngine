@@ -153,6 +153,12 @@
     <ClCompile Include="cpps\FilmNaming.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cpps\GraphGenerateAlgorithmLib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpps\RenderAlgorithmFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="resources\img.qrc">
@@ -357,6 +363,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="headers\IPhotoGrapher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\IRenderAlgorithm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\RenderAlgorithmFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\GraphGenerateAlgorithmLib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
