@@ -146,7 +146,7 @@ bool ModelDataConvertToXMLStreamStrategy::Depart(std::shared_ptr<shabby::IXMLDoc
             std::unique_ptr<shabby::IXMLNode> terminateStatus = root->NewNode(doc, "terminate");
             terminateStatus->SetAttribute("terminate_status", escapeAttribute(automata_source.terminate_status).c_str());
 
-            automata->InsertFirstChild(std::move(initStatus));
+            initStatus = std::move(automata->InsertFirstChild(std::move(initStatus)));
             transferFunction = std::move(automata->InsertAfterChild(std::move(initStatus), std::move(transferFunction)));
             currentInput = std::move(automata->InsertAfterChild(std::move(transferFunction), std::move(currentInput)));
             currentStatus = std::move(automata->InsertAfterChild(std::move(currentInput), std::move(currentStatus)));
