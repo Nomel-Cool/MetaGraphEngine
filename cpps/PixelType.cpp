@@ -8,35 +8,6 @@ std::vector<std::shared_ptr<OnePixel>> OnePixel::GetAllInnerPixels()
     return inner_pixels;
 }
 
-void OnePixel::TryUpdatingSurfaceIfSinglePixel()
-{
-    if (owners_info.size() == 1)
-    {
-        r = owners_info.begin()->second->r;
-        g = owners_info.begin()->second->g;
-        b = owners_info.begin()->second->b;
-        a = owners_info.begin()->second->a;
-        tag = owners_info.begin()->second->tag;
-        block_size = owners_info.begin()->second->block_size;
-    }
-}
-
-void OnePixel::TryUpdatingInnerIfSinglePixel()
-{
-    if (owners_info.size() == 1)
-    {
-        owners_info.begin()->second->x = x;
-        owners_info.begin()->second->y = y;
-        owners_info.begin()->second->z = z;
-        owners_info.begin()->second->r = r;
-        owners_info.begin()->second->g = g;
-        owners_info.begin()->second->b = b;
-        owners_info.begin()->second->a = a;
-        owners_info.begin()->second->tag = tag;
-        owners_info.begin()->second->block_size = block_size;
-    }
-}
-
 void OnePixel::UpdateSurfaceByMainTag()
 {
     if (owners_info.find(tag) == owners_info.end())
@@ -57,6 +28,16 @@ bool OnePixel::GetSingleDeclaration()
     return insist_being_single;
 }
 
+void OnePixel::TryUpdatingInnersAccordingToSurface()
+{
+    for (auto& inner_pixel : owners_info)
+    {
+        inner_pixel.second->x = x;
+        inner_pixel.second->y = y;
+        inner_pixel.second->z = z;
+    }
+}
+
 std::shared_ptr<OnePixel> OnePixel::Seperate(std::size_t tag_info)
 {
     if (owners_info.find(tag_info) == owners_info.end() || owners_info.size() == 1) // Ω˚÷π◊ÛΩ≈≤»”“Ω≈…œÃÏ
@@ -72,6 +53,27 @@ void OnePixel::Merge(std::shared_ptr<OnePixel> sp_merged_pixel)
         return;
     for (const auto& [key, value] : sp_merged_pixel->owners_info)
         owners_info[key] = value;
+}
+
+void OnePixel::Merge(std::shared_ptr<OnePixel> sp_merged_pixel, bool itself)
+{
+    if (sp_merged_pixel == nullptr)
+        return;
+    if (sp_merged_pixel->x != x || sp_merged_pixel->y != y || sp_merged_pixel->z != z)
+        return;
+    if(itself)
+        owners_info[sp_merged_pixel->tag] = sp_merged_pixel;
+}
+
+void OnePixel::Merge(std::shared_ptr<OnePixel> sp_merged_pixel, std::size_t specified_tag)
+{
+    if (sp_merged_pixel == nullptr)
+        return;
+    if (sp_merged_pixel->x != x || sp_merged_pixel->y != y || sp_merged_pixel->z != z)
+        return;
+    if (sp_merged_pixel->owners_info.find(specified_tag) == sp_merged_pixel->owners_info.end())
+        return;
+    owners_info[specified_tag] = sp_merged_pixel->owners_info[specified_tag];
 }
 
 CubePixel::CubePixel(const OnePixel& base_pixel)

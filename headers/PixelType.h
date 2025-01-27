@@ -32,13 +32,14 @@ public:
 
 public:
 	std::vector<std::shared_ptr<OnePixel>> GetAllInnerPixels();
-	void TryUpdatingSurfaceIfSinglePixel();
-	void TryUpdatingInnerIfSinglePixel();
 	void UpdateSurfaceByMainTag();
 	void EmphasizeBeingSingle(bool are_you_insisted);
 	bool GetSingleDeclaration();
+	void TryUpdatingInnersAccordingToSurface();
 	std::shared_ptr<OnePixel> Seperate(std::size_t graph_id);	// 它返回合适筛选条件的视图
 	void Merge(std::shared_ptr<OnePixel> sp_merged_pixel);
+	void Merge(std::shared_ptr<OnePixel> sp_merged_pixel, bool itself);
+	void Merge(std::shared_ptr<OnePixel> sp_merged_pixel, std::size_t specified_tag);
 
 private:
 	bool insist_being_single = false;
