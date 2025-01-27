@@ -11,6 +11,7 @@ public:
     GraphModelLoader(std::shared_ptr<GraphFactory> factory);
     ModelGenerator<SingleAutomata> LoadModel(const QString& modelName) override;
 private:
+    mutable std::mutex mtx;
     std::shared_ptr<GraphFactory> sp_graph_factory;
 };
 
