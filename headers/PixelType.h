@@ -35,8 +35,13 @@ public:
 	void TryUpdatingSurfaceIfSinglePixel();
 	void TryUpdatingInnerIfSinglePixel();
 	void UpdateSurfaceByMainTag();
+	void EmphasizeBeingSingle(bool are_you_insisted);
+	bool GetSingleDeclaration();
 	std::shared_ptr<OnePixel> Seperate(std::size_t graph_id);	// 它返回合适筛选条件的视图
 	void Merge(std::shared_ptr<OnePixel> sp_merged_pixel);
+
+private:
+	bool insist_being_single = false;
 };
 
 class CubePixel : public OnePixel

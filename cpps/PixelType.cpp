@@ -47,6 +47,16 @@ void OnePixel::UpdateSurfaceByMainTag()
     a = owners_info[tag]->a;
 }
 
+void OnePixel::EmphasizeBeingSingle(bool are_you_insisted)
+{
+    insist_being_single = are_you_insisted;
+}
+
+bool OnePixel::GetSingleDeclaration()
+{
+    return insist_being_single;
+}
+
 std::shared_ptr<OnePixel> OnePixel::Seperate(std::size_t tag_info)
 {
     if (owners_info.find(tag_info) == owners_info.end() || owners_info.size() == 1) // 禁止左脚踩右脚上天
@@ -64,18 +74,18 @@ void OnePixel::Merge(std::shared_ptr<OnePixel> sp_merged_pixel)
         owners_info[key] = value;
 }
 
-CubePixel::CubePixel(const OnePixel& basePixel)
+CubePixel::CubePixel(const OnePixel& base_pixel)
 {
     // 使用父类对象的数据初始化当前对象
-    x = basePixel.x;
-    y = basePixel.y;
-    z = basePixel.z;
-    r = basePixel.r;
-    g = basePixel.g;
-    b = basePixel.b;
-    a = basePixel.a;
-    block_size = basePixel.block_size;
-    cur_frame_id = basePixel.cur_frame_id;
+    x = base_pixel.x;
+    y = base_pixel.y;
+    z = base_pixel.z;
+    r = base_pixel.r;
+    g = base_pixel.g;
+    b = base_pixel.b;
+    a = base_pixel.a;
+    block_size = base_pixel.block_size;
+    cur_frame_id = base_pixel.cur_frame_id;
 
     // 初始化变换
     InitializeTransformation();
