@@ -556,7 +556,7 @@ InputHandler::InputHandler(GLFWwindow* main_window)
     window = main_window;
     keyMap = {
         {GLFW_KEY_UP, "UP"}, {GLFW_KEY_DOWN, "DOWN"}, {GLFW_KEY_LEFT, "LEFT"}, {GLFW_KEY_RIGHT, "RIGHT"},
-        {GLFW_KEY_SPACE, "Space"}, {GLFW_KEY_LEFT_SHIFT, "Shift"}
+        {GLFW_KEY_SPACE, "SPACE"}, {GLFW_KEY_LEFT_SHIFT, "SHIFT"}
     };
 }
 
