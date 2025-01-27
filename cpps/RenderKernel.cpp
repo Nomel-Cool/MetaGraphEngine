@@ -27,9 +27,7 @@ QString GraphFactory::Request4Model(const QString& model_name)
          GraphModel graph_model;
          std::string automata_xml_path = database_manager.QueryFilePathByModelName(model_name.toStdString());
          /*std::string automata_xml_path = "./resources/xmls/graphAutomata/bezier_automata.xml";*/
-         auto bound_func = [this](const std::string& json_string, GraphModel& model) {
-             return sp_stream_to_modeldata->FillUp(json_string, model);
-         };
+         auto bound_func = std::bind(&IStreamConvertToModelDataStrategy::FillUp, sp_stream_to_modeldata, std::placeholders::_1, std::placeholders::_2);
          bool trans_result = sp_file_manager->TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
          if(trans_result)
          {
@@ -44,9 +42,7 @@ QString GraphFactory::Request4Model(const QString& model_name)
          {
              if (automata_xml_path.empty()) 
                  automata_xml_path = database_manager.RebuildXmlFileByModelName(model_name.toStdString());
-             auto bound_func = [this](const std::string& json_string, GraphModel& model) {
-                 return sp_stream_to_modeldata->FillUp(json_string, model);
-             };
+             auto bound_func = std::bind(&IStreamConvertToModelDataStrategy::FillUp, sp_stream_to_modeldata, std::placeholders::_1, std::placeholders::_2);
              bool trans_result = sp_file_manager->TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
              if (trans_result)
              {
@@ -177,9 +173,7 @@ ModelGenerator<SingleAutomata> GraphFactory::OfferDynamicModel(const QString& mo
     GraphModel graph_model;
     //std::string automata_xml_path = "./resources/xmls/graphAutomata/point_automata.xml";
     std::string automata_xml_path = database_manager.QueryFilePathByModelName(model_name.toStdString());
-    auto bound_func = [this](const std::string& json_string, GraphModel& model) {
-        return sp_stream_to_modeldata->FillUp(json_string, model);
-    };
+    auto bound_func = std::bind(&IStreamConvertToModelDataStrategy::FillUp, sp_stream_to_modeldata, std::placeholders::_1, std::placeholders::_2);
     bool trans_result = sp_file_manager->TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
     if (trans_result)
     {
@@ -196,9 +190,7 @@ ModelGenerator<SingleAutomata> GraphFactory::OfferDynamicModel(const QString& mo
     else
     {
         automata_xml_path = database_manager.RebuildXmlFileByModelName(model_name.toStdString());
-        auto bound_func = [this](const std::string& json_string, GraphModel& model) {
-            return sp_stream_to_modeldata->FillUp(json_string, model);
-        };
+        auto bound_func = std::bind(&IStreamConvertToModelDataStrategy::FillUp, sp_stream_to_modeldata, std::placeholders::_1, std::placeholders::_2);
         bool trans_result = sp_file_manager->TransXml2Class<GraphModel>(automata_xml_path, graph_model, bound_func);
         if (trans_result)
         {
