@@ -38,7 +38,9 @@ bool Hall::TransferPixelFrom(const StagePos& coordinate_begin)
     //        当对单像素声明为复合像素是无效的，因为当其它像素融合进来后，它们已经固定了，对这部分执行复合像素处理是没有效果的，而如果不发生融合则更不应该执行复合像素处理
     if (target_pixel->owners_info.size() == 1 || target_pixel->GetSingleDeclaration())
     {
-        target_pixel->TryUpdatingInnerIfSinglePixel();
+        if (target_pixel->GetSingleDeclaration())
+            target_pixel->TryUpdatingInnersAccordingToSurface();
+
         auto& sp_dest_pixel = stage[{target_pixel->x, target_pixel->y, target_pixel->z}];
         if (sp_dest_pixel != target_pixel)
         {
@@ -57,7 +59,7 @@ bool Hall::TransferPixelFrom(const StagePos& coordinate_begin)
     //        如果 seperate 出来的像素移动到“空闲”位置，则直接占有
     //        否则 seperate 移动到了已经有人占有的位置，不应该对它有任何影响（颜色仍然由该位置原初占有者更新，受先后序影响，但原初占有者仍可以得到被共享的情况并做出变化，一帧的变化，肉眼无法察觉）
     //        对复合像素声明为单像素：如果没有更改surface坐标的前提下，该像素的单处理使其不变；否则将会发生批量把自身里子转移到其它像素位置
-    if (target_pixel->owners_info.size() > 1)
+    if (target_pixel->owners_info.size() > 1 && !target_pixel->GetSingleDeclaration())
     {
         for (auto iter_owners_kv = target_pixel->owners_info.begin(); iter_owners_kv != target_pixel->owners_info.end();)
         {
@@ -71,7 +73,7 @@ bool Hall::TransferPixelFrom(const StagePos& coordinate_begin)
             {
                 if (iter_owners_kv->second->x != target_pixel->x || iter_owners_kv->second->y != target_pixel->y || iter_owners_kv->second->z != target_pixel->z)
                 {
-                    it->second->Merge(iter_owners_kv->second);
+                    it->second->Merge(iter_owners_kv->second, true);
                     target_pixel->owners_info.erase(iter_owners_kv++); // 如果所有人全空，则会被TidyUp识别并清理
                 }
                 else
