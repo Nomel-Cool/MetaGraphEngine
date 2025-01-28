@@ -49,7 +49,8 @@ void OnePixel::Merge(std::shared_ptr<OnePixel> sp_merged_pixel)
 {
     if (sp_merged_pixel == nullptr)
         return;
-    if (sp_merged_pixel->x != x || sp_merged_pixel->y != y || sp_merged_pixel->z != z)
+    //if (sp_merged_pixel->x != x || sp_merged_pixel->y != y || sp_merged_pixel->z != z)
+    if (!SamePos({ sp_merged_pixel->x,sp_merged_pixel->y,sp_merged_pixel->z }, { x,y,z }))
         return;
     for (const auto& [key, value] : sp_merged_pixel->owners_info)
         owners_info[key] = value;
@@ -59,7 +60,8 @@ void OnePixel::Merge(std::shared_ptr<OnePixel> sp_merged_pixel, bool itself)
 {
     if (sp_merged_pixel == nullptr)
         return;
-    if (sp_merged_pixel->x != x || sp_merged_pixel->y != y || sp_merged_pixel->z != z)
+    //if (sp_merged_pixel->x != x || sp_merged_pixel->y != y || sp_merged_pixel->z != z)
+    if (!SamePos({ sp_merged_pixel->x,sp_merged_pixel->y,sp_merged_pixel->z }, { x,y,z }))
         return;
     if(itself)
         owners_info[sp_merged_pixel->tag] = sp_merged_pixel;
@@ -69,7 +71,8 @@ void OnePixel::Merge(std::shared_ptr<OnePixel> sp_merged_pixel, std::size_t spec
 {
     if (sp_merged_pixel == nullptr)
         return;
-    if (sp_merged_pixel->x != x || sp_merged_pixel->y != y || sp_merged_pixel->z != z)
+    //if (sp_merged_pixel->x != x || sp_merged_pixel->y != y || sp_merged_pixel->z != z)
+    if (!SamePos({ sp_merged_pixel->x,sp_merged_pixel->y,sp_merged_pixel->z }, { x,y,z }))
         return;
     if (sp_merged_pixel->owners_info.find(specified_tag) == sp_merged_pixel->owners_info.end())
         return;

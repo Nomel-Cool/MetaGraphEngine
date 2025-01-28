@@ -71,7 +71,8 @@ bool Hall::TransferPixelFrom(const StagePos& coordinate_begin)
             auto [it, inserted] = stage.try_emplace({ iter_owners_kv->second->x, iter_owners_kv->second->y, iter_owners_kv->second->z }, iter_owners_kv->second);
             if (!inserted)
             {
-                if (iter_owners_kv->second->x != target_pixel->x || iter_owners_kv->second->y != target_pixel->y || iter_owners_kv->second->z != target_pixel->z)
+                //if (iter_owners_kv->second->x != target_pixel->x || iter_owners_kv->second->y != target_pixel->y || iter_owners_kv->second->z != target_pixel->z)
+                if (!SamePos({ iter_owners_kv->second->x,iter_owners_kv->second->y,iter_owners_kv->second->z }, { target_pixel->x,target_pixel->y,target_pixel->z }))
                 {
                     it->second->Merge(iter_owners_kv->second, true);
                     target_pixel->owners_info.erase(iter_owners_kv++); // 如果所有人全空，则会被TidyUp识别并清理

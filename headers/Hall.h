@@ -12,9 +12,6 @@
 #include "PixelType.h"
 #include "FrameIDManager.h"
 
-
-using StagePos = std::tuple<std::size_t, std::size_t, std::size_t>;
-
 /// <summary>
 /// 负责舞台呈现：图元交互，舞台摄影，舞台播放
 /// </summary>

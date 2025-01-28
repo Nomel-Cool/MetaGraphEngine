@@ -19,7 +19,7 @@ void Gravity::Apply(std::shared_ptr<OnePixel> p_one_pixel, const OpInfo& op_info
     {
         if (p_one_pixel->tag == 0x12)
         {
-            p_one_pixel->y += 2;
+            p_one_pixel->y -= 0.2;
         }
     }
     if (op_info.op_frame_id != 0 && op_info.keyboard_info == "RIGHT")
@@ -29,7 +29,7 @@ void Gravity::Apply(std::shared_ptr<OnePixel> p_one_pixel, const OpInfo& op_info
             ptr->y += 1;*/
         auto ptr = p_one_pixel->Seperate(0x11);
             if(ptr != nullptr)
-                ptr->x += 1;
+                ptr->x += 0.2;
     }
     if (p_one_pixel->owners_info.size() == 1 && p_one_pixel->owners_info.find(0x10) != p_one_pixel->owners_info.end())
     {
@@ -37,6 +37,4 @@ void Gravity::Apply(std::shared_ptr<OnePixel> p_one_pixel, const OpInfo& op_info
     }
     //else
     //    p_one_pixel->tag = 17;
-
-    p_one_pixel->y -= p_one_pixel->y > 1 ? 1 : 0;
 }
