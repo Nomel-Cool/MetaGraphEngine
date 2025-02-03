@@ -47,6 +47,7 @@ signals:
 protected:
 	void StandBy();
 	void Interact();
+	void FixedStage();
 	void RealTimeInteract();
 	void UpdateGraphList();
 	void SnapShot();
@@ -87,37 +88,25 @@ public:
 		try
 		{
 			const auto& pixels = p_studio->sp_hall->GetStage();
-			std::vector<StagePos> rendered_pixels;
 
-			// 遍历所有像素，除了最后一个
-			for (auto iter_pixel = pixels.begin(); iter_pixel != std::prev(pixels.end()); ++iter_pixel)
+			for (auto iter_pixel = pixels.begin(); iter_pixel != pixels.end(); ++iter_pixel)
 			{
 				if (iter_pixel->second->render_flag != true)
 					continue;
 
 				ATTRIBUTE::Apply(iter_pixel->second);
-				rendered_pixels.emplace_back(iter_pixel->first);
-			}
 
-			// 特化处理最后一个像素
-			if (!pixels.empty())
-			{
-				auto& last_pixel = *std::prev(pixels.end());
-				if (last_pixel.second->render_flag == true)
+				// 特化处理最后一个像素
+				if (iter_pixel == std::prev(pixels.end()))
 				{
-					last_pixel.second->last_flag = true;  // 设置 last_flag 为 true
-					ATTRIBUTE::Apply(last_pixel.second);
-					last_pixel.second->last_flag = false;  // 重置 last_flag 为 false
-					rendered_pixels.emplace_back(last_pixel.first);
+					auto& last_pixel = *std::prev(pixels.end());
+					if (last_pixel.second->render_flag == true)
+					{
+						last_pixel.second->last_flag = true;  // 设置 last_flag 为 true
+						ATTRIBUTE::Apply(last_pixel.second);
+						last_pixel.second->last_flag = false;  // 重置 last_flag 为 false
+					}
 				}
-			}
-
-			/****************************** 执行移交手续 *****************************************/
-			for (const auto& pos : rendered_pixels)
-			{
-				bool displace_result = p_studio->sp_hall->TransferPixelFrom(pos);
-				if (!displace_result)
-					std::cerr << "The displacement is out of expectation." << std::endl;
 			}
 		}
 		catch (const nlohmann::json::type_error& e)
@@ -132,37 +121,24 @@ public:
 		try
 		{
 			const auto& pixels = p_studio->sp_hall->GetStage();
-			std::vector<StagePos> rendered_pixels;
 
-			// 遍历所有像素，除了最后一个
-			for (auto iter_pixel = pixels.begin(); iter_pixel != std::prev(pixels.end()); ++iter_pixel)
+			for (auto iter_pixel = pixels.begin(); iter_pixel != pixels.end(); ++iter_pixel)
 			{
 				if (iter_pixel->second->render_flag != true)
 					continue;
 
 				ATTRIBUTE::Apply(iter_pixel->second, st_op_info);
-				rendered_pixels.emplace_back(iter_pixel->first);
-			}
-
-			// 特化处理最后一个像素
-			if (!pixels.empty())
-			{
-				auto& last_pixel = *std::prev(pixels.end());
-				if (last_pixel.second->render_flag == true)
+				// 特化处理最后一个像素
+				if (iter_pixel == std::prev(pixels.end()))
 				{
-					last_pixel.second->last_flag = true;  // 设置 last_flag 为 true
-					ATTRIBUTE::Apply(last_pixel.second, st_op_info);
-					last_pixel.second->last_flag = false;  // 重置 last_flag 为 false
-					rendered_pixels.emplace_back(last_pixel.first);
+					auto& last_pixel = *std::prev(pixels.end());
+					if (last_pixel.second->render_flag == true)
+					{
+						last_pixel.second->last_flag = true;  // 设置 last_flag 为 true
+						ATTRIBUTE::Apply(last_pixel.second, st_op_info);
+						last_pixel.second->last_flag = false;  // 重置 last_flag 为 false
+					}
 				}
-			}
-
-			/****************************** 执行移交手续 *****************************************/
-			for (const auto& pos : rendered_pixels)
-			{
-				bool displace_result = p_studio->sp_hall->TransferPixelFrom(pos);
-				if (!displace_result)
-					std::cerr << "The displacement is out of expectation." << std::endl;
 			}
 		}
 		catch (const nlohmann::json::type_error& e)

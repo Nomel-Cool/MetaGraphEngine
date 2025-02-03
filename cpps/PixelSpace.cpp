@@ -91,11 +91,12 @@ void GraphStudio::Launch()
             running = false;
 
             /**************** 暂定流程四件套 ***************/
-            StandBy(); // 出牌定格
+            StandBy(); // 出牌
             Interact(); // 变更手牌
-            UpdateGraphList(); // 收牌再来
+            FixedStage(); // 定格            
             SnapShot(); // 储为快照
             TidyUp(); // 清理非渲染像素
+            UpdateGraphList(); // 收牌再来
 
             running = true;
         };
@@ -128,11 +129,12 @@ void GraphStudio::RealTimeRender()
                 if (!sp_gl_screen->is_running) break; // 如果 tmp1 退出，则退出循环
 
                 ///**************** 暂定流程四件套 ***************/
-                StandBy();          // 出牌定格
+                StandBy();          // 出牌
                 RealTimeInteract(); // 根据操作实时变更手牌
-                UpdateGraphList();  // 收牌再来
+                FixedStage();       // 定格
                 TidyUp();           // 清理非渲染像素
                 RealTimeSnapShot(); // 储为实时快照
+                UpdateGraphList();  // 收牌再来
                 auto loop_end_time = Clock::now();
                 Duration loop_duration = loop_end_time - loop_start_time;
                 auto sleep_duration = std::chrono::milliseconds(sp_frame_generate_interval_manager->GetFrameGenerationInterval()) - loop_duration; // 限制为 58 FPS
@@ -205,6 +207,20 @@ void GraphStudio::StandBy()
 void GraphStudio::Interact()
 {
     sp_law->AffectOn<Gravity>(this);
+}
+
+void GraphStudio::FixedStage()
+{
+    const auto& pixels = sp_hall->GetStage();
+
+    for (auto iter_pixel = pixels.begin(); iter_pixel != pixels.end(); ++iter_pixel)
+    {
+        if (iter_pixel->second->render_flag != true)
+            continue;
+        bool displace_result = sp_hall->TransferPixelFrom(iter_pixel->first);
+        if (!displace_result)
+            std::cerr << "The displacement is out of expectation." << std::endl;
+    }
 }
 
 void GraphStudio::RealTimeInteract()
