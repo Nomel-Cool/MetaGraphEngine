@@ -63,10 +63,10 @@ install(
 )
 
 # 复制资源文件到安装目录
-#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/resources/ DESTINATION ${CMAKE_INSTALL_BINDIR}/resources)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/resources/ DESTINATION ${CMAKE_INSTALL_BINDIR}/resources)
 
 # 复制着色器代码文件到安装目录
-#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/shaders_codes/ DESTINATION ${CMAKE_INSTALL_BINDIR}/shaders_codes)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/shaders_codes/ DESTINATION ${CMAKE_INSTALL_BINDIR}/shaders_codes)
 
 # 将资源文件复制到 build 目录，供在build下使用VS打开.sln调试时使用 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
@@ -88,7 +88,7 @@ foreach(DLL ${DLL_FILES})
 endforeach()
 
 # 安装每个 .dll 文件到安装目录 
-#foreach(DLL ${DLL_FILES}) 
-#    install(FILES ${DLL} DESTINATION ${CMAKE_INSTALL_BINDIR}
-#)
-#endforeach()
+foreach(DLL ${DLL_FILES}) 
+    install(FILES ${DLL} DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+endforeach()
