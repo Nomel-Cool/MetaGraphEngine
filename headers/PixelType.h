@@ -55,7 +55,7 @@ public:
 
 public:
 	std::vector<std::shared_ptr<OnePixel>> GetAllInnerPixels();
-	void UpdateSurfaceByMainTag();
+	void UpdateColorByMainTag();
 	void EmphasizeBeingSingle(bool are_you_insisted);
 	bool GetSingleDeclaration();
 	void TryUpdatingInnersAccordingToSurface();

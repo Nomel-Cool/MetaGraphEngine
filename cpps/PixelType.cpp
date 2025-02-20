@@ -8,14 +8,27 @@ std::vector<std::shared_ptr<OnePixel>> OnePixel::GetAllInnerPixels()
     return inner_pixels;
 }
 
-void OnePixel::UpdateSurfaceByMainTag()
+void OnePixel::UpdateColorByMainTag()
 {
+    // 这是基于用户使用习惯设计的：当表里一致时，约定熟成用户是期望面子的颜色直接代表整个像素颜色
+    // 如果是复合像素，则仍然按照主Tag来更新面子
     if (owners_info.find(tag) == owners_info.end())
         return;
-    r = owners_info[tag]->r;
-    g = owners_info[tag]->g;
-    b = owners_info[tag]->b;
-    a = owners_info[tag]->a;
+    else if (owners_info.size() == 1) 
+    {
+        owners_info[tag]->r = r;
+        owners_info[tag]->g = g;
+        owners_info[tag]->b = b;
+        owners_info[tag]->a = a;
+    }
+    else
+    {
+        r = owners_info[tag]->r;
+        g = owners_info[tag]->g;
+        b = owners_info[tag]->b;
+        a = owners_info[tag]->a;
+    }
+
 }
 
 void OnePixel::EmphasizeBeingSingle(bool are_you_insisted)
