@@ -7,17 +7,19 @@ GLTexture::GLTexture(unsigned int id)
 	sampler_id = id;
 }
 
-GLTexture::GLTexture(TEXTURETYPE texture_type)
+GLTexture::GLTexture(TEXTURETYPE texture_type, unsigned int id)
 {
 	switch (texture_type)
 	{
 	case _2D:
 		glGenTextures(1, &texture);
 		glBindTexture(GL_TEXTURE_2D, texture);
+		sampler_id = id;
 		break;
 	case _3D:
 		glGenTextures(1, &texture);
 		glBindTexture(GL_TEXTURE_3D, texture);
+		sampler_id = id;
 		break;
 	default:
 		break;
@@ -79,6 +81,11 @@ void GLTexture::SetSamplingWhenMagnifing3D(unsigned int magnify_sample_mode)
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, magnify_sample_mode);
 }
 
+unsigned int GLTexture::GetSampleID() const
+{
+	return sampler_id;
+}
+
 void GLTexture::ActivateSampler2D() const
 {
 	glActiveTexture(GL_TEXTURE0 + sampler_id);
@@ -91,10 +98,13 @@ void GLTexture::ActivateSampler3D() const
 	glBindTexture(GL_TEXTURE_3D, texture);
 }
 
-void GLTexture::Load2DResource(const std::string& url, bool isFlip = false)
+void GLTexture::Load2DResource(const std::string& url, bool isFlip = false, std::string prefix)
 {
+	std::string _url = url;
+	if (!prefix.empty())
+		_url = prefix + "/" + url;
 	stbi_set_flip_vertically_on_load(isFlip); // tell stb_image.h to flip loaded texture's on the y-axis.
-	unsigned char* data = stbi_load(url.c_str(), &source_width, &source_height, &source_channel, 0);
+	unsigned char* data = stbi_load(_url.c_str(), &source_width, &source_height, &source_channel, 0);
 	if (data)
 	{
 		GLenum storage_formation;
@@ -115,10 +125,13 @@ void GLTexture::Load2DResource(const std::string& url, bool isFlip = false)
 	stbi_image_free(data);
 }
 
-void GLTexture::Load3DResource(const std::string& url, int source_depth, bool isFlip = false)
+void GLTexture::Load3DResource(const std::string& url, int source_depth, bool isFlip = false, std::string prefix)
 {
+	std::string _url = url;
+	if (!prefix.empty())
+		_url = prefix + "/" + url;
 	stbi_set_flip_vertically_on_load(isFlip); // 告诉 stb_image.h 是否翻转纹理的 y 轴
-	unsigned char* data = stbi_load(url.c_str(), &source_width, &source_height, &source_channel, 0);
+	unsigned char* data = stbi_load(_url.c_str(), &source_width, &source_height, &source_channel, 0);
 	if (data)
 	{
 		GLenum storage_formation;
