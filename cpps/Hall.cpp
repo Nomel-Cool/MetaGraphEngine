@@ -51,7 +51,7 @@ bool Hall::TransferPixelFrom(const StagePos& coordinate_begin)
             stage[coordinate_begin] = nullptr; // 它将会被 TidyUp 函数识别并清理
         }
         else
-            target_pixel->UpdateSurfaceByMainTag();
+            target_pixel->UpdateColorByMainTag();
     }
 
     //逻辑说明：
@@ -86,7 +86,7 @@ bool Hall::TransferPixelFrom(const StagePos& coordinate_begin)
                 target_pixel->owners_info.erase(iter_owners_kv++);
             }
         }
-        target_pixel->UpdateSurfaceByMainTag();
+        target_pixel->UpdateColorByMainTag();
     }
     return true;
 }
