@@ -15,6 +15,7 @@ GraphFactory::GraphFactory(QObject* parent) : QObject(parent)
     algo_factory->RegisterAlgorithm("PartitionBezierCurve", std::make_unique<PartitionBezierCurveRenderer>(sp_file_manager));
     algo_factory->RegisterCoAlgorithm("CoBresenhamLine", std::make_unique<BresenhamLineRenderer>(sp_file_manager));
     algo_factory->RegisterCoAlgorithm("CoJustAPoint", std::make_unique<JustAPointRenderer>(sp_file_manager));
+    algo_factory->RegisterCoAlgorithm("CoCellAutomataFrame_0", std::make_unique<CellAutomataFrame_0>(sp_file_manager));
     sp_render_cu = std::make_shared<RenderCU>(sp_file_manager, std::move(algo_factory));
 }
 
