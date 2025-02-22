@@ -378,3 +378,166 @@ int PartitionBezierCurveRenderer::binomial_coeff(int n, int k)
     }
     return res;
 }
+
+CellAutomataFrame_0::CellAutomataFrame_0(std::shared_ptr<FileManager> file_manager)
+{
+    sp_file_manager = file_manager;
+    Initialize();
+}
+std::string CellAutomataFrame_0::Execute(const SingleAutomata& graph_model)
+{
+    return std::string();
+}
+ModelGenerator<SingleAutomata> CellAutomataFrame_0::Execute(SingleAutomata& graph_model)
+{
+    int n = 2;
+    while (true) 
+    {
+        json current_status;
+        // 把培养皿映射到current_status的json字符串
+        MapPetriDish2Json(current_status);
+        graph_model.current_status = current_status.dump();
+        co_yield graph_model;
+        current_status = json::parse(graph_model.current_status);
+        MapJson2PetriDish(current_status);
+        Update();
+    }
+}
+void CellAutomataFrame_0::Initialize() {
+    // 使用随机数引擎随机选择一个细胞位置
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, 9);
+
+    //int x = dis(gen);
+    //int y = dis(gen);
+
+    int x = 8;
+    int y = 4;
+
+    PetriDish[x][y] = true;
+    //PetriDish[1][0] = true;
+    //PetriDish[1][1] = true;
+    //PetriDish[1][2] = true;
+}
+void CellAutomataFrame_0::Update() {
+    bool newPetriDish[10][10] = { false };
+
+    for (int i = 0; i < 10; ++i) {
+        for (int j = 0; j < 10; ++j) {
+            int neighbors = CountNeighbors(i, j);
+
+            if (PetriDish[i][j]) {
+                // 存活：2 或 3 个邻居
+                if (neighbors == 2 || neighbors == 3) {
+                    newPetriDish[i][j] = true;
+                }
+                // 死亡：孤独或拥挤
+                else {
+                    newPetriDish[i][j] = false;
+                }
+            }
+            else {
+                // 繁殖：恰好 3 个邻居
+                if (neighbors == 3) {
+                    newPetriDish[i][j] = true;
+                }
+            }
+        }
+    }
+
+    std::copy(&newPetriDish[0][0], &newPetriDish[0][0] + 10 * 10, &PetriDish[0][0]);
+}
+int CellAutomataFrame_0::CountNeighbors(int x, int y) const {
+    int count = 0;
+    for (int i = -1; i <= 1; ++i) {
+        for (int j = -1; j <= 1; ++j) {
+            if (i == 0 && j == 0) continue;
+            int nx = x + i;
+            int ny = y + j;
+            if (nx >= 0 && nx < 10 && ny >= 0 && ny < 10) {
+                count += PetriDish[nx][ny];
+            }
+        }
+    }
+    return count;
+}
+void CellAutomataFrame_0::MapPetriDish2Json(json& current_status) const
+{
+    for(int i = 0; i < 10; ++i)
+        for (int j = 0; j < 10; ++j)
+        {
+            if (PetriDish[i][j] == true)
+            {
+                json point;
+                point["x"] = i;
+                point["y"] = j;
+                point["z"] = 0;
+                point["r"] = 0.5f;
+                point["g"] = 0.5f;
+                point["b"] = 0.5f;
+                point["a"] = 1.0f;
+                point["tag"] = i * i + j * j;
+                point["blockSize"] = 1;
+                current_status.push_back(std::move(point));
+            }
+            else
+            {
+                json point;
+                point["x"] = i;
+                point["y"] = j;
+                point["z"] = 0;
+                point["r"] = 0;
+                point["g"] = 0;
+                point["b"] = 0;
+                point["a"] = 0.0f;
+                point["tag"] = i * i + j * j;
+                point["blockSize"] = 1;
+                current_status.push_back(std::move(point));
+            }
+        }
+}
+void CellAutomataFrame_0::MapJson2PetriDish(const json& current_status)
+{
+    for (const auto& point : current_status)
+    {
+        double a = point["a"];
+        if (a == 0.0f)
+            continue;
+        int x = point["x"];
+        int y = point["y"];
+        double r = point["r"];
+        double g = point["g"];
+        double b = point["b"];
+
+        int r_val = static_cast<int>(std::round(r * 7));
+        int g_val = static_cast<int>(std::round(g * 7));
+        int b_val = static_cast<int>(std::round(b * 7));
+
+        // 根据r, g, b解码，更新培养皿
+        bool neighbors[9] = { false,false,false,false,true,false,false,false,false };
+
+        neighbors[2] = (r_val >> 2) & 1;
+        neighbors[1] = (r_val >> 1) & 1;
+        neighbors[0] = (r_val & 1);
+
+        neighbors[5] = (g_val >> 2) & 1;
+        neighbors[4] = (g_val >> 1) & 1;
+        neighbors[3] = (g_val & 1);
+
+        neighbors[8] = (b_val >> 2) & 1;
+        neighbors[7] = (b_val >> 1) & 1;
+        neighbors[6] = b_val & 1;
+
+        // 更新周围8个位置的状态
+        for (int i = -1; i <= 1; ++i) {
+            for (int j = -1; j <= 1; ++j) {
+                int row = x + i;
+                int column = y + j;
+                if (column >= 0 && column < 10 && row >= 0 && row < 10) {
+                    PetriDish[row][column] |= neighbors[(i + 1) * 3 + (j + 1)];
+                }
+            }
+        }
+    }
+}
