@@ -44,37 +44,41 @@ void* GLBuffer::RetractVBOData(std::size_t vbo_indice = 0)
 	return ptr;
 }
 
-void GLBuffer::SetVBOData(const std::vector<float>& vertex_array, void* ptr, int mod_pos = 0)
-{
-	if (!ptr)
-		return;
+/*
+ *  以下SetVBOData特化的float类型数据接口暂时失效
+*/
 
-	GLint buffer_size = 0;
-	glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &buffer_size);
+//void GLBuffer::SetVBOData(const std::vector<float>& vertex_array, void* ptr, int mod_pos = 0)
+//{
+//	if (!ptr)
+//		return;
+//
+//	GLint buffer_size = 0;
+//	glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &buffer_size);
+//
+//	size_t new_data_size = vertex_array.size() * sizeof(float);
+//
+//	if (mod_pos + new_data_size > buffer_size)
+//	{
+//		printf("Error: Not enough space in VBO!\n");
+//		return;
+//	}
+//
+//	memcpy(ptr, vertex_array.data(), new_data_size);
+//
+//	glUnmapBuffer(GL_ARRAY_BUFFER);
+//}
 
-	size_t new_data_size = vertex_array.size() * sizeof(float);
-
-	if (mod_pos + new_data_size > buffer_size)
-	{
-		printf("Error: Not enough space in VBO!\n");
-		return;
-	}
-
-	memcpy(ptr, vertex_array.data(), new_data_size);
-
-	glUnmapBuffer(GL_ARRAY_BUFFER);
-}
-
-void GLBuffer::SetVBOData(std::vector<float> vertex_array)
-{
-	glBindVertexArray(VAO);
-	auto sptr = std::make_shared<unsigned int>();
-	glGenBuffers(1, &(*sptr));
-	glBindBuffer(GL_ARRAY_BUFFER, *sptr);
-	glBufferData(GL_ARRAY_BUFFER, vertex_array.size() * sizeof(float), &vertex_array[0], GL_DYNAMIC_DRAW);
-	VBOs.emplace_back(sptr);
-	buffer_sizes.emplace_back(vertex_array.size());
-}
+//void GLBuffer::SetVBOData(std::vector<float> vertex_array)
+//{
+//	glBindVertexArray(VAO);
+//	auto sptr = std::make_shared<unsigned int>();
+//	glGenBuffers(1, &(*sptr));
+//	glBindBuffer(GL_ARRAY_BUFFER, *sptr);
+//	glBufferData(GL_ARRAY_BUFFER, vertex_array.size() * sizeof(float), &vertex_array[0], GL_DYNAMIC_DRAW);
+//	VBOs.emplace_back(sptr);
+//	buffer_sizes.emplace_back(vertex_array.size());
+//}
 
 void GLBuffer::SetEBOData(std::vector<unsigned int> indice_array)
 {
