@@ -100,7 +100,7 @@ ApplicationWindow {
                                         automataChildren[outerWraper.outerIndex].singleAutomata[index].terminate_status = text;
                                     }
                                 }
-                                width: 300
+                                width: 200
                             }
                         }
                     }
