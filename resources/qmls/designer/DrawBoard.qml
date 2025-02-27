@@ -33,7 +33,7 @@ Rectangle {
                 spacing: 10
                 leftPadding: 10
                 topPadding: 10
-                anchors.verticalCenter: parent.verticalCenter
+                Layout.alignment: Qt.AlignVCenter
                 RadioButton {
                     checked: true
                     text: qsTr("点")
@@ -77,6 +77,53 @@ Rectangle {
     Canvas {
         id: drawBoard
         anchors.top: toolRowContainer.bottom
+        anchors.bottom: parent.bottom
         anchors.left: parent.left
+        anchors.right: parent.right
+        
+        // 用于存储路径点的数组
+        property var points: []
+        
+        onPaint: {
+            var ctx = getContext("2d")
+            // 清空画布
+            ctx.clearRect(0, 0, width, height)
+            
+            // 设置绘制样式
+            ctx.strokeStyle = "#000000"
+            ctx.lineWidth = 3
+            ctx.lineCap = "round"
+            ctx.lineJoin = "round"
+            
+            // 开始绘制路径
+            if (points.length > 0) {
+                ctx.beginPath()
+                ctx.moveTo(points[0].x, points[0].y)
+                
+                for (var i = 1; i < points.length; i++) {
+                    ctx.lineTo(points[i].x, points[i].y)
+                }
+                ctx.stroke()
+            }
+        }
+        MouseArea {
+            anchors.fill: parent
+            onPressed: {
+                // 初始化路径并添加第一个点
+                drawBoard.points = [{"x": mouseX, "y": mouseY}]
+                drawBoard.requestPaint()
+            }
+            onPositionChanged: {
+                if (pressed) {
+                    // 添加新的路径点并请求重绘
+                    drawBoard.points.push({"x": mouseX, "y": mouseY})
+                    drawBoard.requestPaint()
+                }
+            }
+            onReleased: {
+                // 释放时可选的清理操作
+                drawBoard.points = []
+            }
+        }
     }
 }
