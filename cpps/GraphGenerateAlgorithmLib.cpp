@@ -409,16 +409,10 @@ void CellAutomataFrame_0::Initialize() {
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, 9);
 
-    //int x = dis(gen);
-    //int y = dis(gen);
-
-    int x = 8;
-    int y = 4;
+    int x = dis(gen);
+    int y = dis(gen);
 
     PetriDish[x][y] = true;
-    //PetriDish[1][0] = true;
-    //PetriDish[1][1] = true;
-    //PetriDish[1][2] = true;
 }
 void CellAutomataFrame_0::Update() {
     bool newPetriDish[10][10] = { false };
