@@ -3,3 +3,8 @@ x64/
 build/
 bin/
 install/
+logs/
+*.log
+build-last.log
+install-last.log
+build-install.log
