@@ -3,6 +3,11 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
+
+#include <memory>
+#include <mutex>
+#include <string>
 
 #include "ModelDataConvertHelper.h"
 #include "RenderCU.h"
@@ -11,8 +16,7 @@
 #include "DataBaseManager.h"
 
 /// <summary>
-/// Todo: 可以继承同一个实现了FillUp和状态机状态集的父类
-/// 主要用于处理QML与后端的图元请求
+/// Bridge between QML and the model/render storage.
 /// </summary>
 class GraphFactory : public QObject
 {
@@ -20,27 +24,45 @@ class GraphFactory : public QObject
     friend class Law;
 public:
     explicit GraphFactory(QObject* parent = nullptr);
+
     Q_INVOKABLE QString Request4Model(const QString& model_name);
-    Q_INVOKABLE void Registry4Model(const QString& model_name, const QString& str_model_data);
+    Q_INVOKABLE QString Request4ModelCatalog();
+    Q_INVOKABLE QString Request4ModelPreview(const QString& model_name);
+    Q_INVOKABLE QString Request4ModelBlueprint(const QString& model_name);
+    Q_INVOKABLE bool Registry4Model(const QString& model_name, const QString& str_model_data);
+    Q_INVOKABLE bool DeleteModel(const QString& model_name);
+    Q_INVOKABLE QString GetBackendStatus();
     Q_INVOKABLE QStringList Request4ModelNameList();
+
     /// <summary>
-    /// 传递协程句柄到外部交互环境，通过生成器中定义的GetValue获取当前协程变量值，或者Resume从yield点恢复协程。
+    /// Transfer a coroutine handle to the pixel space, using the generator-defined
+    /// GetValue/Resume protocol.
     /// </summary>
-    /// <param name="model_name">请求加入像素空间进行交互的模型名称</param>
-    /// <returns>包含单体自动机的协程句柄</returns>
     ModelGenerator<SingleAutomata> OfferDynamicModel(const QString& model_name);
 
 signals:
     QStringList update4NameList();
+    void operationSucceeded(const QString& message);
+    void operationFailed(const QString& message);
 
 private:
+    bool LoadGraphModel(const QString& model_name, GraphModel& graph_model, QString& error);
+    QString RenderModelLayers(const GraphModel& graph_model);
+    QString BuildPreview(const GraphModel& graph_model);
+    static int KindIndex(const std::string& func_name);
+    static QString KindName(int kind);
+    static bool IsStaticAlgorithm(const std::string& func_name);
+    static bool IsDynamicAlgorithm(const std::string& func_name);
+    static std::string EnvString(const char* name, const char* fallback);
+    static int EnvInt(const char* name, int fallback);
 
-    std::shared_ptr<IStreamConvertToModelDataStrategy> sp_stream_to_modeldata;
+    std::shared_ptr<XMLStreamConvertToModelDataStrategy> sp_stream_to_modeldata;
     std::shared_ptr<IModelDataConvertToStreamStrategy> sp_modeldata_to_stream;
     std::shared_ptr<RenderCU> sp_render_cu;
     std::shared_ptr<FileManager> sp_file_manager;
     RedisClient redis_client;
     DatabaseManager database_manager;
+    std::mutex storage_mutex;
 };
 
 #endif // !RENDER_KERNEL

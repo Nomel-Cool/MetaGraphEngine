@@ -1,7 +1,20 @@
 #include "ModelDataConvertHelper.h"
 
+XMLStreamConvertToModelDataStrategy::XMLStreamConvertToModelDataStrategy(std::shared_ptr<FileManager> file_manager)
+    : sp_file_manager(std::move(file_manager))
+{
+}
+
+void XMLStreamConvertToModelDataStrategy::Reset()
+{
+    current_state = State::WaitingForModel;
+}
+
 bool XMLStreamConvertToModelDataStrategy::FillUp(const std::string& json_string, GraphModel& graph_model)
 {
+    if (!sp_file_manager)
+        return false;
+
     json json_obj;
     if (!sp_file_manager->TransStr2JsonObject(json_string, json_obj)) {
         std::cerr << "Failed to parse JSON: " << json_string << std::endl;
@@ -12,7 +25,7 @@ bool XMLStreamConvertToModelDataStrategy::FillUp(const std::string& json_string,
     case State::WaitingForModel:
         if (json_obj.contains("model")) {
             current_state = State::ReadingModelName;
-            return FillUp(json_string, graph_model); // Re-process this JSON string in the new state
+            return FillUp(json_string, graph_model);
         }
         break;
     case State::ReadingModelName:
@@ -29,7 +42,7 @@ bool XMLStreamConvertToModelDataStrategy::FillUp(const std::string& json_string,
         if (json_obj.contains("automata")) {
             current_state = State::ReadingAutomataId;
             graph_model.automatas.emplace_back();
-            return FillUp(json_string, graph_model); // Re-process this JSON string in the new state
+            return FillUp(json_string, graph_model);
         }
         break;
     case State::ReadingAutomataId:
@@ -102,40 +115,37 @@ bool ModelDataConvertToXMLStreamStrategy::Depart(std::shared_ptr<shabby::IXMLDoc
 {
     try
     {
-        // 创建根元素
+        auto escapeAttribute = [](const std::string& input) -> std::string {
+            std::string escaped;
+            escaped.reserve(input.size() * 2);
+            for (char c : input)
+            {
+                switch (c)
+                {
+                case '"': escaped += "\\\""; break;
+                case '\\': escaped += "\\\\"; break;
+                case '&': escaped += "&amp;"; break;
+                case '<': escaped += "&lt;"; break;
+                case '>': escaped += "&gt;"; break;
+                case '\'': escaped += "&apos;"; break;
+                default: escaped += c; break;
+                }
+            }
+            return escaped;
+        };
         std::unique_ptr<shabby::IXMLNode> root = doc->NewRoot("model");
         root->SetAttribute("name", graph_model.model_name.c_str());
 
-        // 遍历 automatas 并构造子元素
         for (const auto& automata_source : graph_model.automatas)
         {
             std::unique_ptr<shabby::IXMLNode> automata = root->NewNode(doc, "automata");
             automata->SetAttribute("id", automata_source.id.c_str());
 
-            // 自定义属性值转义函数
-            auto escapeAttribute = [](const std::string& input) -> std::string {
-                std::string escaped;
-                for (char c : input)
-                {
-                    switch (c)
-                    {
-                    case '\"': escaped += "\\\""; break; // 转义双引号
-                    case '\'': escaped += "\\\'"; break; // 转义单引号
-                    case '&': escaped += "&amp;"; break; // 转义 & 为 &amp;
-                    case '<': escaped += "&lt;"; break;  // 转义 < 为 &lt;
-                    case '>': escaped += "&gt;"; break;  // 转义 > 为 &gt;
-                    default: escaped += c; break;        // 其他字符不变
-                    }
-                }
-                return escaped;
-                };
-
-            // 设置子元素及其属性
             std::unique_ptr<shabby::IXMLNode> initStatus = root->NewNode(doc, "init");
             initStatus->SetAttribute("init_status", escapeAttribute(automata_source.init_status).c_str());
 
             std::unique_ptr<shabby::IXMLNode> transferFunction = root->NewNode(doc, "transfer");
-            transferFunction->SetAttribute("func_name", automata_source.func_name.c_str());
+            transferFunction->SetAttribute("func_name", escapeAttribute(automata_source.func_name).c_str());
 
             std::unique_ptr<shabby::IXMLNode> currentInput = root->NewNode(doc, "input");
             currentInput->SetAttribute("current_input", escapeAttribute(automata_source.current_input).c_str());

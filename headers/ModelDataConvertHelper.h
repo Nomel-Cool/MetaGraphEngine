@@ -11,7 +11,9 @@
 class XMLStreamConvertToModelDataStrategy : public IStreamConvertToModelDataStrategy
 {
 public:
+    explicit XMLStreamConvertToModelDataStrategy(std::shared_ptr<FileManager> file_manager = nullptr);
     bool FillUp(const std::string& json_string, GraphModel& graph_model) override;
+    void Reset();
 
 private:
     enum State {
