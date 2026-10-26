@@ -3,5 +3,6 @@
         <file>images/container.jpg</file>
         <file>images/container2.png</file>
         <file>images/container2_specular.png</file>
+        <file>icons/app.png</file>
     </qresource>
 </RCC>

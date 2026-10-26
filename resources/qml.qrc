@@ -1,16 +1,23 @@
 <RCC>
     <qresource prefix="/resources">
         <file>qmls/MainPage.qml</file>
-        <file>qmls/designer/DrawBoard.qml</file>
-        <file>qmls/engine/EngineDesigner.qml</file>
-        <file>qmls/frame/DynamicTabBar.qml</file>
-        <file>qmls/frame/IndexBar.qml</file>
-        <file>qmls/frame/PreviewBoard.qml</file>
-        <file>qmls/frame/SearchBar.qml</file>
-        <file>qmls/engine/GraphList.qml</file>
-        <file>qmls/engine/ButtonToolList.qml</file>
-        <file>qmls/designer/AutomataInventory.qml</file>
-        <file>qmls/engine/FilmSelector.qml</file>
-        <file>qmls/engine/WindowSettings.qml</file>
+        <file>qmls/StartupError.qml</file>
+        <file>qmls/Theme.js</file>
+        <file>qmls/ModelFactory.js</file>
+        <file>qmls/components/AppButton.qml</file>
+        <file>qmls/components/AppTextField.qml</file>
+        <file>qmls/components/ConfirmDialog.qml</file>
+        <file>qmls/components/EmptyState.qml</file>
+        <file>qmls/components/IconButton.qml</file>
+        <file>qmls/components/ModelIcon.qml</file>
+        <file>qmls/components/SectionTitle.qml</file>
+        <file>qmls/components/StatusChip.qml</file>
+        <file>qmls/components/Toast.qml</file>
+        <file>qmls/editor/AdvancedAutomataEditor.qml</file>
+        <file>qmls/editor/ShapeCanvas.qml</file>
+        <file>qmls/preview/PreviewCanvas.qml</file>
+        <file>qmls/views/DesignerView.qml</file>
+        <file>qmls/views/EngineView.qml</file>
+        <file>qmls/views/HelpView.qml</file>
     </qresource>
 </RCC>
