@@ -10,6 +10,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <ranges>
+#include <atomic>
 
 #include "ThreadPool.h"
 #include "RenderKernel.h"
@@ -43,6 +44,14 @@ public:
 
 signals:
 	bool filmTerminated(QString film_name);
+	void modelsLoaded(const QStringList& model_names);
+	void modelsLoadFailed(const QString& message);
+	void engineStarted(const QString& mode);
+	void engineStopped(const QString& mode);
+	void filmSaved(const QString& film_name);
+	void playbackStarted(const QString& film_name);
+	void playbackStopped();
+	void operationFailed(const QString& message);
 
 protected:
 	void StandBy();
@@ -74,6 +83,7 @@ private:
 	std::shared_ptr<GLScreen> sp_gl_screen;
 	std::shared_ptr<FrameIDManager> sp_frame_id_manager;
 	std::shared_ptr<FrameGenerateIntervalManager> sp_frame_generate_interval_manager;
+	std::atomic<bool> realtime_running{ false };
 };
 
 /// <summary>

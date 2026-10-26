@@ -1,5 +1,7 @@
 #include "GLScreen.h"
 
+#include <chrono>
+
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void changeCameraStatusByKeyBoardInput(GLContext& context_manager, GLShader& shader_manager, GLCamera& camera_manager);
@@ -45,12 +47,18 @@ void GLScreen::SetVerticesData(const std::vector<CubePixel>& cubes)
     }
 }
 
+void GLScreen::ClearFrameData()
+{
+    pixel_map.clear();
+    is_running = true;
+}
+
 std::vector<std::shared_ptr<GLBuffer>> GLScreen::GetFrameBuffers(PixelShape shape_type)
 {
     std::vector<std::shared_ptr<GLBuffer>> frame_buffers;
 
     // 使用 ranges::iota 替代外层的 for 循环
-    for (int i : std::views::iota(1, static_cast<int>(pixel_map.size())))
+    for (auto& [frame_id, frame_pixels] : pixel_map)
     {
         std::shared_ptr<GLBuffer> sptr_shape_buffer = std::make_shared<GLBuffer>();
         std::vector<float> frame_vertices;
@@ -60,7 +68,7 @@ std::vector<std::shared_ptr<GLBuffer>> GLScreen::GetFrameBuffers(PixelShape shap
         size_t vertex_offset = 0;
 
         // 使用 ranges::for_each 替代内层的 for 循环
-        std::ranges::for_each(pixel_map[i], [&](auto& pixel_shape) {
+        std::ranges::for_each(frame_pixels, [&](auto& pixel_shape) {
             // 获取当前立方体的顶点数据
             auto vertices = pixel_shape.GetVertices();
             frame_vertices.insert(frame_vertices.end(), vertices.begin(), vertices.end());
@@ -164,9 +172,14 @@ void GLScreen::Rendering()
 
         gl_context->SetWinSize(width, height);
         gl_context->SetWinTitle("Graphs Stage");
-        gl_context->GenGLWindow();
+        if (!gl_context->GenGLWindow())
+            return;
         gl_context->SetFlexibleView();
-        gl_context->ActivateWindow();
+        if (!gl_context->ActivateWindow())
+        {
+            gl_context->CloseWindow();
+            return;
+        }
         glfwSwapInterval(1); // 启用垂直同步 60FPS
         glfwSetInputMode(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         if (!is_lock) // 锁视野则不允许鼠标控制
@@ -192,6 +205,15 @@ void GLScreen::Rendering()
         float shininess = 64.0f;
 
         auto frame_buffers = GetFrameBuffers(PixelShape::CUBE);
+        std::cerr << "Playback frames=" << pixel_map.size() << " buffers=" << frame_buffers.size();
+        if (!frame_buffers.empty()) std::cerr << " ebo0=" << frame_buffers[0]->GetEBODataSize();
+        std::cerr << " cam=" << gl_camera->GetCameraPos().x << "," << gl_camera->GetCameraPos().y << "," << gl_camera->GetCameraPos().z << " persp=" << perspective_type << " size=" << width << "x" << height << std::endl;
+        if (frame_buffers.empty())
+        {
+            std::cerr << "No frames to render." << std::endl;
+            gl_context->CloseWindow();
+            return;
+        }
 
         // 帧率控制
         const double frame_duration = (float)1.0f / FPS; // 120 FPS
@@ -218,7 +240,7 @@ void GLScreen::Rendering()
             if (perspective_type)
                 projection = glm::ortho(0.0f, (float)width / (camera_distance), 0.0f, (float)height / (camera_distance), 0.0f, camera_distance);
             else
-                projection = glm::perspective(glm::radians(gl_camera->GetFOV()), (float)width / height, 0.1f, 100.0f);
+                projection = glm::perspective(glm::radians(gl_camera->GetFOV()), (float)width / height, 0.1f, std::max(100.0f, camera_distance * 3.0f));
 
             // 获取当前时间
             double current_time = glfwGetTime();
@@ -262,19 +284,26 @@ void GLScreen::Rendering()
             gl_context->SwapBuffers();
             gl_context->PollEvents();
         }
+        gl_context->CloseWindow();
     });
     render_thread.join();
 }
 
 void GLScreen::RealTimeRendering(std::shared_ptr<IFilmStorage> sp_storage)
 {
+    is_running = true;
     glm::mat4 model = glm::mat4(1.0f), view = glm::mat4(1.0f), projection = glm::mat4(1.0f);
 
     gl_context->SetWinSize(width, height);
     gl_context->SetWinTitle("Graphs Stage");
-    gl_context->GenGLWindow();
+    if (!gl_context->GenGLWindow())
+        return;
     gl_context->SetFlexibleView();
-    gl_context->ActivateWindow();
+    if (!gl_context->ActivateWindow())
+    {
+        gl_context->CloseWindow();
+        return;
+    }
     glfwSwapInterval(1); // 启用垂直同步 60FPS
     glfwSetInputMode(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     if (!is_lock) // 锁视野则不允许鼠标控制
@@ -332,7 +361,7 @@ void GLScreen::RealTimeRendering(std::shared_ptr<IFilmStorage> sp_storage)
         if (perspective_type)
             projection = glm::ortho(0.0f, (float)width / (camera_distance), 0.0f, (float)height / (camera_distance), 0.0f, camera_distance);
         else
-            projection = glm::perspective(glm::radians(gl_camera->GetFOV()), (float)width / height, 0.1f, 100.0f);
+            projection = glm::perspective(glm::radians(gl_camera->GetFOV()), (float)width / height, 0.1f, std::max(100.0f, camera_distance * 3.0f));
 
         // 更新法线矩阵
         glm::mat3 normModelMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
@@ -383,6 +412,7 @@ void GLScreen::RealTimeRendering(std::shared_ptr<IFilmStorage> sp_storage)
         //std::cout << "Render: " << loop_duration.count() << std::endl;
         //std::cout << "Current Frame ID: " << current_frame << std::endl;
     }
+    gl_context->CloseWindow();
     // 退出时设置标志
     is_running = false;
 
