@@ -43,6 +43,10 @@ void GraphStudio::InitWindow(int width, int height, float cameraX, float cameraY
     sp_gl_screen->SetViewLock(view_lock);
 }
 
+void GraphStudio::SetCameraControlMode(int mode)
+{
+    sp_gl_screen->SetCameraControlMode(mode);
+}
 void GraphStudio::SetFilmName(const QString& film_name)
 {
     if (film_name.trimmed().isEmpty())

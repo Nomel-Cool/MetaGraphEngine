@@ -257,7 +257,7 @@ ApplicationWindow {
         return Math.max(28, Math.min(600, Math.round(maxCoordinate * 2.5)))
     }
 
-    function startEngine(w, h, cx, cy, cz, is2D, lock, mode) {
+    function startEngine(w, h, cx, cy, cz, is2D, lock, mode, cameraMode) {
         if (engineModels.length === 0) {
             showToast("请先选择至少一个可动态演化的模型", "error")
             return
@@ -281,6 +281,7 @@ ApplicationWindow {
         if (Number(cx) === 0 && Number(cy) === 0 && Number(cz) === 200)
             effectiveZ = autoEngineCameraZ()
         engineStatusText = effectiveZ === cz ? "正在加载模型..." : ("正在加载模型（自动取景 z=" + effectiveZ + "）...")
+        studio.SetCameraControlMode(cameraMode === 1 ? 1 : 0)
         studio.InitWindow(w, h, cx, cy, effectiveZ, is2D, lock)
         studio.SetFilmName(filmName)
         studio.RoleEmplacement(engineModels)

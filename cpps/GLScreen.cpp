@@ -2,9 +2,29 @@
 
 #include <chrono>
 
+static std::atomic<int> g_camera_control_mode{0};
+static std::atomic<bool> g_camera_dragging{false};
+static double g_camera_last_x = 0.0;
+static double g_camera_last_y = 0.0;
+static bool g_camera_first_mouse = true;
+
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void changeCameraStatusByKeyBoardInput(GLContext& context_manager, GLShader& shader_manager, GLCamera& camera_manager);
+static void ConfigureCameraInput(GLFWwindow* window, int mode, bool locked, GLCamera* camera)
+{
+    const int effective = locked ? 2 : mode;
+    g_camera_control_mode.store(effective);
+    g_camera_dragging.store(false);
+    g_camera_first_mouse = true;
+    glfwSetWindowUserPointer(window, camera);
+    glfwSetInputMode(window, GLFW_CURSOR, effective == 0 ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+}
+
 
 GLScreen::~GLScreen()
 {
@@ -31,6 +51,11 @@ void GLScreen::InitPerspectiveType(bool view_type)
 void GLScreen::SetViewLock(bool is_view_lock)
 {
     is_lock = is_view_lock;
+}
+
+void GLScreen::SetCameraControlMode(int mode)
+{
+    camera_control_mode = mode == 1 ? 1 : 0;
 }
 
 void GLScreen::SetVerticesData(const std::vector<CubePixel>& cubes)
@@ -181,13 +206,7 @@ void GLScreen::Rendering()
             return;
         }
         glfwSwapInterval(1); // 启用垂直同步 60FPS
-        glfwSetInputMode(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        if (!is_lock) // 锁视野则不允许鼠标控制
-        {
-            glfwSetCursorPosCallback(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), mouse_callback);
-            glfwSetScrollCallback(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), scroll_callback);        // 滚轮控制视野
-            glfwSetWindowUserPointer(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), &(*(gl_camera.get())));
-        }
+                ConfigureCameraInput(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), camera_control_mode, is_lock, gl_camera.get());
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glEnable(GL_DEPTH_TEST);
 
@@ -305,13 +324,7 @@ void GLScreen::RealTimeRendering(std::shared_ptr<IFilmStorage> sp_storage)
         return;
     }
     glfwSwapInterval(1); // 启用垂直同步 60FPS
-    glfwSetInputMode(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    if (!is_lock) // 锁视野则不允许鼠标控制
-    {
-        glfwSetCursorPosCallback(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), mouse_callback);
-        glfwSetScrollCallback(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), scroll_callback);        // 滚轮控制视野
-        glfwSetWindowUserPointer(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), &(*(gl_camera.get())));
-    }
+            ConfigureCameraInput(const_cast<GLFWwindow*>(gl_context->GetWinPtr()), camera_control_mode, is_lock, gl_camera.get());
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_DEPTH_TEST);
 
@@ -547,40 +560,72 @@ void changeCameraStatusByKeyBoardInput(GLContext& context_manager, GLShader& sha
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    static GLCamera* camera = reinterpret_cast<GLCamera*>(glfwGetWindowUserPointer(window));
+    if (g_camera_control_mode.load() == 2)
+        return;
+    if (!glfwGetWindowAttrib(window, GLFW_FOCUSED))
+        return;
 
+    auto* camera = reinterpret_cast<GLCamera*>(glfwGetWindowUserPointer(window));
     if (camera)
     {
-        // 根据滚轮输入调整目标 FOV
         float currentFOV = camera->GetFOV();
-        float targetFOV = currentFOV - static_cast<float>(yoffset); // yoffset 是滚轮的垂直偏移量
+        float targetFOV = currentFOV - static_cast<float>(yoffset);
         camera->SetTargetFOV(targetFOV);
+    }
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    (void)mods;
+    if (button != GLFW_MOUSE_BUTTON_LEFT || g_camera_control_mode.load() != 1)
+        return;
+    if (action == GLFW_PRESS)
+    {
+        g_camera_dragging.store(true);
+        double x = 0.0, y = 0.0;
+        glfwGetCursorPos(window, &x, &y);
+        g_camera_last_x = x;
+        g_camera_last_y = y;
+        g_camera_first_mouse = false;
+    }
+    else if (action == GLFW_RELEASE)
+    {
+        g_camera_dragging.store(false);
+        g_camera_first_mouse = true;
     }
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-    static GLCamera* camera = reinterpret_cast<GLCamera*>(glfwGetWindowUserPointer(window));
-    static GLShader* shader_manager = reinterpret_cast<GLShader*>(glfwGetWindowUserPointer(window));
-    static float lastX = 400; // 初始化鼠标位置
-    static float lastY = 300;
-    static bool firstMouse = true;
+    const int mode = g_camera_control_mode.load();
+    if (mode == 2)
+        return;
+    if (!glfwGetWindowAttrib(window, GLFW_FOCUSED))
+    {
+        g_camera_first_mouse = true;
+        return;
+    }
+    if (mode == 1 && !g_camera_dragging.load())
+        return;
 
-    if (firstMouse) {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
+    auto* camera = reinterpret_cast<GLCamera*>(glfwGetWindowUserPointer(window));
+    if (!camera)
+        return;
+
+    if (g_camera_first_mouse)
+    {
+        g_camera_last_x = xpos;
+        g_camera_last_y = ypos;
+        g_camera_first_mouse = false;
+        return;
     }
 
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // 注意：y 方向是反的
-    lastX = xpos;
-    lastY = ypos;
-
-    // 调用 CameraSpin 更新相机旋转
-    camera->CameraSpin(xoffset, yoffset);
+    const double xoffset = xpos - g_camera_last_x;
+    const double yoffset = g_camera_last_y - ypos;
+    g_camera_last_x = xpos;
+    g_camera_last_y = ypos;
+    camera->CameraSpin(static_cast<float>(xoffset), static_cast<float>(yoffset));
 }
-
 InputHandler::InputHandler(GLFWwindow* main_window)
 {
     window = main_window;

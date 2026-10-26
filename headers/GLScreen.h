@@ -6,6 +6,7 @@
 #include <vector>
 #include <thread>
 #include <ranges>
+#include <atomic>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -61,6 +62,7 @@ public:
     void InitCamara(glm::vec3 camera_pos);
     void InitPerspectiveType(bool view_type);
     void SetViewLock(bool is_view_lock);
+    void SetCameraControlMode(int mode);
     void SetVerticesData(const std::vector<CubePixel>& cubes);
     void ClearFrameData();
     std::vector<std::shared_ptr<GLBuffer>> GetFrameBuffers(PixelShape shape_type);
@@ -72,6 +74,7 @@ public:
 private:
     int width = 0, height = 0;
     bool is_lock = false, perspective_type = false;
+    int camera_control_mode = 0; // 0 free look, 1 click-drag
     float FPS = 120;
     std::shared_ptr<GLContext> gl_context = std::make_shared<GLContext>();
     std::shared_ptr<GLCamera> gl_camera = std::make_shared<GLCamera>();

@@ -15,6 +15,7 @@ Item {
     property real cameraZ: 200
     property bool view2D: false
     property bool viewLock: false
+    property int cameraMode: 0
     property string mode: "offline"
 
     function autoCamera() {
@@ -238,9 +239,33 @@ Item {
                                     onToggled: root.viewLock = checked
                                 }
                             }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 16
+                                Text {
+                                    text: "鼠标视角"
+                                    color: Theme.textMuted
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 11
+                                }
+                                RadioButton {
+                                    text: "自由视角（移动鼠标）"
+                                    checked: root.cameraMode === 0
+                                    enabled: !root.viewLock
+                                    onToggled: if (checked) root.cameraMode = 0
+                                    onClicked: root.cameraMode = 0
+                                }
+                                RadioButton {
+                                    text: "点击拖拽（按住左键）"
+                                    checked: root.cameraMode === 1
+                                    enabled: !root.viewLock
+                                    onToggled: if (checked) root.cameraMode = 1
+                                    onClicked: root.cameraMode = 1
+                                }
+                            }
                             Text {
                                 Layout.fillWidth: true
-                                text: "宽高与相机用于顶部“输出窗口”的 800×600 / 3D 默认设置；2D 为正交投影，锁定后禁用鼠标旋转。"
+                                text: "自由视角：窗口获得焦点时移动鼠标旋转；点击拖拽：按住左键拖动旋转；锁定视角会关闭鼠标旋转。2D 为正交投影。"
                                 color: Theme.textDim
                                 font.family: Theme.fontFamily
                                 font.pixelSize: 10
@@ -305,7 +330,7 @@ Item {
                                 AppButton {
                                     text: "开始生成"
                                     enabled: !app.engineBusy && !app.engineRunning && app.engineModels.length > 0
-                                    onClicked: app.startEngine(root.outWidth, root.outHeight, root.cameraX, root.cameraY, root.cameraZ, root.view2D, root.viewLock, root.mode)
+                                    onClicked: app.startEngine(root.outWidth, root.outHeight, root.cameraX, root.cameraY, root.cameraZ, root.view2D, root.viewLock, root.mode, root.cameraMode)
                                 }
                                 AppButton {
                                     text: "停止并保存"
@@ -485,7 +510,7 @@ Item {
                 AppButton {
                     text: "开始生成"
                     enabled: !app.engineBusy && !app.engineRunning && app.engineModels.length > 0
-                    onClicked: app.startEngine(root.outWidth, root.outHeight, root.cameraX, root.cameraY, root.cameraZ, root.view2D, root.viewLock, root.mode)
+                    onClicked: app.startEngine(root.outWidth, root.outHeight, root.cameraX, root.cameraY, root.cameraZ, root.view2D, root.viewLock, root.mode, root.cameraMode)
                 }
                 AppButton {
                     text: "停止并保存"
