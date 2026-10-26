@@ -1,6 +1,6 @@
 <model name="BoundingPoint">
 	<automata id="1">
-		<init init_status='[{"x":0,"y":0,"z":0,"r":1.0,"g":0.5,"b":0.31,"a":1.0,"tag":0x10,"blockSize":1.0}]'/>
+		<init init_status='[{\"x\":0,\"y\":0,\"z\":0,\"r\":1.0,\"g\":0.5,\"b\":0.31,\"a\":1.0,\"tag\":16,\"blockSize\":1.0}]'/>
 		<transfer func_name="JustAPoint"/>
 		<input current_input='[]'/>
 		<current current_status='[]'/>

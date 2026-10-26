@@ -1,0 +1,9 @@
+<model name="ACell">
+  <automata id="6">
+    <init init_status='[]'/>
+    <transfer func_name="CellAutomataFrame_0"/>
+    <input current_input='[]'/>
+    <current current_status='[]'/>
+    <terminate terminate_status='[]'/>
+  </automata>
+</model>
